@@ -1,0 +1,860 @@
+1
+00:00:00,000 --> 00:00:12,000
+Hello everyone, in this session, I will demo how to generate TK using GitHub Corvallis.
+
+2
+00:00:12,000 --> 00:00:21,000
+To use this feature, first, I need to have TWSFounder created for the item I need to generate TK.
+
+3
+00:00:21,000 --> 00:00:27,000
+In this session, I will go to Team Support. Here, I will have two options.
+
+4
+00:00:27,000 --> 00:00:31,000
+The first option is to create TWSFounder for an item.
+
+5
+00:00:31,000 --> 00:00:38,000
+And the second option is to create TWSFounder for a list of other items.
+
+6
+00:00:38,000 --> 00:00:45,000
+I will demo the first option first. I will choose One Item here.
+
+7
+00:00:45,000 --> 00:00:50,000
+Here, I will have three different types of information.
+
+8
+00:00:50,000 --> 00:00:51,000
+The first information is the TWSFounder.
+
+9
+00:00:51,000 --> 00:00:54,000
+The first information is the database part.
+
+10
+00:00:54,000 --> 00:01:00,000
+This is the folder part that contains the database that I have logged from the snapshot.
+
+11
+00:01:00,000 --> 00:01:03,000
+The second information is the workspace part.
+
+12
+00:01:03,000 --> 00:01:06,000
+I will create a blank folder.
+
+13
+00:01:06,000 --> 00:01:15,000
+And I will take this folder part to contain the outputs in the TUN running process.
+
+14
+00:01:15,000 --> 00:01:17,000
+The third information is the item name.
+
+15
+00:01:17,000 --> 00:01:21,000
+This is the name of the item that I need to create.
+
+16
+00:01:21,000 --> 00:01:23,000
+The TWSFounder.
+
+17
+00:01:23,000 --> 00:01:30,000
+After I have filled out these three things, I will click on Generate Environment.
+
+18
+00:01:30,000 --> 00:01:45,000
+After completing this step, TUN will show me an option to notify me.
+
+19
+00:01:45,000 --> 00:01:47,000
+At the same time, TUN Visual Studio Code will automatically open the TUN Studio Code.
+
+20
+00:01:47,000 --> 00:01:48,000
+This is the first step.
+
+21
+00:01:48,000 --> 00:01:56,000
+TuneVisualStudioCode will automatically open and save the space folder of the item you need to create.
+
+22
+00:01:58,000 --> 00:02:01,000
+Here I will have the source file.
+
+23
+00:02:01,000 --> 00:02:03,000
+I will also have two files.
+
+24
+00:02:03,000 --> 00:02:07,000
+The first is test.cpp and the second is test.h.
+
+25
+00:02:07,000 --> 00:02:09,000
+They are here.
+
+26
+00:02:13,000 --> 00:02:17,000
+Besides, I can use the OpenOutput function.
+
+27
+00:02:17,000 --> 00:02:27,000
+It will help me to open and save the space folder of the item I need to create.
+
+28
+00:02:38,000 --> 00:02:42,000
+For the second option, I will choose ListItem.
+
+29
+00:02:42,000 --> 00:02:45,000
+I also have three important information.
+
+30
+00:02:45,000 --> 00:02:47,000
+The first is database bars.
+
+31
+00:02:47,000 --> 00:02:51,000
+The second one is the first option.
+
+32
+00:02:51,000 --> 00:02:56,000
+And the third one is ListItemBars.
+
+33
+00:02:56,000 --> 00:03:05,000
+I will have an Excel file to store the information of the item name and item bars.
+
+34
+00:03:05,000 --> 00:03:09,000
+I also need to create a SpaceFolder.
+
+35
+00:03:12,000 --> 00:03:16,000
+Then I will take the bar of this file and store it in TuneVisualStudioCode.
+
+36
+00:03:17,000 --> 00:03:23,000
+I need to open it to the third room.
+
+37
+00:03:23,000 --> 00:03:27,000
+Then I will click on Generate Environment.
+
+38
+00:03:27,000 --> 00:03:33,000
+Hello everyone, welcome back to my channel, today I will share with you how to create a
+
+39
+00:03:33,000 --> 00:03:39,000
+free e-mail account, you can use the link in the description of this video,
+
+40
+00:03:39,000 --> 00:03:45,000
+you can use the link in the description of this video,
+
+41
+00:03:45,000 --> 00:03:51,000
+you can use the link in the description of this video,
+
+42
+00:03:51,000 --> 00:03:55,000
+you can use the link in the description of this video,
+
+43
+00:03:55,000 --> 00:03:59,000
+you can use the link in the description of this video,
+
+44
+00:03:59,000 --> 00:04:03,000
+you can use the link in the description of this video,
+
+45
+00:04:03,000 --> 00:04:07,000
+you can use the link in the description of this video,
+
+46
+00:04:07,000 --> 00:04:11,000
+you can use the link in the description of this video,
+
+47
+00:04:11,000 --> 00:04:15,000
+you can use the link in the description of this video,
+
+48
+00:04:15,000 --> 00:04:19,000
+you can use the link in the description of this video,
+
+49
+00:04:19,000 --> 00:04:24,000
+I choose Generate Test Case by A.I.Copilot
+
+50
+00:04:24,000 --> 00:04:27,000
+Here, I have two main sources of information
+
+51
+00:04:27,000 --> 00:04:29,000
+The first one is the item bar
+
+52
+00:04:29,000 --> 00:04:35,000
+I will go to the TestWorksBaseFounder of an item
+
+53
+00:04:35,000 --> 00:04:37,000
+called Generate Test Case
+
+54
+00:04:37,000 --> 00:04:38,000
+For example, this item
+
+55
+00:04:38,000 --> 00:04:43,000
+I will copy the bar of this file
+
+56
+00:04:43,000 --> 00:04:51,000
+After that, I will input the first source of information
+
+57
+00:04:51,000 --> 00:04:54,000
+And the next one is the data base bar
+
+58
+00:04:54,000 --> 00:04:57,000
+Just like the previous step
+
+59
+00:04:57,000 --> 00:05:03,000
+I will also input the data of the folder containing the data base
+
+60
+00:05:03,000 --> 00:05:08,000
+Here, then I will type autodefine object here
+
+61
+00:05:08,000 --> 00:05:12,000
+In the process of running
+
+62
+00:05:12,000 --> 00:05:13,000
+I can
+
+63
+00:05:13,000 --> 00:05:15,000
+follow the information directly
+
+64
+00:05:15,000 --> 00:05:19,000
+by clicking on the Show Execution Log here
+
+65
+00:05:19,000 --> 00:05:22,000
+There is a Terminal window that will appear
+
+66
+00:05:22,000 --> 00:05:25,000
+and will show the information
+
+67
+00:05:25,000 --> 00:05:28,000
+while I am running
+
+68
+00:05:43,000 --> 00:05:45,000
+The Terminal window will appear
+
+69
+00:05:45,000 --> 00:05:47,000
+For example, if you want to run the test
+
+70
+00:05:47,000 --> 00:05:49,000
+You can change the Terminal data
+
+71
+00:05:49,000 --> 00:05:51,000
+You can see the information here
+
+72
+00:05:51,000 --> 00:05:53,000
+I will then select the Terminal data
+
+73
+00:05:53,000 --> 00:05:55,000
+The Terminal data is displayed here
+
+74
+00:05:55,000 --> 00:05:57,000
+In this way, we can control the power
+
+75
+00:05:57,000 --> 00:05:59,000
+The cluster can be used for my test
+
+76
+00:05:59,000 --> 00:06:01,000
+The computer will be able to control the volume of the data
+
+77
+00:06:01,000 --> 00:06:03,000
+and the pressure and the voltage
+
+78
+00:06:03,000 --> 00:06:05,000
+It is possible to give a higher or lower value
+
+79
+00:06:05,000 --> 00:06:07,000
+by pressing the Error button
+
+80
+00:06:07,000 --> 00:06:09,000
+For simple data, the computer will not ever
+
+81
+00:06:09,000 --> 00:06:11,000
+press the Error button
+
+82
+00:06:11,000 --> 00:06:15,000
+Please subscribe to La La School channel to not miss the fascinating videos
+
+83
+00:06:41,000 --> 00:07:10,980
+Please subscribe to La La School channel to not miss the fascinating videos
+
+84
+00:07:11,000 --> 00:07:13,000
+Thanks for watching
+
+85
+00:07:41,000 --> 00:08:10,980
+Subscribe to La La School channel to not miss the fascinating videos
+
+86
+00:08:11,000 --> 00:08:40,980
+Please subscribe to La La School channel to not miss the fascinating videos
+
+87
+00:08:41,000 --> 00:09:10,980
+Thanks for watching
+
+88
+00:09:11,000 --> 00:09:40,980
+Subscribe to La La School channel to not miss the fascinating videos
+
+89
+00:09:41,000 --> 00:09:41,019
+Please subscribe to La La School channel to not miss the fascinating videos
+
+90
+00:09:41,019 --> 00:09:41,039
+Please subscribe to La La School channel to not miss the fascinating videos
+
+91
+00:09:41,039 --> 00:09:41,059
+Please subscribe to La La School channel to not miss the fascinating videos
+
+92
+00:09:41,059 --> 00:09:41,080
+Please subscribe to La La School channel to not miss the fascinating videos
+
+93
+00:09:41,080 --> 00:09:41,100
+Please subscribe to La La School channel to not miss the fascinating videos
+
+94
+00:09:41,100 --> 00:09:41,139
+Please subscribe to La La School channel to not miss the fascinating videos
+
+95
+00:09:41,139 --> 00:09:41,159
+Please subscribe to La La School channel to not miss the fascinating videos
+
+96
+00:09:41,159 --> 00:09:41,200
+Please subscribe to La La School channel to not miss the fascinating videos
+
+97
+00:09:41,200 --> 00:09:41,240
+Please subscribe to La La School channel to not miss the fascinating videos
+
+98
+00:09:41,240 --> 00:09:41,259
+Please subscribe to La La School channel to not miss the fascinating videos
+
+99
+00:09:41,259 --> 00:09:41,299
+Please subscribe to La La School channel to not miss the fascinating videos
+
+100
+00:09:41,299 --> 00:09:41,320
+Please subscribe to La La School channel to not miss the fascinating videos
+
+101
+00:09:41,320 --> 00:09:41,340
+Please subscribe to La La School channel to not miss the fascinating videos
+
+102
+00:09:41,340 --> 00:09:41,360
+Please subscribe to La La School channel to not miss the fascinating videos
+
+103
+00:09:41,360 --> 00:09:47,360
+At the end of Auto Default Check, we will go to the next step, which is Repair Get Suits.
+
+104
+00:09:47,360 --> 00:10:11,360
+In the pop-up information, we will see that there are 3 functions, Forward, Suits Function, and Update Lockdown.
+
+105
+00:10:11,360 --> 00:10:16,360
+We see that there are 3 functions listed here.
+
+106
+00:10:16,360 --> 00:10:17,360
+We see that there are 3 functions listed here.
+
+107
+00:10:17,360 --> 00:10:18,360
+We see that there are 3 functions listed here.
+
+108
+00:10:18,360 --> 00:10:23,360
+We will select one of the 3 functions that we want to generate test case.
+
+109
+00:10:23,360 --> 00:10:25,360
+In the next step, we will have 2 options.
+
+110
+00:10:25,360 --> 00:10:31,360
+The first option is to generate test case for the function we are selecting here.
+
+111
+00:10:31,360 --> 00:10:38,360
+And the second option is to generate test case for all functions in this item.
+
+112
+00:10:38,360 --> 00:10:41,360
+To make it easier for us to observe the running process,
+
+113
+00:10:41,360 --> 00:10:46,360
+while generating test case, we will open Visual Studio Code
+
+114
+00:10:46,360 --> 00:10:50,360
+And we just which test.
+
+115
+00:10:50,360 --> 00:11:05,360
+So we set the default setting as 250,
+
+116
+00:11:05,360 --> 00:11:10,360
+and by this setting, we will detect whether the scale of the возь Dun move like this
+
+117
+00:11:10,360 --> 00:11:15,360
+So we design and import this item, that will open called feeds of it got.
+
+118
+00:11:16,360 --> 00:11:23,360
+We will see the information in the Visual Studio Code.
+
+119
+00:11:23,360 --> 00:11:28,360
+We will go to Output and choose GitHub Copilot Chart here.
+
+120
+00:11:28,360 --> 00:11:33,360
+The button generation information will be shown in this terminal.
+
+121
+00:11:35,360 --> 00:11:39,360
+After we see the notification that the test generation is completed,
+
+122
+00:11:39,360 --> 00:11:44,360
+that is, the button generation is done.
+
+123
+00:11:44,360 --> 00:11:48,360
+Next, we will click on Terminal.
+
+124
+00:11:48,360 --> 00:11:50,360
+We will build this test.
+
+125
+00:12:06,360 --> 00:12:11,360
+Here we have 8 TKs and all 8 TKs are passed.
+
+126
+00:12:11,360 --> 00:12:14,360
+Next, we will see the code code.
+
+127
+00:12:14,360 --> 00:12:16,360
+How does it work?
+
+128
+00:12:16,360 --> 00:12:20,360
+Then we will proceed to build Canada for this test.
+
+129
+00:12:20,360 --> 00:12:23,360
+We will click on Build Canada here.
+
+130
+00:12:44,360 --> 00:12:57,360
+After building Canada is done,
+
+131
+00:12:57,360 --> 00:13:00,360
+we will see that in the folder,
+
+132
+00:13:00,360 --> 00:13:03,360
+in the folder of the item,
+
+133
+00:13:03,360 --> 00:13:08,360
+we will see that there is a Canada folder in the Output folder.
+
+134
+00:13:10,360 --> 00:13:12,360
+We will open Canada.
+
+135
+00:13:12,360 --> 00:13:14,360
+Click on Tools.
+
+136
+00:13:14,360 --> 00:13:16,360
+Then we will go to the C folder.
+
+137
+00:13:18,360 --> 00:13:21,360
+Choose TCC.
+
+138
+00:13:22,360 --> 00:13:24,360
+Go to Tools.
+
+139
+00:13:24,360 --> 00:13:26,360
+Go to Canada.
+
+140
+00:13:26,360 --> 00:13:29,360
+Then we will open this tool.
+
+141
+00:13:36,360 --> 00:13:39,360
+We will create a project in Canada.
+
+142
+00:13:39,360 --> 00:13:41,360
+C Project.
+
+143
+00:13:45,360 --> 00:13:46,360
+In Canada.
+
+144
+00:13:46,360 --> 00:13:47,360
+We have Welcome C.
+
+145
+00:13:47,360 --> 00:13:48,360
+For this project,
+
+146
+00:13:48,360 --> 00:13:50,360
+if we wanted to start the project in Canada,
+
+147
+00:13:50,360 --> 00:13:52,360
+we have always selected Canada.
+
+148
+00:13:52,360 --> 00:13:53,360
+Any more,
+
+149
+00:13:53,360 --> 00:13:54,360
+I will not click here.
+
+150
+00:13:54,360 --> 00:13:55,360
+conjunct...
+
+151
+00:13:55,360 --> 00:13:56,360
+Then select Canada.
+
+152
+00:13:56,360 --> 00:13:57,360
+C will assume Canada future.
+
+153
+00:13:57,360 --> 00:13:59,360
+and select the year that we wanted to create.
+
+154
+00:13:59,360 --> 00:14:02,360
+We also select Canada,
+
+155
+00:14:02,360 --> 00:14:03,360
+and select the year that we want to create.
+
+156
+00:14:03,360 --> 00:14:04,360
+Here we go.
+
+157
+00:14:04,360 --> 00:14:06,360
+Then select the year that we want to create.
+
+158
+00:14:06,360 --> 00:14:07,860
+management,
+
+159
+00:14:07,860 --> 00:14:08,360
+Under Canada.
+
+160
+00:14:08,360 --> 00:14:09,360
+We select Canada.
+
+161
+00:14:09,360 --> 00:14:10,360
+now đ:// Almost Canada,
+
+162
+00:14:10,360 --> 00:14:12,360
+where this is Canada.
+
+163
+00:14:12,360 --> 00:14:26,360
+I will click on this .cov file
+
+164
+00:14:26,360 --> 00:14:33,360
+Then I will open this file
+
+165
+00:14:33,360 --> 00:14:36,360
+Here I see that the first function
+
+166
+00:14:36,360 --> 00:14:39,360
+its light code lines are blue
+
+167
+00:14:39,360 --> 00:14:43,360
+This is equivalent to the fact that this light code has been covered
+
+168
+00:14:43,360 --> 00:14:47,360
+And these red lines are still not covered
+
+169
+00:14:55,360 --> 00:14:59,360
+Then I will demo my second option
+
+170
+00:14:59,360 --> 00:15:02,360
+is Generate TK Onshoot
+
+171
+00:15:02,360 --> 00:15:05,360
+Before clicking on this Generate button
+
+172
+00:15:05,360 --> 00:15:09,360
+I will delete the newly created TKs
+
+173
+00:15:09,360 --> 00:15:14,360
+In the first option
+
+174
+00:15:14,360 --> 00:15:17,360
+to avoid being duplicated for the next time
+
+175
+00:15:27,360 --> 00:15:30,360
+Then I will click on Generate TK Onshoot here
+
+176
+00:15:30,360 --> 00:15:34,360
+to create TKs for all functions in this item
+
+177
+00:15:39,360 --> 00:15:41,360
+And this time I will click on Generate TK Onshoot
+
+178
+00:15:41,360 --> 00:15:43,360
+To create the second TK
+
+179
+00:15:43,360 --> 00:15:44,360
+and click on the next TK
+
+180
+00:15:44,360 --> 00:15:45,360
+to add the code
+
+181
+00:15:45,360 --> 00:15:47,360
+Then I will have to assign these first 2 TKs
+
+182
+00:15:47,360 --> 00:15:49,360
+on each TK
+
+183
+00:15:49,360 --> 00:15:52,360
+All 4 TKs
+
+184
+00:15:52,360 --> 00:15:54,360
+The first TKs will be the TKs
+
+185
+00:15:54,360 --> 00:15:56,360
+That's all
+
+186
+00:15:56,360 --> 00:15:58,360
+Now we go to the next TK
+
+187
+00:15:58,360 --> 00:16:00,360
+and then we will create the second TK
+
+188
+00:16:00,360 --> 00:16:02,360
+Let me go to the next TK
+
+189
+00:16:02,360 --> 00:16:04,360
+The second TK will be a small wall
+
+190
+00:16:04,360 --> 00:16:06,360
+The first one is here
+
+191
+00:16:06,360 --> 00:16:08,360
+So I just need to delete it
+
+192
+00:16:09,360 --> 00:16:13,360
+Please subscribe to La La School channel to not miss the fascinating videos
+
+193
+00:16:39,360 --> 00:16:41,360
+Thanks for watching
+
+194
+00:17:09,360 --> 00:17:27,360
+Please subscribe to La La School channel to not miss the fascinating videos
+
+195
+00:17:27,360 --> 00:17:34,360
+After finished generating the key for 3 functions in this item, I will build the data
+
+196
+00:17:34,360 --> 00:17:38,360
+In this step, I can click on the button
+
+197
+00:17:38,360 --> 00:17:39,360
+to open the data
+
+198
+00:17:39,360 --> 00:17:48,360
+I can build the data from the Visual Studio Code
+
+199
+00:17:48,360 --> 00:17:55,360
+I go to Terminal, select Runtasks, and select the data
+
+200
+00:18:09,360 --> 00:18:18,360
+In the Terminal section, I can see the values and codecodes that I have created
+
+201
+00:18:18,360 --> 00:18:21,360
+I will go to Toolkartata
+
+202
+00:18:21,360 --> 00:18:27,360
+I will see which codecodes have been created
+
+203
+00:18:27,360 --> 00:18:35,360
+I will gradually drag the Kantata folder into the project
+
+204
+00:18:35,360 --> 00:18:36,360
+To this Kantata
+
+205
+00:18:36,360 --> 00:18:38,360
+To this Kantata folder
+
+206
+00:18:39,360 --> 00:18:45,780
+Click Esto
+
+207
+00:18:48,280 --> 00:18:54,860
+Here we can see that the codecodes of the three functions of this item are already created
+
+208
+00:18:54,860 --> 00:19:00,860
+And so the color of these changes into blue
+
+209
+00:19:00,860 --> 00:19:04,360
+Now we click on Kantata to select View
+
+210
+00:19:04,360 --> 00:19:08,360
+Then we need to backup our API
+
+211
+00:19:08,360 --> 00:19:17,360
+We can choose View, Reboot Viewer to view this report
+
+212
+00:19:17,360 --> 00:19:22,360
+We can view the test report here
+
+213
+00:19:22,360 --> 00:19:32,360
+And the coverage that we can see here
+
+214
+00:19:32,360 --> 00:19:34,360
+This is the end of my demo
+
+215
+00:19:34,360 --> 00:19:37,360
+Thank you for watching
+

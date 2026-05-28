@@ -1,0 +1,9 @@
+input/
+output/
+
+.git backup/
+
+*.dll
+*.mp4
+*.wav
+temp_audio_extract.wav
