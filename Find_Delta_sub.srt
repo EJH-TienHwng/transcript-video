@@ -467,7 +467,7 @@ This creates the test folder for these modules.
  
 
 118
-00:08:08,000 --> 00:08:29,220
+00:08:24,000 --> 00:08:29,220
 After step 1, a notification window will appear.
 
 119
@@ -488,19 +488,19 @@ After completing step 2, the tool will report the result here.
 
 123
 00:09:08,440 --> 00:09:12,440
-Coverage has been automatically collected for all modules.
+"Coverage has been automatically collected for all modules."
 
 124
-00:09:12,440 --> 00:09:14,440
+00:09:12,440 --> 00:09:16,440
 To see the result,
 
 125
-00:09:14,440 --> 00:09:15,440
-we check the files.
+00:09:16,440 --> 00:09:17,440
+we go to files.
 
 126
-00:09:16,440 --> 00:09:18,440
-Take a look at the Details page.
+00:09:17,440 --> 00:09:18,440
+we go to files.
 
 127
 00:09:18,440 --> 00:09:22,440
@@ -524,7 +524,7 @@ The second is Fail.
 
 132
 00:09:34,440 --> 00:09:36,440
-The third is Fail.
+The second is Fail.
 
 133
 00:09:36,440 --> 00:09:38,440
@@ -556,7 +556,7 @@ We will test these files.
 
 140
 00:10:03,440 --> 00:10:19,440
-For the failed modules, we will use the Auto Default Object feature to resolve them.
+For the failed modules, we will use the Auto Define Object feature to resolve them.
 
 141
 00:10:19,440 --> 00:10:21,440
@@ -600,11 +600,11 @@ In total, there are 16 modules.
 
 151
 00:11:03,440 --> 00:11:05,440
-We will repeat the steps.
+ 
 
 152
 00:11:05,440 --> 00:11:07,440
-(Repeating steps)
+ 
 
 153
 00:11:07,440 --> 00:11:09,440
@@ -628,15 +628,15 @@ Total is 15.
 
 158
 00:11:16,440 --> 00:11:20,440
-After that, we will proceed to Repair Test Suite
+After that, we will proceed to Prepair Get SUTs
 
 159
 00:11:20,440 --> 00:11:23,440
-to fix the failed modules.
+for the failed modules.
 
 160
 00:11:23,440 --> 00:11:31,440
-(Processing...)
+ 
 
 161
 00:12:01,440 --> 00:12:25,440
@@ -648,22 +648,22 @@ Then I will go to the review step for the failed modules, to verify the results 
 
 163
 00:12:55,440 --> 00:13:07,440
-(Reviewing failed modules)
+ 
 
 164
 00:13:07,440 --> 00:13:15,440
-Then I will repeat the same steps.
+ 
 
 165
 00:13:15,440 --> 00:13:22,440
-I will also copy the contents for the modules.
+ 
 
 166
 00:13:22,440 --> 00:13:24,440
-That's all.
+ 
 
 167
-00:13:25,440 --> 00:13:47,440
+00:13:34,440 --> 00:13:47,440
 After finishing the review, I now have 11 successful modules and 4 failed modules out of a total of 15.
 
 168
@@ -688,59 +688,59 @@ But I still have 4 failed modules.
 
 173
 00:14:25,440 --> 00:14:31,440
-Here, I have successfully supported the "Old" modules.
+Here, the tool have successfully supported the "Old" modules.
 
 174
 00:14:31,440 --> 00:14:35,440
 Now, I will move to the "New" modules here.
 
 175
-00:14:35,440 --> 00:14:46,440
+00:14:35,440 --> 00:14:48,440
 Currently, these new modules do not have test scripts in my database because they weren't tested in the previous version.
 
 176
-00:14:46,440 --> 00:14:51,440
-So, I will find the test scripts on the server.
+00:14:48,440 --> 00:14:51,440
+So, we will find the test scripts on the SharePoint database.
 
 177
 00:14:51,440 --> 00:15:05,440
-I will search for the test scripts used for these modules in other projects, streams, or snapshots.
+We will search for the test scripts used for these modules in other version, projects, streams, or snapshots.
 
 178
 00:15:05,440 --> 00:15:07,440
-I will find them on the server.
+We will find them on the SharePoint.
 
 179
 00:15:07,440 --> 00:15:10,440
-Now, I will test this module.
+Now, we will test this module.
 
 180
 00:15:10,440 --> 00:15:12,440
-(Testing module)
+ 
 
 181
 00:15:12,440 --> 00:15:14,440
-(Testing module)
+ 
 
 182
 00:15:16,440 --> 00:15:26,440
-In the server's information column, I can see project details for the new modules released.
+Under the information column, you can see the SharePoint Link section.
 
 183
 00:15:26,440 --> 00:15:35,440
-Now, I will input all the test script sources into the server's test script directory.
+Next, I will paste the SharePoint link that holds the test script sources from our previous tasks into this field.
 
 184
 00:15:35,440 --> 00:15:41,440
-Now, I will add tags to the basic core functions.
+ 
 
 185
 00:15:41,440 --> 00:15:44,440
-Now, enter the description for the server.
+ 
 
 186
 00:15:44,440 --> 00:15:47,440
-This is the CPU side of the UT Team.
+This is the SharePoint of the UT Team.
 
 187
 00:15:47,440 --> 00:15:53,440
@@ -748,7 +748,7 @@ We have the folder for the test.
 
 188
 00:15:53,440 --> 00:16:00,440
-Here we have the region and the customer.
+Here we have the regions and the customers.
 
 189
 00:16:00,440 --> 00:16:07,440
@@ -772,11 +772,11 @@ Inside the test environment folder, we have the test scripts for those modules.
 
 194
 00:16:40,440 --> 00:16:48,480
-If we feel that there are not enough modules, we will fetch the test environment.
+ 
 
 195
 00:16:48,480 --> 00:16:54,440
-Then we take the support link before accessing the database.
+Then we'll take the SharePoint link which contains the database.
 
 196
 00:16:54,440 --> 00:16:59,440
@@ -788,23 +788,23 @@ Then we will load the database.
 
 198
 00:17:08,440 --> 00:17:10,440
-We select the database,
+We select China or Japan
 
 199
 00:17:10,440 --> 00:17:12,440
-(Processing...)
+based on the region you want.
 
 200
 00:17:12,440 --> 00:17:14,440
-as you want.
+based on the region you want.
 
 201
 00:17:14,440 --> 00:17:16,440
-Here we have the customer,
+Here we have the customer project.
 
 202
 00:17:16,440 --> 00:17:18,440
-project.
+Here we have the customer project.
 
 203
 00:17:18,440 --> 00:17:20,440
@@ -836,11 +836,11 @@ here,
 
 210
 00:17:32,440 --> 00:17:34,440
-(Processing data)
+ 
 
 211
 00:17:34,440 --> 00:17:36,440
-I'll choose "New".
+I'll choose "New" in the Type Data field.
 
 212
 00:17:36,440 --> 00:17:38,440
@@ -868,7 +868,7 @@ I have to fill in
 
 218
 00:17:48,440 --> 00:17:50,440
-the information like the module name,
+the information into the Module Name field,
 
 219
 00:17:50,440 --> 00:17:52,440
@@ -884,15 +884,15 @@ Or I can choose
 
 222
 00:17:56,440 --> 00:17:58,440
-Search New Module.
+Search New Module (SharePoint).
 
 223
 00:17:58,440 --> 00:18:00,440
-Here I'll choose All Modules
+Here I'll choose all the modules
 
 224
 00:18:00,440 --> 00:18:02,440
-instead of New.
+that has type New.
 
 225
 00:18:02,440 --> 00:18:04,440
@@ -944,7 +944,7 @@ of that module
 
 237
 00:18:26,440 --> 00:18:28,440
-into All Modules.
+into Module Name.
 
 238
 00:18:28,440 --> 00:18:30,440
@@ -952,67 +952,67 @@ Then I'll click
 
 239
 00:18:30,440 --> 00:18:32,440
-Search File.
+Search Files.
 
 240
 00:18:38,440 --> 00:18:40,440
-(Searching file)
+ 
 
 241
 00:18:40,440 --> 00:18:42,440
-(Searching file)
+ 
 
 242
 00:18:42,440 --> 00:18:44,440
-then I'll
+ 
 
 243
 00:18:44,440 --> 00:18:46,440
-select
+ 
 
 244
 00:18:46,440 --> 00:18:48,440
-the new module.
+ 
 
 245
 00:18:48,440 --> 00:18:50,440
-Then
+ 
 
 246
 00:18:50,440 --> 00:18:52,440
-I'll click
+ 
 
 247
 00:18:52,440 --> 00:18:54,440
-Search
+ 
 
 248
 00:18:54,440 --> 00:18:56,440
-File.
+ 
 
 249
 00:18:56,440 --> 00:18:58,440
-Right now,
+ 
 
 250
 00:18:58,440 --> 00:19:00,440
-I'm going to
+ 
 
 251
 00:19:00,440 --> 00:19:02,440
-select
+ 
 
 252
 00:19:02,440 --> 00:19:04,440
-the new
+ 
 
 253
 00:19:04,440 --> 00:19:06,440
-module.
+ 
 
 254
 00:19:06,440 --> 00:19:08,440
-Then I'll click search.
+ 
 
 255
 00:19:08,440 --> 00:19:32,440
@@ -1044,7 +1044,7 @@ I want to download the test script back, so I will create a folder for downloadi
 
 262
 00:20:11,440 --> 00:20:16,440
-I have created a download sample folder here.
+I have created a download sample folder here (SP_Download).
 
 263
 00:20:16,440 --> 00:20:20,440
@@ -1060,38 +1060,38 @@ Then I will choose the download folder,
 
 266
 00:20:31,440 --> 00:20:41,440
-and paste it in the path field.
+I will go to the next step, which is to create a folder for that module.
 
 267
 00:20:41,440 --> 00:20:46,440
-Then I click Execute.
+I will go to the next step, which is to create a folder for that module.
 
 268
 00:20:46,440 --> 00:20:55,440
-I will go to the next step, which is to create a folder for that module.
+ 
 
 269
 00:20:55,440 --> 00:20:56,440
-(Processing...)
+ 
 
 270
 00:20:56,440 --> 00:20:57,440
-It's in the folder category.
+In the workspace folder, 
 
 271
 00:20:57,440 --> 00:20:59,440
-Then I click Create Folder for that module.
+we will see the newly created folder
 
 272
 00:20:59,440 --> 00:21:07,440
-This is the new downloadable module.
+for the module we just downloaded.
 
 273
-00:21:07,440 --> 00:21:19,440
+00:21:07,440 --> 00:21:12,440
 After that, I will build test for that module.
 
 274
-00:21:19,440 --> 00:21:38,940
+00:21:28,440 --> 00:21:38,940
 To see the details, I open the Module Info file here.
 
 275
@@ -1100,63 +1100,63 @@ Then I will see the module where I just downloaded the test Delta. The result af
 
 276
 00:21:54,940 --> 00:22:07,940
-Then the next step is to define the remaining objects in the module.
+Then the next step is to define the missing objects in that module.
 
 277
 00:22:07,940 --> 00:22:08,940
-(Processing objects...)
+Then the next step is to define the missing objects in that module.
 
 278
 00:22:08,940 --> 00:22:18,940
-(Processing objects...)
+Then the next step is to define the missing objects in that module.
 
 279
 00:22:18,940 --> 00:22:23,940
-(Processing objects...)
+ 
 
 280
 00:22:38,940 --> 00:22:46,940
-(Processing objects...)
+ 
 
 281
 00:22:46,940 --> 00:22:57,940
-(Loading...)
+ 
 
 282
 00:22:57,940 --> 00:23:01,940
-(Loading...)
+ 
 
 283
 00:23:01,940 --> 00:23:03,940
-(Loading...)
+ 
 
 284
 00:23:03,940 --> 00:23:04,940
-(Loading...)
+ 
 
 285
 00:23:04,940 --> 00:23:05,940
-(Loading...)
+ 
 
 286
 00:23:05,940 --> 00:23:06,940
-(Loading...)
+ 
 
 287
 00:23:06,940 --> 00:23:07,940
-(Loading...)
+ 
 
 288
 00:23:07,940 --> 00:23:08,940
-(Loading...)
+ 
 
 289
 00:23:08,940 --> 00:23:12,940
-(Please wait for the process to complete)
+ 
 
 290
 00:23:38,940 --> 00:23:40,940
-(Processing...)
+ 
 
 291
 00:24:08,940 --> 00:24:17,940
@@ -1164,7 +1164,7 @@ After this step, we will have a result here: successful is 4, total is 5.
 
 292
 00:24:22,940 --> 00:24:25,940
-Then we will go to the next step, Repair Test Suite.
+Then we will go to the next step, Prepair Get SUTs.
 
 293
 00:24:32,940 --> 00:24:37,940
@@ -1172,23 +1172,23 @@ The result is successful is 5, total is 5.
 
 294
 00:24:37,940 --> 00:24:38,940
-(Repair Test Suite)
+ 
 
 295
 00:24:39,940 --> 00:24:44,940
-(Processing...)
+Then, we will go to another step, which is Rebuild Failed Modules to get the result of that module.
 
 296
 00:24:48,940 --> 00:24:57,940
-After this step, we will have a result here, successful is 4.
+After Rebuild Failed Module, we will have a result here.
 
 297
 00:24:58,940 --> 00:25:01,940
-Then we will go to the next step, Repair Test Suite.
+And to view detail info, we will go to the file Module Info here.
 
 298
 00:25:02,940 --> 00:25:07,940
-The result is successful is 5, total is 5.
+The module that we selected earlier is here.
 
 299
 00:25:07,940 --> 00:25:14,940
@@ -1208,11 +1208,11 @@ After checking all the steps, I can see that there are still 4 modules that have
 
 303
 00:25:36,940 --> 00:25:46,940
-Then I can choose the test data.
+Then I can choose the Delta, the test item,
 
 304
 00:25:46,940 --> 00:25:52,940
-The test module has been tested in this way.
+the test module has been tested in this way.
 
 305
 00:25:52,940 --> 00:25:59,940
@@ -1220,7 +1220,7 @@ Then I will download the test scripts from the previous version for those module
 
 306
 00:25:59,940 --> 00:26:03,940
-And see the results in this file.
+And see the results again in this file.
 
 307
 00:26:06,940 --> 00:26:11,940
@@ -1228,7 +1228,7 @@ Here I have finished the demo for everyone.
 
 308
 00:26:11,940 --> 00:26:15,940
-About the first option in the case of Analyze,
+About the first option in the case of Analyze Path,
 
 309
 00:26:15,940 --> 00:26:19,940
@@ -1256,7 +1256,7 @@ To use another file, I will create another workspace folder.
 
 315
 00:26:42,940 --> 00:26:45,940
-I call it "workspace 2".
+I call it "WorkSpace_2".
 
 316
 00:26:45,940 --> 00:26:52,940
@@ -1300,15 +1300,15 @@ In this file, it is like this.
 
 326
 00:27:32,940 --> 00:27:33,940
-Then the data that I need to fill in is like this,
+The data that we need to analyze have to be
 
 327
 00:27:33,940 --> 00:27:37,940
-so that I can Analyze it.
+The data that we need to analyze have to be
 
 328
 00:27:37,940 --> 00:27:40,940
-It will be in the system report here.
+be in the sheet merge report here.
 
 329
 00:27:40,940 --> 00:27:43,940
@@ -1336,15 +1336,15 @@ Copy this file path.
 
 335
 00:28:02,940 --> 00:28:08,940
-Then I will input it into the Analyze bar.
+Then I will input it into the Analyze path.
 
 336
 00:28:08,940 --> 00:28:14,940
-Then I will use the database here.
+Then I will use the old database here.
 
 337
 00:28:14,940 --> 00:28:18,940
-The database I will input is
+The workspace I will input here is
 
 338
 00:28:18,940 --> 00:28:23,940
@@ -1400,7 +1400,7 @@ Then I will see that there are 4 New modules and the remaining 6 are Old, corres
 
 351
 00:29:29,940 --> 00:29:33,940
-(Reviewing modules...)
+ 
 
 352
 00:29:37,940 --> 00:29:42,940
@@ -1436,43 +1436,43 @@ It is the same step, I will choose Old modules to be built.
 
 360
 00:30:33,940 --> 00:30:36,940
-(Selecting Old Modules...)
+ 
 
 361
 00:30:37,940 --> 00:30:43,259
-Then I will execute.
+ 
 
 362
 00:30:44,940 --> 00:30:48,940
-(Executing build...)
+ 
 
 363
 00:30:53,940 --> 00:30:55,940
-Old modules will be built.
+ 
 
 364
 00:30:55,940 --> 00:30:59,940
-(Processing...)
+ 
 
 365
 00:31:25,940 --> 00:31:27,940
-(Processing...)
+ 
 
 366
 00:31:55,940 --> 00:31:57,940
-(Processing...)
+ 
 
 367
 00:32:25,940 --> 00:32:27,940
-(Processing...)
+ 
 
 368
 00:32:55,940 --> 00:32:57,940
-(Processing...)
+ 
 
 369
 00:32:57,940 --> 00:32:59,940
-(Processing...)
+ 
 
 370
 00:33:11,940 --> 00:33:17,940
@@ -1480,15 +1480,15 @@ After completing Run All Steps,
 
 371
 00:33:19,940 --> 00:33:21,940
-I check the Module Info file.
+I check result in the Module Info file.
 
 372
 00:33:21,940 --> 00:33:23,940
-(Opening Module Info...)
+ 
 
 373
 00:33:23,940 --> 00:33:25,940
-(Opening Module Info...)
+ 
 
 374
 00:33:25,940 --> 00:33:30,480
@@ -1519,20 +1519,20 @@ modules that are New here.
 Next, I will handle these New modules.
 
 381
-00:33:55,940 --> 00:34:04,820
+00:33:55,940 --> 00:34:00,820
 I will switch to New,
 
 382
-00:34:04,820 --> 00:34:09,059
-then I will select the relevant information
+00:34:00,820 --> 00:34:09,059
+At Type Delta field, we'll switch to New. Then I will select the relevant information
 
 383
 00:34:09,059 --> 00:34:11,780
-in the server's section.
+in the SharePoint's information.
 
 384
 00:34:11,780 --> 00:34:18,119
-In this step, I will demo how to search for new modules on the server.
+In this step, I will demo how to search for new modules on the SharePoint.
 
 385
 00:34:18,119 --> 00:34:21,000
@@ -1548,7 +1548,7 @@ listed in the Excel file just now.
 
 388
 00:34:25,940 --> 00:34:31,000
-I have 4 modules that need to be searched on the server.
+I have 4 modules that need to be searched for data on the SharePoint.
 
 389
 00:34:42,000 --> 00:34:45,000
@@ -1564,7 +1564,7 @@ for downloading the scripts
 
 392
 00:34:52,000 --> 00:34:54,000
-from the server.
+from the SharePoint.
 
 393
 00:34:54,000 --> 00:34:55,900
@@ -1584,47 +1584,47 @@ that have been found.
 
 397
 00:35:05,940 --> 00:35:09,940
-I found that there are test scripts on the server.
+I found that there are test scripts on the SharePoint.
 
 398
 00:35:13,940 --> 00:35:17,940
-Then here I will see the modules
+Here, there will be modules
 
 399
 00:35:17,940 --> 00:35:21,940
-that have been tested previously.
+tested using the GTest
 
 400
 00:35:21,940 --> 00:35:23,940
-And here I will see the modules
+or Cantata environment.
 
 401
 00:35:23,940 --> 00:35:25,940
-that have been fully tested.
+ 
 
 402
 00:35:25,940 --> 00:35:27,940
-Then I am going to load this module.
+ 
 
 403
 00:35:27,940 --> 00:35:29,940
-I will check if it has
+Now, we will select
 
 404
 00:35:29,940 --> 00:35:31,940
-the test environment data.
+the modules
 
 405
 00:35:31,940 --> 00:35:33,940
-If the test environment
+that have GTest
 
 406
 00:35:33,940 --> 00:35:35,940
-is included inside,
+as their test environment.
 
 407
 00:35:35,940 --> 00:35:37,940
-then I will choose these.
+So, I will choose these.
 
 408
 00:35:37,940 --> 00:35:41,240
@@ -1632,27 +1632,27 @@ First I choose this one,
 
 409
 00:35:41,240 --> 00:35:44,139
-next here,
+next is this one,
 
 410
 00:35:44,139 --> 00:35:46,940
-then finally, click download.
+ 
 
 411
 00:35:46,940 --> 00:35:47,940
-(Downloading...)
+ 
 
 412
 00:35:47,940 --> 00:35:49,940
-Next, load 1 more module.
+ 
 
 413
 00:35:49,940 --> 00:35:50,940
-Module
+ 
 
 414
 00:35:50,940 --> 00:35:53,440
-I'll demo them one by one.
+Now, I'm going to download these 2 modules
 
 415
 00:35:53,440 --> 00:35:54,940
@@ -1664,7 +1664,7 @@ Then I will choose Create Folder for these two modules.
 
 417
 00:36:20,179 --> 00:36:50,159
-I will go to folder to create a new module.
+ 
 
 418
 00:36:50,179 --> 00:36:55,179
@@ -1672,23 +1672,23 @@ Check again.
 
 419
 00:36:55,179 --> 00:37:00,179
-Next is the other side.
+Next is the other module.
 
 420
-00:37:20,179 --> 00:37:44,179
+00:37:41,179 --> 00:37:44,179
 And then I will build test for this module.
 
 421
-00:37:44,179 --> 00:38:13,179
+00:38:01,179 --> 00:38:13,179
 After completing the build test, I will check the result.
 
 422
 00:38:13,179 --> 00:38:14,179
-(Building test...)
+ 
 
 423
 00:38:14,179 --> 00:38:15,179
-(Building test...)
+ 
 
 424
 00:38:15,179 --> 00:38:16,179
@@ -1696,75 +1696,75 @@ After completing the build test, I will check the result.
 
 425
 00:38:16,179 --> 00:38:17,179
-(Building test...)
+I'm going to Output -> Module Info to check the result of that module.
 
 426
 00:38:17,179 --> 00:38:18,179
-(Building test...)
+I'm going to Output -> Module Info to check the result of that module.
 
 427
 00:38:18,179 --> 00:38:19,179
-(Building test...)
+I'm going to Output -> Module Info to check the result of that module.
 
 428
 00:38:19,179 --> 00:38:20,179
-(Building test...)
+I'm going to Output -> Module Info to check the result of that module.
 
 429
 00:38:20,179 --> 00:38:21,179
-(Building test...)
+I'm going to Output -> Module Info to check the result of that module.
 
 430
 00:38:21,179 --> 00:38:22,179
-(Building test...)
+I'm going to Output -> Module Info to check the result of that module.
 
 431
 00:38:21,179 --> 00:38:23,179
-(Building test...)
+ 
 
 432
 00:38:23,179 --> 00:38:24,179
-(Building test...)
+ 
 
 433
 00:38:24,179 --> 00:38:25,179
-(Building test...)
+ 
 
 434
 00:38:25,179 --> 00:38:26,179
-(Building test...)
+ 
 
 435
 00:38:26,179 --> 00:38:27,179
-(Building test...)
+ 
 
 436
 00:38:27,179 --> 00:38:28,179
-(Building test...)
+ 
 
 437
 00:38:28,179 --> 00:38:46,179
-For this module, I can use Auto Default Object, then use Repair Test Suite, and then build the module again, like the first demo.
+For this Failed module, I can use Auto Define Object, then use Prepair Get SUTs, and then build the module again, like the first demo.
 
 438
-00:38:58,179 --> 00:39:26,179
-After running Auto Default Object, I will have a successful result.
+00:39:20,179 --> 00:39:26,179
+After running Auto Define Object, I will have a successful result.
 
 439
 00:39:26,179 --> 00:39:28,179
-This is one of the most successful results.
+The successful result is 1,
 
 440
 00:39:28,179 --> 00:39:30,179
-The total number is my module.
+out of a total of 1 module.
 
 441
 00:39:30,179 --> 00:39:34,179
-After that, I will go to the step of Repair Test Suite.
+After that, I will go to the step of Prepair Get SUTs.
 
 442
 00:39:34,179 --> 00:39:38,179
-Fail here, for the module to be failed.
+for the failed module.
 
 443
 00:39:55,179 --> 00:39:57,179
@@ -1772,7 +1772,7 @@ Then I will go to the next step,
 
 444
 00:39:57,179 --> 00:39:59,179
-which is about the module to be failed.
+which is Rebuild Failed Modules.
 
 445
 00:40:23,179 --> 00:40:26,179
@@ -1808,7 +1808,7 @@ So that completes my demo on finding Delta modules in Unit Testing
 
 453
 00:41:13,179 --> 00:41:17,179
-using the Automation Tool.
+using the Gtest Automation Tool.
 
 454
 00:41:17,179 --> 00:41:21,179

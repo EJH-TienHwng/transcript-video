@@ -11,3 +11,15 @@ Note: Twinset CC ????
 and testing is done.
 
 Note: TPA file không có code ?
+
+
+183
+00:15:26,440 --> 00:15:35,440
+Now, I will input all the completed test script sources into the SharePoint's test script directory.
+
+
+311
+00:26:23,940 --> 00:26:27,940
+I will use a Module List file.
+
+Note: Module lib ?
