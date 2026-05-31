@@ -1,0 +1,104 @@
+1
+00:00:00,000 --> 00:00:07,000
+Hello everyone, today I will show you how to crawl the score data of the 2K4 students
+
+2
+00:00:07,000 --> 00:00:27,600
+in the national high school exam in 2022. Here I will use the Dân Chí website. Here it gives the points of the students, so we can search for the exam point. here is the test point, this is the rescue line and the rescue line, here we
+
+3
+00:00:27,600 --> 00:00:28,000
+can enter the name number, for example, rescue line and this rescue line, here we can enter the
+
+4
+00:00:28,000 --> 00:02:47,000
+name number, for example, I am in Binh Binh, I will enter 27 behind the name number 000001 For example, we click on the result, for example, this is a point of a student who has the number and What is 2700000, then we go back here again, when we check the network, we enter 270000001, we will see the result, it will appear a file, what is it, search gradle-htm, here we have a request url, we copy it in here, open it, what is it? The main item here is the student, behind this student it will have the name number, Math, Literature, Language, Physics, and so on. Here we can use Python to the able to increase or decrease the score of the students with a very fast speed We can increase the score of, for example, Ninh Binh has 11,000 students, we will increase the score in about 5-10 minutes here it is, we can use the code, we will create a test method dot file here we will use the most important the most important thing is the request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request request it's here, I can request this, this is the way to use it, it's the request part, we'll get the information, request, send it back, right? Here we will use this request library, and first of all, if you want to do it, Each student is born one, right? Then we will use this request library First, if you want each candidate to be 1, you will definitely have to run a loop For example, we will give a loop for xin Candidates start with 00, 00, 01, right? 8 digits are enough, right? And the last candidate is about 11,000. How much is it here? It's up to you to choose.
+
+5
+00:02:47,000 --> 00:02:55,000
+1 1 0 0 0, right? We're going to have a loop like this, right? And it's going to be scrapping.
+
+6
+00:02:55,000 --> 00:03:06,000
+Scrapping URL, we're going to get a link.
+
+7
+00:03:06,000 --> 00:03:10,000
+Let's see if we can hear it
+
+8
+00:03:10,000 --> 00:03:14,000
+Let's see if we can hear it
+
+9
+00:03:14,000 --> 00:03:18,000
+Let's see if we can hear it
+
+10
+00:03:18,000 --> 00:03:22,000
+Let's see if we can hear it
+
+11
+00:03:22,000 --> 00:03:26,000
+Let's see if we can hear it
+
+12
+00:03:26,000 --> 00:03:30,000
+Let's see if we can hear it
+
+13
+00:03:30,000 --> 00:04:31,280
+Let's see if we can hear it Scraping URL, we will get the link, we will get a link from the request here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here, here,001 here, this is the same number, now we replace it with the one for the str of x, right? So every time the x runs here, it will automatically replace it, right? So the scrapping process, we select the url to send the request. Next, we will put the payload and the header. I have already coded the payload and the header. What is the main command? The main command is to create this command. The main command is to take the response by request.request, take it is get scrapping URL is the link we click on and the two headers and the data is by payload. What is the payload? This is when we change it once, these will change Yes it is, then buy this one will be called , I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, I'm done, it's true, this one will be called a lot Yes, that's it. After that, we will take a change, for example,
+
+14
+00:04:31,280 --> 00:04:46,400
+For example, ifo is equal to respawn.respawn.session Let's take a look at the first one a little bit, what look at it a little bit, it's full of points, it's
+
+15
+00:04:46,400 --> 00:04:51,320
+considered to be the same as this screen, the top 100 is also the same as the screen and it will be all the information
+
+16
+00:04:51,320 --> 00:04:56,320
+This is why the most important school is the student school.
+
+17
+00:04:56,320 --> 00:05:00,320
+We will take the name of the student, right?
+
+18
+00:05:00,320 --> 00:05:04,320
+Does the student have S? No S.
+
+19
+00:05:04,320 --> 00:05:48,220
+And here we will take a point change, what is the info here, when we have it, what is it, you can pay attention to it, for example, the number of numbers, for example, the number of numbers, then here we will write the info of the number of numbers here, we will write it will automatically understand that the number is correct and each one of these, for example, is the info of the text, then these two will be separated by a number or like this, it will automatically understand that this square is each of them. So there will be about 12 points in 12, the from the name number. This point will have 12 numbers
+
+20
+00:05:48,220 --> 00:06:00,880
+we will get exactly 12, then we will like 15, 6, 7, 8, 9, 10, right? 2 more, then the
+
+21
+00:06:00,880 --> 00:09:26,400
+first thing we start with is the name number, what is second one is the math point The third is the grammar point The fourth is the grammar point The fifth is the physical point The sixth is the chemistry point The seventh is the average of natural science History History of geography Next is the average of civil society And, here I have a missing number, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 I don't want to go to school anymore, right, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, go to school, let's go to Google, let's go to this, let's go to the format, let's go to this, first of all, what will be the name of the info of the name number, remember that we have to write the same as the other side, the same as the request, the name is spd, this is the math, this is the foreign language, so I wrote it before I will copy it and save it for a little bit of time From the point of math and literature, I will make a beautiful number to make it easier to look at. Math, math and literature of the language of the physics of science and biology of the average point of nature, after we run this, what can we use, what can we use, what is the test point, the test point variable will be taken by the point the point, finally we will print out the test point When we run this command, pay attention to the Terminal Here is the response.json student, I don't know where I'm wrong This is the response.json.student I don't know where I'm wrong It's this place, isn't it? Ah, that's right, json is missing the circle Now we will run it right away Still missing something It only runs the first number in the name of the basic cycle, here we will run it, so it runs out of all the numbers, the number of names in turn, here are the ones that are written, it's hard, it's hard, are the subjects that people do not take, right? For example, if people take the natural science school, they will not have to take the social science school. This is the list of the names, it just runs in a row. When all 11,000 students run, it will stop. This is how I created the country's national college entrance exam of you 2K4
+
+22
+00:09:26,400 --> 00:09:31,260
+Using the Python code is very simple
+
+23
+00:09:31,260 --> 00:09:34,840
+We can crawl all the points
+
+24
+00:09:34,840 --> 00:09:36,900
+The same with other states
+
+25
+00:09:36,900 --> 00:09:42,280
+Above is my Python code about crawling data points
+
+26
+00:09:42,280 --> 00:09:45,600
+See you in the next videos
+

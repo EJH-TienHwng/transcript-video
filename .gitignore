@@ -1,9 +1,8 @@
-input/
-output/
+.venv/
 
 .git backup/
 
 *.dll
-*.mp4
+# *.mp4
 *.wav
 temp_audio_extract.wav

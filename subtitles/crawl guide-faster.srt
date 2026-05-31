@@ -1,0 +1,408 @@
+1
+00:00:00,000 --> 00:00:07,000
+Hello everyone, today I will show you how to crawl the score data of the 2K4 students
+
+2
+00:00:07,000 --> 00:00:13,000
+for the national high school exam in 2022. Here I will use the website Dân Chí
+
+3
+00:00:13,000 --> 00:00:21,000
+Here it gives the points of the students, so we can search for the exam point
+
+4
+00:00:21,000 --> 00:00:31,000
+Here we can enter the name of the student, for example, I am in Đinh Bình, I will enter 27
+
+5
+00:00:31,000 --> 00:00:38,000
+And behind is the name number 000001, for example, we click to see the result
+
+6
+00:00:38,000 --> 00:00:45,000
+For example, this is a point of a student with the name number 270001
+
+7
+00:00:45,000 --> 00:00:51,000
+We click again, when we check about the network
+
+8
+00:00:51,000 --> 00:00:55,000
+We enter 270000001, we click to see the result
+
+9
+00:00:55,000 --> 00:01:04,000
+It will show us a file called Search Gradual ATM
+
+10
+00:01:04,000 --> 00:01:11,000
+Here we have a Request URL, we copy it in here, open it, what is it?
+
+11
+00:01:11,000 --> 00:01:15,000
+The score is 100, all related to this
+
+12
+00:01:15,000 --> 00:01:20,000
+The main item here is the student, behind this student it will have the name number, the score
+
+13
+00:01:20,000 --> 00:01:21,000
+The score is 100, all related to this student, behind this student it will have the name number, the score
+
+14
+00:01:21,000 --> 00:01:25,000
+Yes, this is the score of the student, below is the statistic score, grey, medium is the variance, and rough year is the appreciating score
+
+15
+00:01:25,000 --> 00:01:29,000
+Here we use Python to control the score of the students
+
+16
+00:01:29,000 --> 00:01:32,000
+and it handles the test score very quickly
+
+17
+00:01:32,000 --> 00:01:36,980
+For example, the exam station in Đinh Bình has 11000 students, we have to use the光 love
+
+18
+00:01:36,980 --> 00:01:40,980
+We will use a code to clean the test scores
+
+19
+00:01:40,980 --> 00:01:45,000
+You will be able to process the exam score one by one, in case there is no的時候コ initialization, you know the code
+
+20
+00:01:46,000 --> 00:01:50,000
+And then we will create a test score to verify the accuracy of the exam scores
+
+21
+00:01:50,000 --> 00:01:54,400
+we will use the most important dictionary, the most important dictionary about request
+
+22
+00:01:54,400 --> 00:02:07,500
+import request request this request dictionary, it can request this button
+
+23
+00:02:07,500 --> 00:02:16,880
+here is the usage of this way it is, then this request part we will get the information
+
+24
+00:02:16,880 --> 00:02:23,960
+request to send it back, right? Here we will use this request document and
+
+25
+00:02:23,960 --> 00:02:29,720
+first of all, if you want the thing to be each candidate 1, right, we will definitely
+
+26
+00:02:29,720 --> 00:02:40,500
+have to run a set of rooms in a set of rooms. For example, the candidate starts at 00001, it's enough for 8
+
+27
+00:02:40,500 --> 00:02:46,860
+numbers, right? And the last candidate is about 11,000, how much is it here? It depends on the choice,
+
+28
+00:02:46,860 --> 00:02:55,080
+right? 11000, we will have a set of rooms like this, right? And it will be Scraping
+
+29
+00:02:55,080 --> 00:03:06,240
+Scraping UAL, we will take the link line, what is it?
+
+30
+00:03:06,240 --> 00:03:16,840
+Let's take a link line from the request here, this UAL here, open it here, here you
+
+31
+00:03:16,840 --> 00:03:21,100
+click what do we want for it, it runs in turn, right? Then we have to change the
+
+32
+00:03:21,100 --> 00:03:28,160
+change is what 27001 this, this, this, this is the number of lines and we will replace it with
+
+33
+00:03:28,160 --> 00:03:37,680
+the index for X of X, right? The ID string of X, yes, so every time the X runs here, it will
+
+34
+00:03:37,680 --> 00:03:42,140
+automatically replace it, right? Yes, it's so, the Scraping thing, we choose UAL and send the request, it's
+
+35
+00:03:46,840 --> 00:03:52,720
+After that, we will give the payload and the header, here I have coded first, the payload and the header
+
+36
+00:03:52,720 --> 00:03:58,020
+What is the main command? The main command is to calculate this command
+
+37
+00:03:58,020 --> 00:04:11,380
+The main command is that we will take response by request.request, get scrapping
+
+38
+00:04:11,380 --> 00:04:17,120
+This is the link we are looking for and the two headers and data are by payload
+
+39
+00:04:17,120 --> 00:04:21,820
+What is payload? This is when we change it once, then these things will change
+
+40
+00:04:21,820 --> 00:04:24,320
+This is called payload
+
+41
+00:04:24,320 --> 00:04:32,880
+That's it for the response. After the response, we will take a variable, for example, if for example, if for
+
+42
+00:04:32,880 --> 00:04:39,020
+by response.request
+
+43
+00:04:39,020 --> 00:04:41,340
+Let's take a variable
+
+44
+00:04:41,340 --> 00:04:47,180
+Let's take the original one, let's take a look at it a little bit, let's see what the default is, it is considered by this
+
+45
+00:04:47,180 --> 00:04:51,840
+The payload is already 100% by the payload and the student will be all the information contained in this
+
+46
+00:04:51,840 --> 00:04:55,580
+So the most important school is the student school
+
+47
+00:04:55,580 --> 00:05:03,180
+We will take the student, right? Does the student have S? No S
+
+48
+00:05:03,180 --> 00:05:08,180
+And here we will take a variable, what is it?
+
+49
+00:05:08,180 --> 00:05:10,180
+Uhm
+
+50
+00:05:11,340 --> 00:05:13,340
+city, now the principal of the studentником is the singleton
+
+51
+00:05:13,340 --> 00:05:16,040
+Well, the table is a bitchau ah how can we not cope, but I just want myself right?
+
+52
+00:05:16,040 --> 00:05:16,500
+cafes
+
+53
+00:05:16,500 --> 00:05:21,360
+If you want to send somebody to the computer, give him a statement that starts with i
+
+54
+00:05:21,360 --> 00:05:36,040
+if i'm a in com
+
+55
+00:05:36,040 --> 00:05:37,240
+stuff
+
+56
+00:05:37,240 --> 00:05:38,960
+the surabhi
+
+57
+00:05:38,960 --> 00:05:39,440
+U серıyor
+
+58
+00:05:39,440 --> 00:05:40,520
+xã
+
+59
+00:05:40,520 --> 00:05:41,160
+xã sûr xã xã xã xã xã xã xã xã xã Book of Hmmm Chemistry is not always good, please note 1 is not always useful if you forgot more. Then pack it to pick up one page. There's no question, is it? If you fill in thisdemo , then it will have adOOOOOOOO all your desx to your computer will make
+
+60
+00:05:41,340 --> 00:05:48,360
+the total of 12 points, 12 numbers are from the name number, this point will have 12 numbers,
+
+61
+00:05:48,360 --> 00:05:58,380
+we will get exactly 12, then we like 15 this year 6, 8, 9, 10, two more,
+
+62
+00:05:58,380 --> 00:06:07,740
+the first thing we start is the name number, the second is what is the math point, the third is the
+
+63
+00:06:07,740 --> 00:06:21,360
+math point, the fourth is the grammar point, the fifth is the physical point, the sixth is the chemical point,
+
+64
+00:06:21,360 --> 00:06:27,240
+the seventh is the average or natural
+
+65
+00:06:27,240 --> 00:06:33,540
+history, the history of geography,
+
+66
+00:06:33,540 --> 00:06:37,620
+the
+
+67
+00:06:37,740 --> 00:06:49,240
+next is the nationality and the last is the average of social science,
+
+68
+00:06:49,240 --> 00:06:57,160
+so I'm missing 12345678910112, I'm missing the biological one, right?
+
+69
+00:06:57,160 --> 00:07:05,660
+Biological
+
+70
+00:07:05,660 --> 00:07:07,620
+,
+
+71
+00:07:07,740 --> 00:07:12,780
+it's ok, overcome the first step to go here, we will check the foreign
+
+72
+00:07:12,780 --> 00:07:18,800
+attribute for this, the first number that has a capital will be what yes
+
+73
+00:07:18,800 --> 00:07:23,700
+the degree of the animal's Epaphrodite is found Remember that we have to write it exactly the same over there, is it
+
+74
+00:07:23,700 --> 00:07:34,800
+exactly like that request your cell phone, I set up an sb became a bit of a shop,?
+
+75
+00:07:34,800 --> 00:07:35,800
+ah, ah,
+
+76
+00:07:35,800 --> 00:07:36,860
+ah, ah, ah i won't tell you, i will copy always for a while i will do all i could for free dasr
+
+77
+00:07:36,860 --> 00:07:37,420
+y
+
+78
+00:07:37,740 --> 00:07:45,780
+Yes, from the point of Mathematics, I will make the number beautiful so that it looks easy. Mathematics,
+
+79
+00:07:45,780 --> 00:07:55,380
+Language, Physics, Science, Biology, Normal and Natural points, then after we run
+
+80
+00:07:55,380 --> 00:08:02,240
+this, what can we use? What can we use? The point is that the
+
+81
+00:08:02,240 --> 00:08:12,440
+point will be taken by the point's str. Finally, we will print out the point, then
+
+82
+00:08:12,440 --> 00:08:17,340
+we run this command, then pay attention to the terminal.
+
+83
+00:08:17,340 --> 00:08:25,120
+Here is the response station student, where am I wrong?
+
+84
+00:08:25,120 --> 00:08:30,920
+This is where it says, right?
+
+85
+00:08:30,920 --> 00:08:37,360
+Yes, that's right, Jason is missing the circle.
+
+86
+00:08:37,360 --> 00:08:40,820
+Yes, now we will run it right away.
+
+87
+00:08:40,820 --> 00:08:44,480
+Yes, there is still something missing.
+
+88
+00:08:44,480 --> 00:08:48,300
+Yes, it only runs the first password.
+
+89
+00:08:48,300 --> 00:08:56,580
+Yes, the basic cycle pattern is here, we will run it right away.
+
+90
+00:08:56,580 --> 00:08:59,620
+Yes, so it runs out of all the points.
+
+91
+00:08:59,620 --> 00:09:00,820
+Here is the password.
+
+92
+00:09:00,820 --> 00:09:06,460
+Here is the password, here are the points, here, these are the games that are
+
+93
+00:09:06,460 --> 00:09:09,220
+written here that they do not have a test, right?
+
+94
+00:09:09,220 --> 00:09:12,460
+For example, if they are in the natural scientific school, they will not have to
+
+95
+00:09:12,460 --> 00:09:15,100
+study social science at the beginning, this is the name.
+
+96
+00:09:15,100 --> 00:09:17,260
+It just runs the lettres.
+
+97
+00:09:17,260 --> 00:09:19,840
+Then when it runs out of all the 11,000 students, it will stop.
+
+98
+00:09:19,840 --> 00:09:24,600
+Here is how I got a call from the country's national media.
+
+99
+00:09:24,600 --> 00:09:28,760
+But you 24
+
+100
+00:09:28,760 --> 00:09:30,620
+use.
+
+101
+00:09:30,620 --> 00:09:37,620
+It's very simple. We can crawl all the points in the same way as other states.
+
+102
+00:09:37,620 --> 00:09:45,620
+Above is my Python code about crawling data points. See you in the next videos.
+
