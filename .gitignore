@@ -1,6 +1,7 @@
 .venv/
 
 .git backup/
+temp/
 
 *.dll
 # *.mp4
