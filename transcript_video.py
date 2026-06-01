@@ -11,7 +11,7 @@ Folder structure:
 Example:
 	python transcript_video.py
 	python transcript_video.py --video my_video.mp4
-	python transcript_video.py --model "C:/Users/AHG5HC/.faster-whisper-large-v3"
+	python transcript_video.py --model "C:/Users/<USERNAME>/.faster-whisper-large-v3"
 """
 
 from __future__ import annotations
@@ -33,6 +33,10 @@ import imageio_ffmpeg
 
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v"}
 DEFAULT_MODEL_PATH = r"C:\Users\AHG5HC\.faster-whisper-large-v3"
+MODEL_FILENAME_SUFFIXES = {
+	"faster-whisper": "faster",
+	"huggingface": "huggingface",
+}
 
 
 @dataclass
@@ -260,6 +264,11 @@ def detect_model_type(model_path: Path) -> str:
 	raise ValueError(f"Không nhận diện được định dạng model tại: {model_path}")
 
 
+def get_model_filename_suffix(model_path: Path) -> str:
+	"""Return the short model name used as a subtitle filename suffix."""
+	return MODEL_FILENAME_SUFFIXES[detect_model_type(model_path)]
+
+
 def transcribe_with_faster_whisper(
 	video_path: Path,
 	model_path: Path,
@@ -404,7 +413,8 @@ def process_video(
 	skip_burn: bool,
 ) -> None:
 	"""Generate SRT and optionally burn subtitles into one video."""
-	srt_path = paths.subtitle_dir / f"{video_path.stem}.srt"
+	model_suffix = get_model_filename_suffix(model_path)
+	srt_path = paths.subtitle_dir / f"{video_path.stem}_{model_suffix}.srt"
 	output_path = paths.output_dir / f"{video_path.stem}_ENG_SUB.mp4"
 
 	logging.info("Processing: %s", video_path.name)
