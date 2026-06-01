@@ -4,7 +4,7 @@ Hello everyone, in this session, I will demo how to generate Testcase using GitH
 
 2
 00:00:12,000 --> 00:00:21,000
-To use this feature, first, I need to have TWSFounder created for the item I need to generate Testcase.
+To use this feature, first, I need to have Test Workspace Folder created for the item I need to generate Testcase.
 
 3
 00:00:21,000 --> 00:00:27,000
@@ -12,11 +12,11 @@ In this session, I will go to Team Support. Here, I will have two options.
 
 4
 00:00:27,000 --> 00:00:31,000
-The first option is to create TWSFounder for an item.
+The first option is to create Test Workspace Folder for an item.
 
 5
 00:00:31,000 --> 00:00:38,000
-And the second option is to create TWSFounder for a list of other items.
+And the second option is to create Test Workspace Folder for a list of other items.
 
 6
 00:00:38,000 --> 00:00:45,000
@@ -28,19 +28,19 @@ Here, I will have three different types of information.
 
 8
 00:00:50,000 --> 00:00:51,000
-The first information is the TWSFounder.
+The first information is the Test Workspace Folder.
 
 9
 00:00:51,000 --> 00:00:54,000
-The first information is the database part.
+The first information is the database path.
 
 10
 00:00:54,000 --> 00:01:00,000
-This is the folder part that contains the database that I have logged from the snapshot.
+This is the folder path that contains the database that I have logged from the stream or snapshot.
 
 11
 00:01:00,000 --> 00:01:03,000
-The second information is the workspace part.
+The second information is the workspace path.
 
 12
 00:01:03,000 --> 00:01:06,000
@@ -48,7 +48,7 @@ I will create a blank folder.
 
 13
 00:01:06,000 --> 00:01:15,000
-And I will take this folder part to contain the outputs in the Tool running process.
+And I will take this folder path to contain the outputs in the Tool running process.
 
 14
 00:01:15,000 --> 00:01:17,000
@@ -60,7 +60,7 @@ This is the name of the item that I need to create.
 
 16
 00:01:21,000 --> 00:01:23,000
-The TWSFounder.
+The Test Workspace Folder.
 
 17
 00:01:23,000 --> 00:01:30,000
@@ -80,7 +80,7 @@ At the same time,
 
 21
 00:01:48,000 --> 00:01:56,000
-VisualStudioCode will automatically open and save the space folder of the item you need to create.
+Visual Studio Code will automatically open and save the space folder of the item you need to create.
 
 22
 00:01:58,000 --> 00:02:01,000
@@ -100,7 +100,7 @@ Here they are.
 
 26
 00:02:13,000 --> 00:02:17,000
-Besides, I can use the OpenOutput function.
+Besides, I can use the "Open output" feature.
 
 27
 00:02:17,000 --> 00:02:27,000
@@ -116,7 +116,7 @@ I also have three important information.
 
 30
 00:02:45,000 --> 00:02:47,000
-The first is database part.
+The first is database path.
 
 31
 00:02:47,000 --> 00:02:51,000
@@ -124,11 +124,11 @@ The second one is the first option.
 
 32
 00:02:51,000 --> 00:02:56,000
-And the third one is ListItem part.
+And the third one is ListItem path.
 
 33
 00:02:56,000 --> 00:03:05,000
-I will have an Excel file to store the information of the item name and item part.
+I will have an Excel file to store the information of the item name and item path.
 
 34
 00:03:05,000 --> 00:03:09,000
@@ -136,7 +136,7 @@ I also need to create a SpaceFolder.
 
 35
 00:03:12,000 --> 00:03:16,000
-Then I will take the part of this file and store it in VisualStudioCode.
+Then I will take the path of this file and store it in Visual Studio Code.
 
 36
 00:03:17,000 --> 00:03:23,000
@@ -144,7 +144,7 @@ I need to open it to the third path.
 
 37
 00:03:23,000 --> 00:03:27,000
-Then I will click on Generate Environment.
+Then I will click on "Generate environment".
 
 38
 00:03:27,000 --> 00:03:33,000
@@ -192,7 +192,7 @@ We need to create testcase
 
 49
 00:04:19,000 --> 00:04:24,000
-We choose Generate Test Case by A.I.Copilot
+We choose Generate Test Case by A.I. Copilot
 
 50
 00:04:24,000 --> 00:04:27,000
@@ -200,11 +200,11 @@ Here, I have two main sources of information
 
 51
 00:04:27,000 --> 00:04:29,000
-The first one is the item part
+The first one is the item path
 
 52
 00:04:29,000 --> 00:04:35,000
-I will go to the TestWorksBaseFounder of an item
+I will go to the Test Workspace Folder of an item
 
 53
 00:04:35,000 --> 00:04:37,000
@@ -216,7 +216,7 @@ For example, this item
 
 55
 00:04:38,000 --> 00:04:43,000
-I will copy the part of this file
+I will copy the path of this file
 
 56
 00:04:43,000 --> 00:04:51,000
@@ -224,7 +224,7 @@ After that, I will input the first source of information
 
 57
 00:04:51,000 --> 00:04:54,000
-And the next one is the data base part
+And the next one is the database path
 
 58
 00:04:54,000 --> 00:04:57,000
@@ -232,11 +232,11 @@ Just like the previous step
 
 59
 00:04:57,000 --> 00:05:03,000
-I will also input the data of the folder containing the data base
+I will also input the data of the folder containing the database
 
 60
 00:05:03,000 --> 00:05:10,000
-Here, then I will type autodefine object here
+Here, then I will click Auto define object here
 
 61
 00:05:10,000 --> 00:05:11,000
@@ -408,11 +408,11 @@ while the Tool is running
 
 103
 00:09:41,360 --> 00:09:47,360
-At the end of Auto Default Check, we will go to the next step, which is Repair Get Suits.
+At the end of Auto Default Check, we will go to the next step, which is Prepare Get SUTs.
 
 104
 00:10:02,360 --> 00:10:11,360
-In the pop-up information, we will see that there are 3 functions, Forward, Suits Function, and Update Lockdown.
+In the pop-up information, we will see that it found 3 SUTs functions and update dropdown.
 
 105
 00:10:11,360 --> 00:10:16,360
@@ -452,7 +452,7 @@ while generating test case, we will open Visual Studio Code
 
 114
 00:10:46,360 --> 00:10:52,360
-And import the folder of item inside here.
+And import the test workspace folder of item inside here.
 
 115
 00:10:58,360 --> 00:11:02,360
@@ -460,7 +460,7 @@ So we demonstrate the first option,
 
 116
 00:11:03,360 --> 00:11:10,360
-and generate test case for only one function here , we choose generate one SUT
+and generate test case for only one function here, we choose generate one SUT
 
 117
 00:11:11,360 --> 00:11:16,360
@@ -476,7 +476,7 @@ We will go to Output and choose GitHub Copilot Chat here.
 
 120
 00:11:28,360 --> 00:11:33,360
-The button generation information will be shown in this terminal.
+The generate process information will be shown in this terminal.
 
 121
 00:11:35,360 --> 00:11:39,360
@@ -484,7 +484,7 @@ After we see the notification that the test generation is completed,
 
 122
 00:11:39,360 --> 00:11:44,360
-that is, the button generation is done.
+that is, the generate process is done.
 
 123
 00:11:44,360 --> 00:11:48,360
@@ -500,11 +500,11 @@ Here we have 8 Testcases and all 8 Testcases are passed.
 
 126
 00:12:11,360 --> 00:12:14,360
-Next, we will see the code coverage.
+Next, we will see how the code coverage is.
 
 127
 00:12:14,360 --> 00:12:16,360
-How does it work?
+Next, we will see how the code coverage is.
 
 128
 00:12:16,360 --> 00:12:20,360
@@ -520,11 +520,11 @@ After building Cantata is done,
 
 131
 00:12:57,360 --> 00:13:00,360
-we will see that in the folder,
+we will see that in the
 
 132
 00:13:00,360 --> 00:13:03,360
-in the folder of the item,
+Test Workspace folder of the item,
 
 133
 00:13:03,360 --> 00:13:08,360
@@ -632,15 +632,15 @@ like the Item name
 
 159
 00:14:07,860 --> 00:14:08,360
-We will drag,
+We will drag the folder Cantata to the new project we've just created in Cantata tool 
 
 160
 00:14:08,360 --> 00:14:14,360
-folder Cantata we have just created 
+We will drag the folder Cantata to the new project we've just created in Cantata tool 
 
 161
 00:14:14,360 --> 00:14:14,360
-
+We will drag the folder Cantata to the new project we've just created in Cantata tool 
 
 162
 00:14:14,360 --> 00:14:14,360
@@ -660,7 +660,7 @@ Here I see that the first function
 
 166
 00:14:36,360 --> 00:14:39,360
-its light code lines are blue
+the code color are blue
 
 167
 00:14:39,360 --> 00:14:43,360
@@ -676,7 +676,7 @@ Then I will demonstrate my second option
 
 170
 00:14:59,360 --> 00:15:02,360
-is Generate Testcase Onshoot
+is Generate Testcase All SUT
 
 171
 00:15:02,360 --> 00:15:05,360
@@ -692,11 +692,11 @@ In the first option
 
 174
 00:15:14,360 --> 00:15:17,360
-to avoid being duplicated for the next time
+to avoid being duplicated for the next run time
 
 175
 00:15:27,360 --> 00:15:30,360
-Then I will click on Generate Testcase Onshoot here
+Then I will click on Generate Testcase All SUT here
 
 176
 00:15:30,360 --> 00:15:34,360
@@ -780,7 +780,7 @@ After finished generating the testcases for 3 functions in this item, I will bui
 
 196
 00:17:34,360 --> 00:17:41,360
-In this step, we can click on the button to build Cantata in Tool
+In this step, we can click on the "Build Cantata" button to build in Tool
 
 197
 00:17:41,360 --> 00:17:41,360
@@ -792,7 +792,7 @@ Or we can build Cantata from the Visual Studio Code
 
 199
 00:17:48,360 --> 00:17:55,360
-I go to Terminal, select Runtasks, and select Cantata
+I go to Terminal, select Runtasks, and select "Cantata++ coverage measurement"
 
 200
 00:18:11,360 --> 00:18:18,360
@@ -804,7 +804,7 @@ We will go to Tool Cantata
 
 202
 00:18:21,360 --> 00:18:27,360
-We will see which code coverage have been created
+We will see that the code had been covered 100%
 
 203
 00:18:27,360 --> 00:18:35,360
@@ -816,7 +816,7 @@ I will gradually drag the Cantata folder into the project
 
 205
 00:18:36,360 --> 00:18:38,360
-To this Cantata folder
+in Cantata tool
 
 206
 00:18:39,360 --> 00:18:45,780
@@ -824,23 +824,23 @@ To this Cantata folder
 
 207
 00:18:50,280 --> 00:18:54,860
-Here we can see that the code coverage of the three functions of this item are already created
+Here we can see that the line code of these three functions of this item are already covered
 
 208
 00:18:54,860 --> 00:19:00,860
-And so the color of these changes into blue
+And so the color of these changes into green
 
 209
 00:19:00,860 --> 00:19:04,360
-Now we click on Cantata to select View
+
 
 210
 00:19:04,360 --> 00:19:08,360
-Then we need to backup our API
+
 
 211
 00:19:08,360 --> 00:19:17,360
-We can choose View, Reboot Viewer to view this report
+Now we click on Cantata, choose View, choose Report Viewer to view this report
 
 212
 00:19:17,360 --> 00:19:22,360

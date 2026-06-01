@@ -180,7 +180,7 @@ This refers to the CSV file generated
 
 46
 00:03:29,000 --> 00:03:35,000
-in the build config process using Twinset CC.
+in the build config process using the tool SharCC.
 
 47
 00:03:35,000 --> 00:03:39,000
