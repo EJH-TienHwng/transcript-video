@@ -6,7 +6,6 @@ temp/
 *.dll
 *.mp4
 *.wav
-temp_audio_extract.wavinput/
-output/
+temp_audio_extract.wav
 input/
 output/
