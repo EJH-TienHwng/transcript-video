@@ -8,3 +8,5 @@ temp/
 *.wav
 temp_audio_extract.wavinput/
 output/
+input/
+output/
