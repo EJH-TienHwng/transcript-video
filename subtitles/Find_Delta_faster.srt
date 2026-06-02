@@ -8,7 +8,7 @@ First, I will open this tool.
 
 3
 00:00:21,000 --> 00:00:29,000
-At the main interface, I will navigate to Analysis Support, and select Check Delta from Database, Save Point.
+At the main interface, I will navigate to Analysis Support, and select Check Delta from Database, SharePoint.
 
 4
 00:00:29,000 --> 00:00:38,000
@@ -124,7 +124,7 @@ This is the path of the folder that contains the database.
 
 32
 00:02:32,000 --> 00:02:35,000
-Whether loading using Snapshot or Stream,
+Whether loading using Snapshot or Stream using SharCC tool,
 
 33
 00:02:35,000 --> 00:02:38,000
@@ -228,11 +228,11 @@ We can help this tool process faster.
 
 58
 00:04:18,000 --> 00:04:21,000
-It corresponds to the capabilities of this tool.
+It corresponds to the Parallel Threads of this tool.
 
 59
 00:04:21,000 --> 00:04:24,000
-In the Development Tool section,
+The Tool Development Team,
 
 60
 00:04:24,000 --> 00:04:28,000
@@ -272,15 +272,15 @@ The result is also shown here.
 
 69
 00:05:03,000 --> 00:05:06,000
-Relative to New, All, and NoCode,
+Relative to New, Old, and NoCode,
 
 70
 00:05:06,000 --> 00:05:08,000
-28 corresponds to New,
+The number 28 corresponds to New,
 
 71
 00:05:08,000 --> 00:05:11,000
-16 is All, and 8 is NoCode.
+16 is Old, and 8 is NoCode.
 
 72
 00:05:11,000 --> 00:05:14,000
@@ -376,7 +376,7 @@ The tool helps me to list these modules as Old and no code.
 
 95
 00:06:51,000 --> 00:06:59,000
-Then, I will build test this file.
+Then, I close this file.
 
 96
 00:06:59,000 --> 00:07:03,000
@@ -520,11 +520,11 @@ First is Success.
 
 131
 00:09:29,440 --> 00:09:34,440
-The second is Fail.
+The second is Failed.
 
 132
 00:09:34,440 --> 00:09:36,440
-The second is Fail.
+The second is Failed.
 
 133
 00:09:36,440 --> 00:09:38,440
@@ -644,7 +644,7 @@ After this step, the result will appear in this popup. I will have 15 successful
 
 162
 00:12:25,440 --> 00:12:45,440
-Then I will go to the review step for the failed modules, to verify the results for the modules I have just finished.
+Then I will go to the review step for the failed modules, to verify the results for the modules I have just fixed.
 
 163
 00:12:55,440 --> 00:13:07,440
@@ -712,7 +712,7 @@ We will find them on the SharePoint.
 
 179
 00:15:07,440 --> 00:15:10,440
-Now, we will test this module.
+Now, we close this file.
 
 180
 00:15:10,440 --> 00:15:12,440
@@ -1028,7 +1028,7 @@ In that module, I have checked the test environment.
 
 258
 00:19:45,440 --> 00:19:51,440
-The name of the stream and the snapshot, as well as the PP number, are displayed in these 3 columns.
+The name of the stream and the snapshot, as well as the BB number, are displayed in these 3 columns.
 
 259
 00:19:51,440 --> 00:19:59,440
@@ -1160,7 +1160,7 @@ Then the next step is to define the missing objects in that module.
 
 291
 00:24:08,940 --> 00:24:17,940
-After this step, we will have a result here: successful is 4, total is 5.
+After this step, we will have a result here: successful is 4, failed is 1, and total is 5.
 
 292
 00:24:22,940 --> 00:24:25,940
@@ -1248,7 +1248,7 @@ What will it be like?
 
 313
 00:26:29,940 --> 00:26:32,940
-I will open this file.
+I will close this file.
 
 314
 00:26:36,940 --> 00:26:42,940
@@ -1396,7 +1396,7 @@ I will open the Module Info file here.
 
 350
 00:29:20,940 --> 00:29:26,940
-Then I will see that there are 4 New modules and the remaining 6 are Old, corresponding to 10 modules here.
+Then I will see that there are 4 New modules and the remaining are Old, corresponding to 10 modules here.
 
 351
 00:29:29,940 --> 00:29:33,940
