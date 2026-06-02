@@ -168,13 +168,26 @@ def burn_subtitles(video_in: Path, srt_in: Path, video_out: Path) -> None:
 	ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 	srt_escaped = escape_subtitle_path_for_ffmpeg(srt_in)
 
+	subtitle_style = (
+		"FontName=Arial,"
+		"FontSize=16,"
+		"PrimaryColour=&H00FFFFFF,"
+		"OutlineColour=&H00000000,"
+		"BorderStyle=1,"
+		"Outline=2,"
+		"Shadow=0,"
+		"Alignment=2,"
+		"MarginV=40"
+	)
+
 	command = [
 		ffmpeg_path,
 		"-y",
 		"-i",
 		str(video_in),
 		"-vf",
-		f"subtitles='{srt_escaped}'",
+		# f"subtitles='{srt_escaped}':force_style='{subtitle_style}'",
+		f"subtitles='{srt_escaped}':force_style='MarginV=24'",
 		"-c:a",
 		"copy",
 		str(video_out),
