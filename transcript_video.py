@@ -17,6 +17,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import subprocess
@@ -36,6 +37,9 @@ DEFAULT_MODEL_PATH = r"C:\Users\AHG5HC\.faster-whisper-large-v3"
 MODEL_FILENAME_SUFFIXES = {
 	"faster-whisper": "faster",
 	"huggingface": "huggingface",
+}
+TRANSLATION_MODEL_FILENAME_SUFFIXES = {
+	"vinai-translate": "vinai",
 }
 
 
@@ -168,16 +172,30 @@ def burn_subtitles(video_in: Path, srt_in: Path, video_out: Path) -> None:
 	ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 	srt_escaped = escape_subtitle_path_for_ffmpeg(srt_in)
 
+	# Default subtitle style with white text and black outline. You can customize this as needed.
 	subtitle_style = (
 		"FontName=Arial,"
 		"FontSize=16,"
 		"PrimaryColour=&H00FFFFFF,"
+		"SecondaryColour=&H00FFFFFF,"
 		"OutlineColour=&H00000000,"
+		"BackColour=&H00000000,"
+		"Bold=0,"
+		"Italic=0,"
+		"Underline=0,"
+		"StrikeOut=0,"
+		"ScaleX=100,"
+		"ScaleY=100,"
+		"Spacing=0,"
+		"Angle=0,"
 		"BorderStyle=1,"
-		"Outline=2,"
+		"Outline=1,"
 		"Shadow=0,"
-		"Alignment=2,"
-		"MarginV=40"
+		"Alignment=2," # Bottom-center
+		"MarginL=10,"
+		"MarginR=10,"
+		"MarginV=25," # Adjust vertical margin to move subtitles up/down
+		"Encoding=1"
 	)
 
 	command = [
@@ -187,7 +205,7 @@ def burn_subtitles(video_in: Path, srt_in: Path, video_out: Path) -> None:
 		str(video_in),
 		"-vf",
 		# f"subtitles='{srt_escaped}':force_style='{subtitle_style}'",
-		f"subtitles='{srt_escaped}':force_style='MarginV=24'",
+		f"subtitles='{srt_escaped}':force_style='MarginV=25'",
 		"-c:a",
 		"copy",
 		str(video_out),
@@ -268,18 +286,55 @@ def find_videos(input_dir: Path, selected_video: Optional[str] = None) -> List[P
 # Transcription engines
 # =========================
 
+def read_transformers_model_config(model_path: Path) -> dict:
+	"""Read a local Transformers config file when one is available."""
+	config_path = model_path / "config.json"
+	if not config_path.exists():
+		return {}
+
+	with config_path.open("r", encoding="utf-8") as file:
+		return json.load(file)
+
+
+def has_transformers_model_weights(model_path: Path) -> bool:
+	"""Return whether a local Transformers model folder contains model weights."""
+	return (model_path / "model.safetensors").exists() or (model_path / "pytorch_model.bin").exists()
+
+
 def detect_model_type(model_path: Path) -> str:
-	"""Detect whether the model folder is faster-whisper or Hugging Face Whisper."""
+	"""Detect whether the ASR model folder is faster-whisper or Hugging Face Whisper."""
 	if (model_path / "model.bin").exists():
 		return "faster-whisper"
-	if (model_path / "model.safetensors").exists() or (model_path / "pytorch_model.bin").exists():
+
+	config = read_transformers_model_config(model_path)
+	if has_transformers_model_weights(model_path) and config.get("model_type") == "whisper":
 		return "huggingface"
+
+	if has_transformers_model_weights(model_path) and config.get("model_type") == "mbart":
+		raise ValueError(
+			f"Model tại {model_path} là model dịch văn bản. "
+			"Hãy truyền nó qua --translation-model và dùng model Whisper cho --model."
+		)
+
 	raise ValueError(f"Không nhận diện được định dạng model tại: {model_path}")
 
 
-def get_model_filename_suffix(model_path: Path) -> str:
+def detect_translation_model_type(model_path: Path) -> str:
+	"""Detect a supported local text translation model."""
+	config = read_transformers_model_config(model_path)
+	if has_transformers_model_weights(model_path) and config.get("model_type") == "mbart":
+		return "vinai-translate"
+
+	raise ValueError(f"Không nhận diện được model dịch văn bản tại: {model_path}")
+
+
+def get_model_filename_suffix(model_path: Path, translation_model_path: Optional[Path] = None) -> str:
 	"""Return the short model name used as a subtitle filename suffix."""
-	return MODEL_FILENAME_SUFFIXES[detect_model_type(model_path)]
+	suffix = MODEL_FILENAME_SUFFIXES[detect_model_type(model_path)]
+	if translation_model_path is not None:
+		translation_type = detect_translation_model_type(translation_model_path)
+		suffix += f"_{TRANSLATION_MODEL_FILENAME_SUFFIXES[translation_type]}"
+	return suffix
 
 
 def transcribe_with_faster_whisper(
@@ -379,6 +434,66 @@ def transcribe_with_huggingface(
 			audio_path.unlink()
 
 
+def translate_segments_with_vinai(
+	segments: List[SubtitleSegment],
+	model_path: Path,
+	device: str,
+	batch_size: int,
+) -> List[SubtitleSegment]:
+	"""Translate Vietnamese subtitle segments to English with VinAI Translate."""
+	if batch_size < 1:
+		raise ValueError("--translation-batch-size phải lớn hơn 0.")
+
+	detect_translation_model_type(model_path)
+
+	import torch
+	from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+	if device == "cuda" and not torch.cuda.is_available():
+		logging.warning("CUDA không khả dụng cho VinAI Translate, tự chuyển sang CPU.")
+		device = "cpu"
+
+	torch_device = torch.device(device)
+	logging.info("Translation engine: VinAI Translate (%s)", torch_device)
+
+	tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
+	model = AutoModelForSeq2SeqLM.from_pretrained(str(model_path))
+	model.to(torch_device)
+	model.eval()
+
+	source_segments = [segment for segment in segments if (segment.text or "").strip()]
+	translated_segments: List[SubtitleSegment] = []
+
+	for start in range(0, len(source_segments), batch_size):
+		batch = source_segments[start:start + batch_size]
+		texts = [segment.text.strip() for segment in batch]
+		inputs = tokenizer(
+			texts,
+			padding=True,
+			truncation=True,
+			max_length=1024,
+			return_tensors="pt",
+		).to(torch_device)
+
+		with torch.inference_mode():
+			output_ids = model.generate(
+				**inputs,
+				decoder_start_token_id=tokenizer.lang_code_to_id["en_XX"],
+				num_return_sequences=1,
+				num_beams=5,
+				early_stopping=True,
+			)
+
+		translations = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+		translated_segments.extend(
+			SubtitleSegment(segment.start, segment.end, translation)
+			for segment, translation in zip(batch, translations)
+		)
+		logging.info("Translated %d/%d subtitle segment(s).", min(start + batch_size, len(source_segments)), len(source_segments))
+
+	return translated_segments
+
+
 def transcribe_video(
 	video_path: Path,
 	model_path: Path,
@@ -417,16 +532,18 @@ def transcribe_video(
 def process_video(
 	video_path: Path,
 	model_path: Path,
+	translation_model_path: Optional[Path],
 	paths: ProjectPaths,
 	task: str,
 	language: Optional[str],
 	device: str,
 	compute_type: str,
+	translation_batch_size: int,
 	overwrite_srt: bool,
 	skip_burn: bool,
 ) -> None:
 	"""Generate SRT and optionally burn subtitles into one video."""
-	model_suffix = get_model_filename_suffix(model_path)
+	model_suffix = get_model_filename_suffix(model_path, translation_model_path)
 	srt_path = paths.subtitle_dir / f"{video_path.stem}_{model_suffix}.srt"
 	output_path = paths.output_dir / f"{video_path.stem}_ENG_SUB.mp4"
 
@@ -436,23 +553,34 @@ def process_video(
 		logging.info("SRT đã tồn tại, bỏ qua transcription: %s", srt_path)
 	else:
 		logging.info("Step 1: Transcribing/translating...")
+		transcription_task = "transcribe" if translation_model_path is not None else task
 		segments = transcribe_video(
 			video_path=video_path,
 			model_path=model_path,
 			paths=paths,
-			task=task,
+			task=transcription_task,
 			language=language,
 			device=device,
 			compute_type=compute_type,
 		)
-		logging.info("Step 2: Writing SRT: %s", srt_path)
+		if translation_model_path is not None:
+			logging.info("Step 2: Translating Vietnamese segments with VinAI...")
+			segments = translate_segments_with_vinai(
+				segments=segments,
+				model_path=translation_model_path,
+				device=device,
+				batch_size=translation_batch_size,
+			)
+		write_step = 3 if translation_model_path is not None else 2
+		logging.info("Step %d: Writing SRT: %s", write_step, srt_path)
 		write_srt(segments, srt_path)
 
 	if skip_burn:
 		logging.info("Skip burn enabled. Done after SRT generation.")
 		return
 
-	logging.info("Step 3: Burning subtitles to video: %s", output_path)
+	burn_step = 4 if translation_model_path is not None else 3
+	logging.info("Step %d: Burning subtitles to video: %s", burn_step, output_path)
 	burn_subtitles(video_path, srt_path, output_path)
 	logging.info("DONE: %s", output_path)
 
@@ -477,6 +605,11 @@ def parse_args() -> argparse.Namespace:
 		help="Path to faster-whisper or Hugging Face Whisper model folder.",
 	)
 	parser.add_argument(
+		"--translation-model",
+		default=None,
+		help="Optional path to a VinAI vi2en text translation model. Requires --task translate.",
+	)
+	parser.add_argument(
 		"--task",
 		choices=["translate", "transcribe"],
 		default="translate",
@@ -499,6 +632,12 @@ def parse_args() -> argparse.Namespace:
 		help="faster-whisper compute type. Common values: int8, float16, float32.",
 	)
 	parser.add_argument(
+		"--translation-batch-size",
+		type=int,
+		default=8,
+		help="Number of subtitle segments translated together by VinAI. Default: 8.",
+	)
+	parser.add_argument(
 		"--overwrite-srt",
 		action="store_true",
 		help="Regenerate SRT even if it already exists.",
@@ -517,6 +656,11 @@ def main() -> None:
 
 	root = Path(args.root).resolve()
 	model_path = Path(args.model).expanduser().resolve()
+	translation_model_path = (
+		Path(args.translation_model).expanduser().resolve()
+		if args.translation_model
+		else None
+	)
 	language = args.language.strip() or None
 
 	paths = ProjectPaths.from_root(root)
@@ -524,6 +668,12 @@ def main() -> None:
 
 	if not model_path.exists():
 		raise FileNotFoundError(f"Không tìm thấy model folder: {model_path}")
+	if translation_model_path is not None:
+		if not translation_model_path.exists():
+			raise FileNotFoundError(f"Không tìm thấy translation model folder: {translation_model_path}")
+		if args.task != "translate":
+			raise ValueError("--translation-model chỉ được dùng cùng --task translate.")
+		detect_translation_model_type(translation_model_path)
 
 	videos = find_videos(paths.input_dir, args.video)
 	logging.info("Found %d video(s).", len(videos))
@@ -533,11 +683,13 @@ def main() -> None:
 			process_video(
 				video_path=video_path,
 				model_path=model_path,
+				translation_model_path=translation_model_path,
 				paths=paths,
 				task=args.task,
 				language=language,
 				device=args.device,
 				compute_type=args.compute_type,
+				translation_batch_size=args.translation_batch_size,
 				overwrite_srt=args.overwrite_srt,
 				skip_burn=args.skip_burn,
 			)

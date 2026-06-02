@@ -20,7 +20,7 @@
 - [Chuẩn bị model](#chuẩn-bị-model)
 - [Sử dụng nhanh](#sử-dụng-nhanh)
 - [Tham số CLI](#tham-số-cli)
-- [Cách hai engine hoạt động](#cách-hai-engine-hoạt-động)
+- [Cách các engine hoạt động](#cách-các-engine-hoạt-động)
 - [Output](#output)
 - [Lưu ý vận hành](#lưu-ý-vận-hành)
 - [Xử lý lỗi thường gặp](#xử-lý-lỗi-thường-gặp)
@@ -35,12 +35,13 @@ Project cung cấp một pipeline Python chạy local để xử lý video theo 
 4. Ghi phụ đề ra file `.srt` trong `subtitles/`.
 5. Burn phụ đề vào video và ghi kết quả vào `output/`.
 
-Pipeline hỗ trợ hai loại model local:
+Pipeline hỗ trợ hai loại model nhận dạng giọng nói local và một model dịch văn bản tùy chọn:
 
-| Engine | File dùng để nhận diện | Đặc điểm |
+| Engine | File dùng để nhận diện | Vai trò |
 | --- | --- | --- |
 | `faster-whisper` | `model.bin` | Nhẹ hơn, phù hợp để xử lý nhanh với CTranslate2 |
 | Hugging Face Transformers | `model.safetensors` hoặc `pytorch_model.bin` | Dùng model Whisper chuẩn từ Hugging Face |
+| VinAI Translate | `pytorch_model.bin` với `model_type: mbart` | Dịch text tiếng Việt từ Whisper sang tiếng Anh theo từng subtitle segment |
 
 ## Luồng xử lý
 
@@ -60,7 +61,10 @@ flowchart TD
     Q -->|faster-whisper| J[Tạo subtitle segments]
     Q -->|Hugging Face Transformers| I[Trích xuất WAV mono 16 kHz tạm thời]
     I --> J
-    J --> L[Ghi subtitles/video-name_model.srt]
+    J --> R{Có --translation-model?}
+    R -->|Có| S[VinAI Translate dịch text vi2en]
+    R -->|Không| L[Ghi subtitles/video-name_model.srt]
+    S --> L
     K --> M{Có --skip-burn?}
     L --> M
     M -->|Có| N[Kết thúc sau khi tạo SRT]
@@ -75,7 +79,8 @@ transcript-video/
 ├── input/                  # Video đầu vào
 ├── model/                  # Model local, không commit lên Git
 │   ├── faster-whisper-large-v3/
-│   └── whisper-large-v3/
+│   ├── whisper-large-v3/
+│   └── vinai-translate-vi2en-v2/
 ├── output/                 # Video đã burn hard subtitle
 ├── subtitles/              # File SRT được tạo ra hoặc chỉnh sửa thủ công
 ├── temp/                   # Audio WAV tạm thời khi chạy Hugging Face engine
@@ -112,13 +117,13 @@ python -m venv .venv
 python -m pip install --upgrade pip
 ```
 
-Cài dependency theo môi trường CUDA 12.1 đang được khai báo trong `requirements.txt`:
+Cài dependency theo môi trường CUDA 12.4 đang được khai báo trong `requirements.txt`:
 
 ```powershell
-python -m pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121
+python -m pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu124
 ```
 
-Nếu chỉ sử dụng CPU, hãy cài bản PyTorch phù hợp với CPU trước, sau đó chạy script với `--device cpu`. File `requirements.txt` hiện được pin theo môi trường GPU CUDA 12.1 của project.
+Nếu chỉ sử dụng CPU, hãy cài bản PyTorch phù hợp với CPU trước, sau đó chạy script với `--device cpu`. File `requirements.txt` hiện được pin theo môi trường GPU CUDA 12.4 của project. Model VinAI local dùng file `pytorch_model.bin`, vì vậy cần PyTorch `2.6.0` trở lên để Transformers load model an toàn.
 
 ## Chuẩn bị model
 
@@ -131,11 +136,15 @@ model/
 │   ├── model.bin
 │   ├── tokenizer.json
 │   └── vocabulary.json
-└── whisper-large-v3/
+├── whisper-large-v3/
+│   ├── config.json
+│   ├── model.safetensors
+│   ├── preprocessor_config.json
+│   └── tokenizer.json
+└── vinai-translate-vi2en-v2/
     ├── config.json
-    ├── model.safetensors
-    ├── preprocessor_config.json
-    └── tokenizer.json
+    ├── pytorch_model.bin
+    └── sentencepiece.bpe.model
 ```
 
 Model là artifact lớn và đã được ignore khỏi Git. Khi chạy, nên truyền `--model` rõ ràng vì giá trị mặc định trong script đang trỏ đến một đường dẫn local.
@@ -200,6 +209,15 @@ Chạy Hugging Face Transformers engine trên CPU:
   --model .\model\whisper-large-v3
 ```
 
+Chép lời tiếng Việt bằng Whisper rồi dịch từng subtitle segment sang tiếng Anh bằng VinAI Translate:
+
+```powershell
+.\.venv\Scripts\python.exe .\transcript_video.py `
+  --task translate `
+  --model .\model\faster-whisper-large-v3 `
+  --translation-model .\model\vinai-translate-vi2en-v2
+```
+
 ## Tham số CLI
 
 | Tham số | Mặc định | Ý nghĩa |
@@ -207,10 +225,12 @@ Chạy Hugging Face Transformers engine trên CPU:
 | `--root` | `.` | Thư mục gốc chứa `input/`, `subtitles/`, `output/`, `temp/` |
 | `--video` | Trống | Chỉ xử lý một file cụ thể bên trong `input/` |
 | `--model` | Đường dẫn local trong script | Thư mục chứa model `faster-whisper` hoặc Hugging Face Whisper |
+| `--translation-model` | Trống | Thư mục VinAI Translate vi2en tùy chọn; chỉ dùng cùng `--task translate` |
 | `--task` | `translate` | `translate`: dịch sang tiếng Anh; `transcribe`: giữ nguyên ngôn ngữ |
 | `--language` | `vi` | Gợi ý ngôn ngữ nguồn cho `faster-whisper`; truyền chuỗi rỗng để auto-detect |
 | `--device` | `cuda` | Thiết bị inference: `cuda` hoặc `cpu` |
 | `--compute-type` | `int8` | Kiểu tính toán cho `faster-whisper`, thường dùng `int8`, `float16`, `float32` |
+| `--translation-batch-size` | `8` | Số subtitle segment được VinAI dịch cùng lúc |
 | `--overwrite-srt` | Tắt | Tạo lại SRT nếu file cùng tên đã tồn tại |
 | `--skip-burn` | Tắt | Chỉ tạo SRT, không xuất video hard subtitle |
 
@@ -220,7 +240,7 @@ Xem trợ giúp trực tiếp:
 .\.venv\Scripts\python.exe .\transcript_video.py --help
 ```
 
-## Cách hai engine hoạt động
+## Cách các engine hoạt động
 
 ```mermaid
 flowchart LR
@@ -235,9 +255,15 @@ flowchart LR
     I --> J[ASR pipeline xử lý theo chunk 30 giây]
     G --> K[Subtitle segments]
     J --> K
+    K --> L{Có --translation-model?}
+    L -->|Có| M[VinAI Translate dịch text vi2en theo batch]
+    L -->|Không| N[Ghi SRT]
+    M --> N
 ```
 
 Với Hugging Face engine, audio WAV mono `16 kHz` chỉ tồn tại tạm thời trong `temp/` và được xóa sau khi xử lý xong. Pipeline đọc WAV thành NumPy array trước khi đưa vào Transformers để tránh phụ thuộc vào cơ chế tìm FFmpeg nội bộ của thư viện.
+
+VinAI Translate không nhận audio hoặc video. Khi dùng `--translation-model`, script yêu cầu Whisper chép lời tiếng Việt bằng task `transcribe`, giữ nguyên timestamp, sau đó dịch text theo batch và ghi SRT với suffix `_vinai`.
 
 ## Output
 
@@ -259,6 +285,7 @@ Hello everyone, today I will show you how to crawl the score data...
 ## Lưu ý vận hành
 
 - SRT dùng suffix `_faster.srt` với `faster-whisper` và `_huggingface.srt` với Hugging Face Transformers.
+- Khi bật VinAI Translate, SRT có thêm suffix `_vinai`, ví dụ `_faster_vinai.srt`, để không tái sử dụng nhầm SRT được tạo bởi engine khác.
 - Nếu SRT tương ứng với model đã tồn tại, script sẽ tái sử dụng file đó. Dùng `--overwrite-srt` khi muốn chạy transcription lại với model hoặc tham số khác.
 - File SRT theo quy tắc cũ như `crawl guide.srt` sẽ không tự được tái sử dụng. Đổi tên file sang suffix tương ứng nếu muốn burn lại mà không chạy transcription.
 - Có thể chỉnh sửa thủ công file trong `subtitles/`, sau đó chạy lại không kèm `--overwrite-srt` để burn bản subtitle đã sửa.
@@ -274,6 +301,7 @@ Hello everyone, today I will show you how to crawl the score data...
 | --- | --- | --- |
 | `Không tìm thấy model folder` | Sai đường dẫn truyền vào `--model` | Kiểm tra thư mục model và dùng đường dẫn tương đối như `.\model\faster-whisper-large-v3` |
 | `Không nhận diện được định dạng model` | Thiếu `model.bin`, `model.safetensors` hoặc `pytorch_model.bin` | Kiểm tra model đã tải đầy đủ |
+| Model dịch văn bản phải truyền qua `--translation-model` | Đã truyền VinAI Translate vào `--model` | Dùng Whisper cho `--model` và VinAI cho `--translation-model` |
 | `Không có video nào trong folder` | `input/` trống hoặc extension không được hỗ trợ | Thêm video hợp lệ vào `input/` |
 | Lỗi CUDA | Máy không có GPU NVIDIA hoặc CUDA/PyTorch không tương thích | Chạy với `--device cpu` hoặc cài lại PyTorch đúng phiên bản CUDA |
 | Burn subtitle lỗi | File SRT không tồn tại hoặc FFmpeg không đọc được subtitle | Chạy tạo SRT trước, kiểm tra encoding UTF-8 và đường dẫn file |
