@@ -8,7 +8,7 @@ To use this feature, first, I need to have Test Workspace Folder created for the
 
 3
 00:00:21,000 --> 00:00:27,000
-In this session, I will go to Team Support. Here, I will have two options.
+In this session, I will go to Testing Support. Here, I will have two options.
 
 4
 00:00:27,000 --> 00:00:31,000
@@ -80,7 +80,7 @@ At the same time,
 
 21
 00:01:48,000 --> 00:01:56,000
-Visual Studio Code will automatically open and save the space folder of the item you need to create.
+Visual Studio Code will automatically open and import the test workspace folder of the item you need to create.
 
 22
 00:01:58,000 --> 00:02:01,000
@@ -120,7 +120,7 @@ The first is database path.
 
 31
 00:02:47,000 --> 00:02:51,000
-The second one is the first option.
+The second one is the workspace path.
 
 32
 00:02:51,000 --> 00:02:56,000
@@ -132,15 +132,15 @@ I will have an Excel file to store the information of the item name and item pat
 
 34
 00:03:05,000 --> 00:03:09,000
-I also need to create a SpaceFolder.
+That need to create test workspace folders.
 
 35
 00:03:12,000 --> 00:03:16,000
-Then I will take the path of this file and store it in Visual Studio Code.
+Then I will take the path of this file
 
 36
 00:03:17,000 --> 00:03:23,000
-I need to open it to the third path.
+and enter it into the List Items path field.
 
 37
 00:03:23,000 --> 00:03:27,000
@@ -196,7 +196,7 @@ We choose Generate Test Case by A.I. Copilot
 
 50
 00:04:24,000 --> 00:04:27,000
-Here, I have two main sources of information
+Here, I have two fields.
 
 51
 00:04:27,000 --> 00:04:29,000
@@ -208,7 +208,7 @@ I will go to the Test Workspace Folder of an item
 
 53
 00:04:35,000 --> 00:04:37,000
-called Generate Test Case
+that needs to generate test cases
 
 54
 00:04:37,000 --> 00:04:38,000
@@ -408,7 +408,7 @@ while the Tool is running
 
 103
 00:09:41,360 --> 00:09:47,360
-At the end of Auto Default Check, we will go to the next step, which is Prepare Get SUTs.
+At the end of Auto Define Object, we will go to the next step, which is Prepare Get SUTs.
 
 104
 00:10:02,360 --> 00:10:11,360
@@ -660,11 +660,11 @@ Here I see that the first function
 
 166
 00:14:36,360 --> 00:14:39,360
-the code color are blue
+the code color is green
 
 167
 00:14:39,360 --> 00:14:43,360
-This is equivalent to the fact that this light code has been covered
+This is equivalent to the fact that these lines of code have been covered 
 
 168
 00:14:43,360 --> 00:14:47,360
@@ -792,7 +792,7 @@ Or we can build Cantata from the Visual Studio Code
 
 199
 00:17:48,360 --> 00:17:55,360
-I go to Terminal, select Runtasks, and select "Cantata++ coverage measurement"
+I go to Terminal, select select Run Task..., and select "Cantata++ coverage measurement"
 
 200
 00:18:11,360 --> 00:18:18,360
