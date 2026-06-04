@@ -773,11 +773,49 @@ def synthesize_timed_tts_audio(
 	"""
 	Generate one WAV file by placing every TTS segment at its subtitle timestamp.
 
-	This is the recommended mode for videos because the generated voice-over
-	starts at the same time as each subtitle line.
+	Important fix:
+	- Each TTS segment is only allowed to play until before the next subtitle starts.
+	- If the generated TTS is too long, it is sped up.
+	- If it is still too long, it is trimmed with a small fade-out.
 	"""
 	import numpy as np
 	import soundfile as sf
+
+	# ===== Timing control =====
+	MIN_GAP_SECONDS = 0.08       # small silence before next voice starts
+	MAX_SPEEDUP = 1.35           # do not speed up too much, or voice becomes unnatural
+	MIN_SLOT_SECONDS = 0.35      # minimum allowed slot
+	FADE_OUT_SECONDS = 0.04      # fade out when trimming
+
+	def speedup_wav_by_resample(wav: np.ndarray, speed_factor: float) -> np.ndarray:
+		"""
+		Simple in-memory speed-up.
+		Note: this changes pitch slightly, but avoids overlap without extra dependencies.
+		"""
+		if speed_factor <= 1.0 or len(wav) < 2:
+			return wav
+
+		new_length = max(1, int(len(wav) / speed_factor))
+		old_positions = np.linspace(0.0, 1.0, num=len(wav), endpoint=False)
+		new_positions = np.linspace(0.0, 1.0, num=new_length, endpoint=False)
+
+		return np.interp(new_positions, old_positions, wav).astype(np.float32)
+
+	def trim_with_fade_out(wav: np.ndarray, max_samples: int, sample_rate: int) -> np.ndarray:
+		"""Trim wav to max_samples and apply a small fade-out to avoid clicking."""
+		if max_samples <= 0:
+			return np.zeros(0, dtype=np.float32)
+
+		if len(wav) <= max_samples:
+			return wav
+
+		wav = wav[:max_samples].copy()
+		fade_samples = min(len(wav), int(FADE_OUT_SECONDS * sample_rate))
+
+		if fade_samples > 0:
+			wav[-fade_samples:] *= np.linspace(1.0, 0.0, fade_samples, dtype=np.float32)
+
+		return wav
 
 	valid_segments = [segment for segment in segments if segment.text.strip()]
 	if not valid_segments:
@@ -787,10 +825,11 @@ def synthesize_timed_tts_audio(
 
 	generated_chunks = []
 	sample_rate = None
+	video_duration = get_media_duration_seconds(video_path)
 
-	for index, segment in enumerate(valid_segments, start=1):
+	for index, segment in enumerate(valid_segments):
 		text = segment.text.strip()
-		logging.info("TTS segment %d/%d: %s", index, len(valid_segments), text[:80])
+		logging.info("TTS segment %d/%d: %s", index + 1, len(valid_segments), text[:80])
 
 		wav, sr = generate_qwen_custom_voice(
 			model=model,
@@ -807,9 +846,43 @@ def synthesize_timed_tts_audio(
 		elif sr != sample_rate:
 			raise ValueError(f"Sample rate không đồng nhất: {sr} != {sample_rate}")
 
+		# Slot end = before next subtitle starts.
+		if index + 1 < len(valid_segments):
+			next_start = valid_segments[index + 1].start
+			slot_end = next_start - MIN_GAP_SECONDS
+		else:
+			# Last segment can run until video end, or at least its own subtitle end.
+			slot_end = video_duration if video_duration else segment.end + 1.0
+
+		available_duration = max(MIN_SLOT_SECONDS, slot_end - segment.start)
+		available_samples = int(available_duration * sample_rate)
+
+		original_duration = len(wav) / sample_rate
+
+		if original_duration > available_duration:
+			needed_speedup = original_duration / available_duration
+			speedup = min(needed_speedup, MAX_SPEEDUP)
+
+			logging.warning(
+				"TTS segment %d too long: %.2fs > %.2fs. Speedup %.2fx.",
+				index + 1,
+				original_duration,
+				available_duration,
+				speedup,
+			)
+
+			wav = speedup_wav_by_resample(wav, speedup)
+
+			if len(wav) > available_samples:
+				logging.warning(
+					"TTS segment %d still too long after speedup. Trim to %.2fs.",
+					index + 1,
+					available_duration,
+				)
+				wav = trim_with_fade_out(wav, available_samples, sample_rate)
+
 		generated_chunks.append((segment, wav))
 
-	video_duration = get_media_duration_seconds(video_path)
 	subtitle_duration = max(segment.end for segment in valid_segments) + 1.0
 	total_duration = max(video_duration or 0.0, subtitle_duration)
 	total_samples = int(total_duration * sample_rate) + sample_rate
@@ -826,6 +899,7 @@ def synthesize_timed_tts_audio(
 			wav = wav[: len(full_audio) - start_sample]
 			end_sample = len(full_audio)
 
+		# No overlap now because each wav was already fitted to its slot.
 		full_audio[start_sample:end_sample] += wav
 
 	full_audio = np.clip(full_audio, -1.0, 1.0)
