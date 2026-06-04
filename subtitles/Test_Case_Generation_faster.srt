@@ -27,11 +27,7 @@ I will demo the first option first. I will choose One Item here.
 Here, I will have three different types of information.
 
 8
-00:00:50,000 --> 00:00:51,000
-The first information is the Test Workspace Folder.
-
-9
-00:00:51,000 --> 00:00:54,000
+00:00:50,000 --> 00:00:54,000
 The first information is the database path.
 
 10
@@ -87,24 +83,20 @@ Here I will have the source file.
 I will also have two files.
 
 23
-00:02:03,000 --> 00:02:07,000
+00:02:03,000 --> 00:02:10,000
 The first is test.cpp and the second is test.h.
 
-24
-00:02:07,000 --> 00:02:09,000
-Here they are.
-
 25
-00:02:13,000 --> 00:02:17,000
+00:02:11,000 --> 00:02:17,000
 Besides, I can use the "Open output" feature.
 
 26
 00:02:17,000 --> 00:02:27,000
-It will help me to open and save the space folder of the item I need to create.
+It will help me to open the test workspace folder of the item I need to create.
 
 27
 00:02:38,000 --> 00:02:42,000
-For the second option, I will choose ListItem.
+For the second option, I will choose List Item.
 
 28
 00:02:42,000 --> 00:02:45,000
@@ -120,7 +112,7 @@ The second one is the workspace path.
 
 31
 00:02:51,000 --> 00:02:56,000
-And the third one is ListItem path.
+And the third one is List Items path.
 
 32
 00:02:56,000 --> 00:03:05,000
@@ -148,7 +140,7 @@ After this step is done,
 
 38
 00:03:59,000 --> 00:04:03,000
-choose OpenOutput
+choose Open output
 
 39
 00:04:03,000 --> 00:04:08,000
@@ -156,7 +148,7 @@ Then we will see the workspace folder is created
 
 40
 00:04:09,000 --> 00:04:11,000
-Inside Itemlist
+Inside Item list
 
 41
 00:04:12,000 --> 00:04:15,000
@@ -472,7 +464,7 @@ Or we can build Cantata from the Visual Studio Code
 
 119
 00:17:48,360 --> 00:17:55,360
-I go to Terminal, select select Run Task..., and select "Cantata++ coverage measurement"
+I go to Terminal, then select Run Task..., and select "Cantata++ coverage measurement"
 
 120
 00:18:11,360 --> 00:18:18,360

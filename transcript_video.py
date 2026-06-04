@@ -5,7 +5,7 @@ Folder structure:
 	project/
 	├── input/       # put original videos here
 	├── subtitles/   # generated .srt files
-	├── audio/       # generated .wav TTS audio filesâc
+	├── audio/       # generated .wav TTS audio files and 5-minute review chunks
 	├── output/      # final videos
 	└── temp/        # temporary extracted audio
 
@@ -18,6 +18,9 @@ Generate subtitles only, then burn subtitles:
 
 Generate subtitles + Qwen TTS audio + final video with TTS audio:
 	python transcript_video_tts_complete.py --video my_video.mp4 --task translate --language vi --enable-tts
+
+By default, when TTS is enabled, the generated TTS WAV is also split into 5-minute chunks:
+	audio/<video_name>_tts_chunks/<video_name>_tts_part_000.wav
 
 Use a local Whisper model folder:
 	python transcript_video_tts_complete.py --model "C:/Users/<USERNAME>/.faster-whisper-large-v3"
@@ -379,6 +382,56 @@ def get_media_duration_seconds(media_path: Path) -> Optional[float]:
 	return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
 
 
+def split_audio_into_chunks(
+	audio_in: Path,
+	output_dir: Path,
+	chunk_minutes: int = 5,
+	overwrite: bool = True,
+) -> None:
+	"""Split a long audio file into smaller review chunks.
+
+	This only splits the generated TTS WAV file for easier checking.
+	It does not split the video, subtitle, or original input audio.
+	"""
+	if chunk_minutes <= 0:
+		raise ValueError("chunk_minutes phải lớn hơn 0.")
+	if not audio_in.exists():
+		raise FileNotFoundError(f"Không tìm thấy audio để split: {audio_in}")
+
+	ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+	output_dir.mkdir(parents=True, exist_ok=True)
+
+	# Remove old chunks first. This avoids leaving stale part_010.wav, part_011.wav, ...
+	# from a previous longer generation.
+	if overwrite:
+		for old_chunk in output_dir.glob(f"{audio_in.stem}_part_*{audio_in.suffix}"):
+			try:
+				old_chunk.unlink()
+			except OSError:
+				logging.warning("Không thể xóa chunk cũ: %s", old_chunk)
+
+	chunk_seconds = int(chunk_minutes * 60)
+	output_pattern = output_dir / f"{audio_in.stem}_part_%03d{audio_in.suffix}"
+
+	command = [
+		ffmpeg_path,
+		"-y",
+		"-i",
+		str(audio_in),
+		"-f",
+		"segment",
+		"-segment_time",
+		str(chunk_seconds),
+		"-reset_timestamps",
+		"1",
+		"-c",
+		"copy",
+		str(output_pattern),
+	]
+	run_command(command)
+	logging.info("Split TTS audio into %d-minute chunks: %s", chunk_minutes, output_dir)
+
+
 # =========================
 # Transcription engines
 # =========================
@@ -683,7 +736,7 @@ def load_qwen_tts_model(
 
 	kwargs = {
 		"device_map": "cuda:0" if device == "cuda" else "cpu",
-		"dtype": torch.bfloat16 if device == "cuda" else torch.float32,
+		"dtype": torch.float16 if device == "cuda" else torch.float32,
 	}
 
 	if attn_implementation != "auto":
@@ -907,6 +960,313 @@ def synthesize_timed_tts_audio(
 	sf.write(str(audio_out), full_audio, sample_rate)
 
 
+
+def fit_wav_to_available_duration(
+	wav,
+	sample_rate: int,
+	available_duration: float,
+	max_speedup: float = 1.15,
+	fade_out_seconds: float = 0.04,
+):
+	"""Fit a generated TTS waveform into an available time slot.
+
+	If the waveform is longer than the slot, it is sped up slightly by
+	resampling. If it is still too long, it is trimmed with a small fade-out.
+	"""
+	import numpy as np
+
+	wav = np.asarray(wav, dtype=np.float32)
+	available_samples = max(1, int(available_duration * sample_rate))
+
+	if len(wav) <= available_samples:
+		return wav
+
+	original_duration = len(wav) / sample_rate
+	needed_speedup = original_duration / max(available_duration, 1e-6)
+	speedup = min(max(1.0, needed_speedup), max_speedup)
+
+	if speedup > 1.0 and len(wav) > 1:
+		new_length = max(1, int(len(wav) / speedup))
+		old_positions = np.linspace(0.0, 1.0, num=len(wav), endpoint=False)
+		new_positions = np.linspace(0.0, 1.0, num=new_length, endpoint=False)
+		wav = np.interp(new_positions, old_positions, wav).astype(np.float32)
+
+	if len(wav) > available_samples:
+		wav = wav[:available_samples].copy()
+		fade_samples = min(len(wav), int(fade_out_seconds * sample_rate))
+		if fade_samples > 0:
+			wav[-fade_samples:] *= np.linspace(1.0, 0.0, fade_samples, dtype=np.float32)
+
+	return wav
+
+
+def build_fixed_time_tts_chunks(
+	segments: List[SubtitleSegment],
+	chunk_minutes: int,
+	video_path: Path,
+) -> List[Tuple[int, float, float, List[SubtitleSegment]]]:
+	"""Build fixed-length chunk groups that cover the whole video timeline."""
+	if chunk_minutes <= 0:
+		raise ValueError("chunk_minutes phải lớn hơn 0.")
+
+	valid_segments = [segment for segment in segments if segment.text.strip()]
+	if not valid_segments:
+		raise ValueError("Không có subtitle segment nào để tạo TTS audio.")
+
+	chunk_seconds = chunk_minutes * 60
+	video_duration = get_media_duration_seconds(video_path) or 0.0
+	subtitle_duration = max(segment.end for segment in valid_segments) + 1.0
+	total_duration = max(video_duration, subtitle_duration, chunk_seconds)
+
+	num_chunks = int((total_duration + chunk_seconds - 1) // chunk_seconds)
+	chunks: List[Tuple[int, float, float, List[SubtitleSegment]]] = []
+
+	for chunk_index in range(num_chunks):
+		chunk_start = chunk_index * chunk_seconds
+		chunk_end = min((chunk_index + 1) * chunk_seconds, total_duration)
+		chunk_segments = [
+			segment
+			for segment in valid_segments
+			if chunk_start <= segment.start < chunk_end
+		]
+		chunks.append((chunk_index, chunk_start, chunk_end, chunk_segments))
+
+	return chunks
+
+
+def synthesize_one_fixed_time_chunk(
+	model,
+	chunk_index: int,
+	chunk_start: float,
+	chunk_end: float,
+	chunk_segments: List[SubtitleSegment],
+	chunk_audio_out: Path,
+	tts_language: str,
+	tts_speaker: str,
+	tts_instruct: str,
+	sample_rate: Optional[int] = None,
+	max_speedup: float = 1.15,
+) -> int:
+	"""Generate one fixed-time TTS chunk.
+
+	The chunk keeps local timing, so when chunks are concatenated later,
+	the full audio stays aligned with the original video timeline.
+	"""
+	import numpy as np
+	import soundfile as sf
+
+	chunk_audio_out.parent.mkdir(parents=True, exist_ok=True)
+
+	# If a chunk has no subtitle, create pure silence.
+	# Use the previous sample_rate if known, otherwise use 24000 as a safe fallback.
+	sr_final = sample_rate or 24000
+	chunk_duration = max(0.1, chunk_end - chunk_start)
+	full_chunk = np.zeros(int(chunk_duration * sr_final), dtype=np.float32)
+
+	if not chunk_segments:
+		sf.write(str(chunk_audio_out), full_chunk, sr_final)
+		logging.info("Chunk %03d has no subtitle. Wrote silence: %s", chunk_index, chunk_audio_out)
+		return sr_final
+
+	generated_items = []
+
+	for local_index, segment in enumerate(chunk_segments):
+		text = segment.text.strip()
+		logging.info(
+			"TTS chunk %03d segment %d/%d: %s",
+			chunk_index,
+			local_index + 1,
+			len(chunk_segments),
+			text[:90],
+		)
+
+		wav, sr = generate_qwen_custom_voice(
+			model=model,
+			text=text,
+			language=tts_language,
+			speaker=tts_speaker,
+			instruct=tts_instruct,
+		)
+		wav = np.asarray(wav, dtype=np.float32)
+
+		if sample_rate is None and local_index == 0:
+			sr_final = sr
+			chunk_duration = max(0.1, chunk_end - chunk_start)
+			full_chunk = np.zeros(int(chunk_duration * sr_final), dtype=np.float32)
+		elif sr != sr_final:
+			raise ValueError(f"Sample rate không đồng nhất: {sr} != {sr_final}")
+
+		# Limit this voice line to before the next subtitle in the same chunk.
+		# If this is the last line in the chunk, limit it to chunk_end.
+		if local_index + 1 < len(chunk_segments):
+			slot_end = chunk_segments[local_index + 1].start - 0.08
+		else:
+			slot_end = chunk_end
+
+		available_duration = max(0.35, slot_end - segment.start)
+		original_duration = len(wav) / sr_final
+
+		if original_duration > available_duration:
+			logging.warning(
+				"Chunk %03d segment %d too long: %.2fs > %.2fs. Fit with max speedup %.2fx.",
+				chunk_index,
+				local_index + 1,
+				original_duration,
+				available_duration,
+				max_speedup,
+			)
+			wav = fit_wav_to_available_duration(
+				wav=wav,
+				sample_rate=sr_final,
+				available_duration=available_duration,
+				max_speedup=max_speedup,
+			)
+
+		local_start = max(0.0, segment.start - chunk_start)
+		generated_items.append((local_start, wav))
+
+	for local_start, wav in generated_items:
+		start_sample = int(local_start * sr_final)
+		end_sample = start_sample + len(wav)
+
+		if start_sample >= len(full_chunk):
+			continue
+
+		if end_sample > len(full_chunk):
+			wav = wav[: len(full_chunk) - start_sample]
+			end_sample = len(full_chunk)
+
+		full_chunk[start_sample:end_sample] += wav
+
+	full_chunk = np.clip(full_chunk, -1.0, 1.0)
+	sf.write(str(chunk_audio_out), full_chunk, sr_final)
+	logging.info("Wrote TTS chunk %03d: %s", chunk_index, chunk_audio_out)
+	return sr_final
+
+
+def rebuild_full_tts_audio_from_chunks(
+	chunk_paths: List[Path],
+	audio_out: Path,
+) -> None:
+	"""Concatenate all fixed-time TTS chunks into one full TTS WAV."""
+	import numpy as np
+	import soundfile as sf
+
+	if not chunk_paths:
+		raise ValueError("Không có chunk audio nào để ghép lại.")
+
+	wav_list = []
+	final_sr = None
+
+	for chunk_path in chunk_paths:
+		if not chunk_path.exists():
+			raise FileNotFoundError(f"Thiếu chunk audio: {chunk_path}")
+
+		wav, sr = sf.read(str(chunk_path), dtype="float32")
+		if final_sr is None:
+			final_sr = sr
+		elif sr != final_sr:
+			raise ValueError(f"Sample rate chunk không đồng nhất: {sr} != {final_sr}")
+
+		wav_list.append(wav)
+
+	full_audio = np.concatenate(wav_list)
+	full_audio = np.clip(full_audio, -1.0, 1.0)
+	audio_out.parent.mkdir(parents=True, exist_ok=True)
+	sf.write(str(audio_out), full_audio, final_sr)
+	logging.info("Rebuilt full TTS audio from chunks: %s", audio_out)
+
+
+def synthesize_tts_audio_by_time_chunks(
+	segments: List[SubtitleSegment],
+	audio_out: Path,
+	chunks_dir: Path,
+	video_path: Path,
+	tts_model_name: str,
+	tts_language: str,
+	tts_speaker: str,
+	tts_instruct: str,
+	device: str,
+	attn_implementation: str,
+	chunk_minutes: int = 5,
+	rerun_chunk: Optional[int] = None,
+	overwrite_all_chunks: bool = False,
+	max_speedup: float = 1.15,
+) -> None:
+	"""Generate TTS by fixed time chunks and rebuild full audio.
+
+	This enables review/regeneration workflows:
+	- First run: generate chunk_000.wav, chunk_001.wav, ... then rebuild full WAV.
+	- If chunk N is bad: pass rerun_chunk=N to regenerate only that chunk,
+	  then rebuild the full WAV and mux it into the video again.
+	"""
+	if rerun_chunk is not None and rerun_chunk < 0:
+		raise ValueError("--rerun-tts-chunk phải >= 0.")
+
+	chunks = build_fixed_time_tts_chunks(
+		segments=segments,
+		chunk_minutes=chunk_minutes,
+		video_path=video_path,
+	)
+	chunks_dir.mkdir(parents=True, exist_ok=True)
+
+	if rerun_chunk is not None and rerun_chunk >= len(chunks):
+		raise ValueError(
+			f"Chunk {rerun_chunk} không tồn tại. Video này chỉ có chunk 0 đến {len(chunks) - 1}."
+		)
+
+	chunk_infos = []
+	chunk_paths: List[Path] = []
+	chunks_to_generate = []
+
+	for chunk_index, chunk_start, chunk_end, chunk_segments in chunks:
+		chunk_path = chunks_dir / f"{audio_out.stem}_chunk_{chunk_index:03d}.wav"
+		chunk_paths.append(chunk_path)
+		should_generate = (
+			overwrite_all_chunks
+			or rerun_chunk == chunk_index
+			or not chunk_path.exists()
+		)
+		chunk_infos.append((chunk_index, chunk_start, chunk_end, chunk_segments, chunk_path, should_generate))
+		if should_generate:
+			chunks_to_generate.append(chunk_index)
+
+	if chunks_to_generate:
+		logging.info("Chunks to generate/regenerate: %s", chunks_to_generate)
+		model = load_qwen_tts_model(tts_model_name, device, attn_implementation)
+		sample_rate = None
+
+		for chunk_index, chunk_start, chunk_end, chunk_segments, chunk_path, should_generate in chunk_infos:
+			if not should_generate:
+				logging.info("Chunk %03d đã tồn tại, bỏ qua generate: %s", chunk_index, chunk_path)
+				continue
+
+			logging.info(
+				"Generating TTS chunk %03d / %03d | %.2fs → %.2fs | %d segment(s)",
+				chunk_index,
+				len(chunks) - 1,
+				chunk_start,
+				chunk_end,
+				len(chunk_segments),
+			)
+			sample_rate = synthesize_one_fixed_time_chunk(
+				model=model,
+				chunk_index=chunk_index,
+				chunk_start=chunk_start,
+				chunk_end=chunk_end,
+				chunk_segments=chunk_segments,
+				chunk_audio_out=chunk_path,
+				tts_language=tts_language,
+				tts_speaker=tts_speaker,
+				tts_instruct=tts_instruct,
+				sample_rate=sample_rate,
+				max_speedup=max_speedup,
+			)
+	else:
+		logging.info("All TTS chunks already exist. Rebuilding full WAV without loading TTS model.")
+
+	rebuild_full_tts_audio_from_chunks(chunk_paths=chunk_paths, audio_out=audio_out)
+
 def mux_audio_into_video_replace(video_in: Path, audio_in: Path, video_out: Path) -> None:
 	"""Replace the video's original audio with generated TTS audio."""
 	ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
@@ -983,20 +1343,26 @@ def process_video(
 	enable_tts: bool,
 	overwrite_tts: bool,
 	tts_mode: str,
+	tts_generation_mode: str,
+	rerun_tts_chunk: Optional[int],
 	tts_model: str,
 	tts_language: str,
 	tts_speaker: str,
 	tts_instruct: str,
 	tts_attn_implementation: str,
 	audio_mode: str,
+	split_tts_audio: bool,
+	tts_chunk_minutes: int,
+	tts_max_speedup: float,
 ) -> None:
-	"""Generate SRT, optionally burn subtitles, optionally generate TTS and mux audio."""
+	"""Generate SRT, burn subtitles, optionally generate chunked TTS and mux audio."""
 	model_suffix = get_model_filename_suffix(model_path, translation_model_path)
 	srt_path = paths.subtitle_dir / f"{video_path.stem}_{model_suffix}.srt"
 
-	subtitled_output_path = paths.output_dir / f"{video_path.stem}_SUB.mp4"
+	subtitled_output_path = paths.output_dir / f"{video_path.stem}_vi-dub_en-sub.mp4"
 	tts_audio_path = paths.audio_dir / f"{video_path.stem}_tts.wav"
-	final_tts_output_path = paths.output_dir / f"{video_path.stem}_SUB_TTS.mp4"
+	tts_chunks_dir = paths.audio_dir / f"{video_path.stem}_tts_chunks"
+	final_tts_output_path = paths.output_dir / f"{video_path.stem}_en-dub_en-sub.mp4"
 
 	logging.info("Processing: %s", video_path.name)
 
@@ -1043,35 +1409,79 @@ def process_video(
 		logging.info("TTS disabled. DONE: %s", subtitled_output_path)
 		return
 
-	if tts_audio_path.exists() and not overwrite_tts:
-		logging.info("TTS audio đã tồn tại, bỏ qua generate: %s", tts_audio_path)
+	# ===== TTS generation =====
+	if tts_generation_mode == "chunked":
+		logging.info(
+			"Step %d: Generating/rebuilding chunked Qwen TTS audio: %s",
+			burn_step + 1,
+			tts_audio_path,
+		)
+		synthesize_tts_audio_by_time_chunks(
+			segments=segments,
+			audio_out=tts_audio_path,
+			chunks_dir=tts_chunks_dir,
+			video_path=video_path,
+			tts_model_name=tts_model,
+			tts_language=tts_language,
+			tts_speaker=tts_speaker,
+			tts_instruct=tts_instruct,
+			device=device,
+			attn_implementation=tts_attn_implementation,
+			chunk_minutes=tts_chunk_minutes,
+			rerun_chunk=rerun_tts_chunk,
+			overwrite_all_chunks=overwrite_tts,
+			max_speedup=tts_max_speedup,
+		)
 	else:
-		logging.info("Step %d: Generating Qwen TTS audio: %s", burn_step + 1, tts_audio_path)
-		if tts_mode == "simple":
-			synthesize_simple_tts_audio(
-				segments=segments,
-				audio_out=tts_audio_path,
-				tts_model_name=tts_model,
-				tts_language=tts_language,
-				tts_speaker=tts_speaker,
-				tts_instruct=tts_instruct,
-				device=device,
-				attn_implementation=tts_attn_implementation,
-			)
+		if tts_audio_path.exists() and not overwrite_tts and rerun_tts_chunk is None:
+			logging.info("TTS audio đã tồn tại, bỏ qua generate: %s", tts_audio_path)
 		else:
-			synthesize_timed_tts_audio(
-				segments=segments,
-				audio_out=tts_audio_path,
-				video_path=video_path,
-				tts_model_name=tts_model,
-				tts_language=tts_language,
-				tts_speaker=tts_speaker,
-				tts_instruct=tts_instruct,
-				device=device,
-				attn_implementation=tts_attn_implementation,
+			if rerun_tts_chunk is not None:
+				logging.warning(
+					"--rerun-tts-chunk chỉ có tác dụng với --tts-generation-mode chunked. "
+					"Đang bỏ qua rerun chunk trong full mode."
+				)
+			logging.info("Step %d: Generating Qwen TTS audio: %s", burn_step + 1, tts_audio_path)
+			if tts_mode == "simple":
+				synthesize_simple_tts_audio(
+					segments=segments,
+					audio_out=tts_audio_path,
+					tts_model_name=tts_model,
+					tts_language=tts_language,
+					tts_speaker=tts_speaker,
+					tts_instruct=tts_instruct,
+					device=device,
+					attn_implementation=tts_attn_implementation,
+				)
+			else:
+				synthesize_timed_tts_audio(
+					segments=segments,
+					audio_out=tts_audio_path,
+					video_path=video_path,
+					tts_model_name=tts_model,
+					tts_language=tts_language,
+					tts_speaker=tts_speaker,
+					tts_instruct=tts_instruct,
+					device=device,
+					attn_implementation=tts_attn_implementation,
+				)
+
+		if split_tts_audio:
+			logging.info(
+				"Step %d: Splitting full TTS audio into %d-minute review chunks: %s",
+				burn_step + 2,
+				tts_chunk_minutes,
+				tts_chunks_dir,
+			)
+			split_audio_into_chunks(
+				audio_in=tts_audio_path,
+				output_dir=tts_chunks_dir,
+				chunk_minutes=tts_chunk_minutes,
+				overwrite=True,
 			)
 
-	logging.info("Step %d: Muxing TTS audio into video: %s", burn_step + 2, final_tts_output_path)
+	mux_step = burn_step + 2
+	logging.info("Step %d: Muxing TTS audio into video: %s", mux_step, final_tts_output_path)
 	if audio_mode == "mix":
 		mux_audio_into_video_mix(subtitled_output_path, tts_audio_path, final_tts_output_path)
 	else:
@@ -1158,7 +1568,19 @@ def parse_args() -> argparse.Namespace:
 		"--tts-mode",
 		choices=["timed", "simple"],
 		default="timed",
-		help="timed = place each TTS line at subtitle timestamp; simple = one continuous voice-over.",
+		help="Used only in full TTS generation mode. timed = place each TTS line at subtitle timestamp; simple = one continuous voice-over.",
+	)
+	parser.add_argument(
+		"--tts-generation-mode",
+		choices=["chunked", "full"],
+		default="chunked",
+		help="chunked = generate fixed 5-minute TTS chunks and rebuild full audio; full = old behavior, generate one full WAV first.",
+	)
+	parser.add_argument(
+		"--rerun-tts-chunk",
+		type=int,
+		default=None,
+		help="Regenerate only one TTS chunk by index, e.g. 3. Works with --tts-generation-mode chunked.",
 	)
 	parser.add_argument(
 		"--tts-model",
@@ -1172,12 +1594,17 @@ def parse_args() -> argparse.Namespace:
 	)
 	parser.add_argument(
 		"--tts-speaker",
-		default="Ryan",
+		default="Aiden",
 		help="Qwen CustomVoice speaker. Examples: Ryan, Aiden, Vivian, Serena.",
 	)
 	parser.add_argument(
 		"--tts-instruct",
-		default="Speak clearly and naturally.",
+		default=(
+			"Speak clearly and professionally in a calm teaching voice. "
+			"Use a steady medium pace and neutral tone. "
+			"Do not laugh, act, dramatize, or add emotions. "
+			"Read the text exactly."
+		),
 		help="Natural language instruction for the TTS voice style.",
 	)
 	parser.add_argument(
@@ -1191,6 +1618,23 @@ def parse_args() -> argparse.Namespace:
 		choices=["replace", "mix"],
 		default="replace",
 		help="replace = replace original audio with TTS; mix = mix original audio and TTS.",
+	)
+	parser.add_argument(
+		"--no-split-tts-audio",
+		action="store_true",
+		help="Do not split the generated TTS WAV into review chunks. By default, TTS WAV is split into 5-minute chunks when --enable-tts is used.",
+	)
+	parser.add_argument(
+		"--tts-chunk-minutes",
+		type=int,
+		default=5,
+		help="Chunk length in minutes for generated TTS WAV review files. Default: 5.",
+	)
+	parser.add_argument(
+		"--tts-max-speedup",
+		type=float,
+		default=1.15,
+		help="Maximum speed-up ratio used to fit a TTS sentence into its timing slot. Default: 1.15.",
 	)
 
 	return parser.parse_args()
@@ -1229,6 +1673,13 @@ def main() -> None:
 			"Nên dùng --task translate để tạo subtitle tiếng Anh rồi TTS tiếng Anh."
 		)
 
+	if args.tts_chunk_minutes <= 0:
+		raise ValueError("--tts-chunk-minutes phải lớn hơn 0.")
+	if args.rerun_tts_chunk is not None and args.rerun_tts_chunk < 0:
+		raise ValueError("--rerun-tts-chunk phải >= 0.")
+	if args.tts_max_speedup < 1.0:
+		raise ValueError("--tts-max-speedup phải >= 1.0.")
+
 	videos = find_videos(paths.input_dir, args.video)
 	logging.info("Found %d video(s).", len(videos))
 
@@ -1249,12 +1700,17 @@ def main() -> None:
 				enable_tts=args.enable_tts,
 				overwrite_tts=args.overwrite_tts,
 				tts_mode=args.tts_mode,
+				tts_generation_mode=args.tts_generation_mode,
+				rerun_tts_chunk=args.rerun_tts_chunk,
 				tts_model=args.tts_model,
 				tts_language=args.tts_language,
 				tts_speaker=args.tts_speaker,
 				tts_instruct=args.tts_instruct,
 				tts_attn_implementation=args.tts_attn_implementation,
 				audio_mode=args.audio_mode,
+				split_tts_audio=args.enable_tts and not args.no_split_tts_audio,
+				tts_chunk_minutes=args.tts_chunk_minutes,
+				tts_max_speedup=args.tts_max_speedup,
 			)
 		except Exception as exc:
 			logging.exception("Failed: %s | Error: %s", video_path.name, exc)
