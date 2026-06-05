@@ -199,24 +199,16 @@ And the next one is the database path
 Just like the previous step
 
 53
-00:04:57,000 --> 00:05:03,000
+00:04:57,000 --> 00:05:05,000
 I will also input the data of the folder containing the database
 
 54
-00:05:03,000 --> 00:05:10,000
+00:05:05,000 --> 00:05:10,000
 Here, then I will click Auto define object here
 
 55
-00:05:10,000 --> 00:05:11,000
-In the process of running
-
-56
-00:05:11,000 --> 00:05:13,000
-I can
-
-57
-00:05:13,000 --> 00:05:15,000
-follow the information directly
+00:05:10,000 --> 00:05:15,000
+While the tool is running, we can see the detailed information
 
 58
 00:05:15,000 --> 00:05:19,000
@@ -228,7 +220,7 @@ There is a Terminal window that will appear
 
 60
 00:05:22,000 --> 00:05:25,000
-and will show the information
+and will show the detailed information
 
 61
 00:05:25,000 --> 00:05:28,000
@@ -344,7 +336,7 @@ Test Workspace folder of the item,
 
 89
 00:13:03,360 --> 00:13:08,360
-we will see that there is a Cantata folder in the Output folder.
+there is a Cantata folder in the Output folder.
 
 90
 00:13:10,360 --> 00:13:12,360
@@ -383,11 +375,11 @@ We will create a project in Cantata.
 C Project.
 
 99
-00:13:53,360 --> 00:13:54,360
+00:13:53,360 --> 00:13:56,360
 We will name the project,
 
 100
-00:13:54,360 --> 00:13:58,360
+00:13:56,360 --> 00:13:59,360
 like the Item name
 
 101

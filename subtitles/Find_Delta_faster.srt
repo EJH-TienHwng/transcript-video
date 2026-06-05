@@ -103,12 +103,12 @@ The second part is the database path.
 This is the path of the folder that contains the database.
 
 27
-00:02:32,000 --> 00:02:35,000
-Whether loading using Snapshot or Stream using SharCC tool,
+00:02:32,000 --> 00:02:36,000
+Whether loading using Snapshot or Stream
 
 28
-00:02:35,000 --> 00:02:38,000
-we will look at our local directory.
+00:02:36,000 --> 00:02:40,000
+to our local machine using the SharCC tool.
 
 29
 00:02:40,000 --> 00:02:43,000
@@ -124,11 +124,11 @@ I will copy this path and input it into the tool here.
 
 32
 00:02:51,000 --> 00:02:53,000
-Next, I will create a folder.
+Next, I will create a folder here,
 
 33
 00:02:53,000 --> 00:02:56,000
-Here, I will create the "WorkSpace_1" folder.
+and named it "WorkSpace_1".
 
 34
 00:02:56,000 --> 00:02:59,000
@@ -136,7 +136,7 @@ This folder will contain the files
 
 35
 00:02:59,000 --> 00:03:03,000
-and documents generated during the tool's process.
+and documents generated during the tool's running process.
 
 36
 00:03:05,000 --> 00:03:09,000
@@ -199,11 +199,11 @@ Next, I will adjust the parallel threads.
 Here, I will have a maximum of 8 threads.
 
 51
-00:04:09,000 --> 00:04:11,000
+00:04:09,000 --> 00:04:12,000
 By choosing the corresponding number,
 
 52
-00:04:11,000 --> 00:04:16,000
+00:04:12,000 --> 00:04:17,000
 We can help this tool process faster.
 
 53
@@ -236,7 +236,7 @@ Here I have 3 types of modules:
 
 60
 00:04:56,000 --> 00:05:00,000
-I will have Old, Old and no code, and New.
+They are: Old, Old and no code, and New.
 
 61
 00:05:00,000 --> 00:05:03,000
@@ -251,20 +251,20 @@ Relative to New, Old, and NoCode,
 The number 28 corresponds to New,
 
 64
-00:05:08,000 --> 00:05:11,000
+00:05:08,000 --> 00:05:12,000
 16 is Old, and 8 is NoCode.
 
 65
-00:05:11,000 --> 00:05:14,000
+00:05:12,000 --> 00:05:15,000
 I can observe the running process of the tool.
 
 66
-00:05:14,000 --> 00:05:22,000
+00:05:15,000 --> 00:05:22,000
 I can open the Terminal here.
 
 67
 00:05:22,000 --> 00:05:28,000
-To make it easier to observe, I can split the screen into 2 parts.
+To make it easier to observe, I will split the screen into 2 parts.
 
 68
 00:05:28,000 --> 00:05:33,000
@@ -299,23 +299,19 @@ Old modules,
 and the rest are Old and no code.
 
 76
-00:06:04,000 --> 00:06:11,000
-The "New" type here refers to the modules
-
-77
-00:06:11,000 --> 00:06:18,000
-that do not have test scripts in the database
+00:06:04,000 --> 00:06:16,000
+The "New" type here refers to the modules that do not have test scripts in the database
 
 78
-00:06:18,000 --> 00:06:22,000
+00:06:16,000 --> 00:06:20,000
 that we loaded from the Stream.
 
 79
-00:06:22,000 --> 00:06:26,000
+00:06:20,000 --> 00:06:24,000
 And the "Old" modules here are the ones that have test scripts
 
 80
-00:06:26,000 --> 00:06:28,000
+00:06:24,000 --> 00:06:28,000
 and have been tested in the previous version.
 
 81
@@ -427,12 +423,8 @@ The second is Failed.
 When we check the results,
 
 108
-00:09:38,440 --> 00:09:44,440
-we will see the successful modules with C0, C1, and MCDC coverage at 100%.
-
-109
-00:09:44,440 --> 00:09:45,440
-This one.
+00:09:38,440 --> 00:09:45,440
+we will see the successful modules with C0, C1, and MCDC coverage at 100% here.
 
 110
 00:09:45,440 --> 00:09:50,940
