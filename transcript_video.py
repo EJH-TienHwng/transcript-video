@@ -1832,3 +1832,7 @@ def main() -> None:
 
 if __name__ == "__main__":
 	main()
+
+
+
+# python transcript_video.py --video "Report.mp4" --model "C:\Users\AHG5HC\.faster-whisper-large-v3" --task translate --language vi --enable-tts --tts-model "C:\Users\AHG5HC\Documents\Code\transcript_video_eng\model\Qwen3-TTS-12Hz-1.7B-CustomVoice" --tts-language English --tts-speaker Aiden --tts-generation-mode chunked --audio-mode replace --tts-attn-implementation sdpa --rerun-tts-chunk 3

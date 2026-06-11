@@ -23,3 +23,7 @@ Now, I will input all the completed test script sources into the SharePoint's te
 I will use a Module List file.
 
 Note: Module lib ?
+
+
+4:30 
+So I'll choose the maximum value of 8 here

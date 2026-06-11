@@ -1,0 +1,1004 @@
+1
+00:00:00,000 --> 00:00:06,000
+Hello everyone. In this video, we will implement UT with Kanata.
+
+2
+00:00:06,000 --> 00:00:12,000
+First, we will have the list of modules that need to implement UT with Kanata.
+
+3
+00:00:12,000 --> 00:00:18,000
+In this video, we will implement UT for the first module.
+
+4
+00:00:18,000 --> 00:00:26,000
+Before implementing UT for Kanata, we will provide the database files.
+
+5
+00:00:26,000 --> 00:00:37,000
+There will be a header folder in this database. It will hold all header files that could be used in the FACI.
+
+6
+00:00:37,000 --> 00:00:44,000
+Besides, all Kanata left blocks will be there.
+
+7
+00:00:44,000 --> 00:00:55,000
+At this time, we can only copy the header file and Kanata file at the same time we need to implement UT.
+
+8
+00:00:55,000 --> 00:00:56,000
+For example, in OpenS preached C Lane, the file directly defined by Uogl is the error value.
+
+9
+00:00:56,000 --> 00:01:06,000
+In this video, I will use UT008, then I will copy TSD and UT008 to my Workspace
+
+10
+00:01:06,000 --> 00:01:15,000
+After copying to my Workspace, I will open Canata
+
+11
+00:01:26,000 --> 00:01:45,000
+After opening Canata, we will change it to C++
+
+12
+00:01:45,000 --> 00:01:55,000
+Then we will open two folders, header and UT folder
+
+13
+00:01:55,000 --> 00:01:56,000
+I will copy to my Workspace
+
+14
+00:01:56,000 --> 00:02:01,000
+Then I will change to C++
+
+15
+00:02:01,000 --> 00:02:07,000
+After un-copy and UPLOAD, we will come to work space
+
+16
+00:02:07,000 --> 00:02:12,000
+Then we are done
+
+17
+00:02:26,000 --> 00:02:31,000
+Go to your computer and try out the new mode
+
+18
+00:02:31,000 --> 00:02:36,000
+To remove the play button, just know that the play button is going to be locked
+
+19
+00:02:36,000 --> 00:02:41,000
+Select the play button for the player
+
+20
+00:02:41,000 --> 00:02:46,000
+Select the play button
+
+21
+00:02:46,000 --> 00:02:51,000
+To remove the play button, just know that the play button is going to be locked
+
+22
+00:02:51,000 --> 00:02:56,000
+It is a refolder, but I can delete it and do it again
+
+23
+00:02:59,000 --> 00:03:02,000
+First I will do release
+
+24
+00:03:03,000 --> 00:03:09,000
+I will select the file that I want to do, then select release
+
+25
+00:03:09,000 --> 00:03:25,000
+When the control panel appears, the line has WinManArc16, it means that my release is inside
+
+26
+00:03:26,000 --> 00:03:32,000
+Now I can create a test case for this C file
+
+27
+00:03:33,000 --> 00:03:38,000
+I can type the name of the C file, then click on the test case
+
+28
+00:03:39,000 --> 00:03:55,000
+The name of the test case will usually start with A test, then the name of the PC
+
+29
+00:03:56,000 --> 00:04:01,000
+Next, I will choose the COVID rule, which is Reboot on Equip
+
+30
+00:04:02,000 --> 00:04:08,000
+At this time, it will reboot all the values ​​such as C0, C1, C1C
+
+31
+00:04:09,000 --> 00:04:12,000
+I will choose Finish
+
+32
+00:04:17,000 --> 00:04:19,000
+Then I choose Test Case
+
+33
+00:04:20,000 --> 00:04:23,000
+On this side, Canada has not created a test case yet
+
+34
+00:04:24,000 --> 00:04:27,000
+I will create a test case for this module
+
+35
+00:04:32,000 --> 00:04:38,000
+Here I will create a test case for the first function, which is this function
+
+36
+00:04:40,000 --> 00:04:46,000
+Copy the function and select this function
+
+37
+00:04:49,000 --> 00:04:53,000
+This is a test case model, it will have the name of the test case
+
+38
+00:04:54,000 --> 00:05:00,000
+Where it is used to attach the value of global variables
+
+39
+00:05:01,000 --> 00:05:02,000
+Input variables
+
+40
+00:05:03,000 --> 00:05:04,000
+And
+
+41
+00:05:05,000 --> 00:05:07,000
+It will be the place where
+
+42
+00:05:07,000 --> 00:05:14,000
+I attach the value of global variables after it has been calculated
+
+43
+00:05:15,000 --> 00:05:20,000
+Next is the test case's Deprivation
+
+44
+00:05:21,000 --> 00:05:25,000
+When I go to which part, I can click here
+
+45
+00:05:26,000 --> 00:05:28,000
+Next is Inspector Call
+
+46
+00:05:29,000 --> 00:05:36,000
+For UT, I will set the code line for a single C module
+
+47
+00:05:36,000 --> 00:05:41,000
+So there are functions that will be executed in other modules
+
+48
+00:05:41,000 --> 00:05:44,000
+So here I will do stop for these functions
+
+49
+00:05:44,000 --> 00:05:47,000
+And do not run the code
+
+50
+00:05:47,000 --> 00:05:50,000
+Actually for the top functions
+
+51
+00:05:50,000 --> 00:05:53,000
+So here it will have all the
+
+52
+00:06:01,000 --> 00:06:05,000
+Next is the F function that I should call to
+
+53
+00:06:05,000 --> 00:06:07,000
+And finally is the check function
+
+54
+00:06:07,000 --> 00:06:12,000
+With this check function, it will check all the global variables in the FACI report
+
+55
+00:06:12,000 --> 00:06:14,000
+Including the static variables
+
+56
+00:06:27,000 --> 00:06:30,000
+Return from the value of this function
+
+57
+00:06:30,000 --> 00:06:33,000
+And this function I can
+
+58
+00:06:33,000 --> 00:06:35,000
+Actually stop it
+
+59
+00:06:35,000 --> 00:06:40,000
+So the stop work will be done at the bottom of the test case
+
+60
+00:06:40,000 --> 00:06:43,000
+I can search for the name of the function here
+
+61
+00:06:44,000 --> 00:06:45,000
+And
+
+62
+00:06:45,000 --> 00:06:48,000
+This function will have the value of Win8
+
+63
+00:06:48,000 --> 00:06:49,000
+So
+
+64
+00:06:50,000 --> 00:06:51,000
+To
+
+65
+00:06:51,000 --> 00:06:52,000
+I will do this
+
+66
+00:06:52,000 --> 00:06:58,000
+This condition while the return value of this function will be 1
+
+67
+00:06:59,000 --> 00:07:01,000
+And I can stop the value
+
+68
+00:07:01,000 --> 00:07:02,000
+For the next
+
+69
+00:07:03,000 --> 00:07:08,000
+This is the name of the function
+
+70
+00:07:08,000 --> 00:07:11,000
+That I can call it
+
+71
+00:07:11,000 --> 00:07:16,000
+When I call it, it will have the value of Win8
+
+72
+00:07:16,000 --> 00:07:17,000
+Win8
+
+73
+00:07:17,000 --> 00:07:18,000
+Win8
+
+74
+00:07:18,000 --> 00:07:19,000
+Win8
+
+75
+00:07:19,000 --> 00:07:20,000
+Win8
+
+76
+00:07:20,000 --> 00:07:21,000
+Win8
+
+77
+00:07:21,000 --> 00:07:22,000
+Win8
+
+78
+00:07:22,000 --> 00:07:23,000
+Win8
+
+79
+00:07:23,000 --> 00:07:24,000
+Win8
+
+80
+00:07:24,000 --> 00:07:25,000
+Win8
+
+81
+00:07:25,000 --> 00:07:26,000
+Win8
+
+82
+00:07:26,000 --> 00:07:27,000
+Win8
+
+83
+00:07:27,000 --> 00:07:28,000
+Win8
+
+84
+00:07:28,000 --> 00:07:29,000
+Win8
+
+85
+00:07:29,000 --> 00:07:30,000
+Win8
+
+86
+00:07:30,000 --> 00:07:31,000
+Win8
+
+87
+00:07:31,000 --> 00:07:32,000
+Win8
+
+88
+00:07:32,000 --> 00:07:33,000
+Win8
+
+89
+00:07:33,000 --> 00:07:34,000
+Win8
+
+90
+00:07:34,000 --> 00:07:35,000
+Win8
+
+91
+00:07:35,000 --> 00:07:36,000
+Win8
+
+92
+00:07:36,000 --> 00:07:37,000
+Win8
+
+93
+00:07:37,000 --> 00:07:38,000
+Win8
+
+94
+00:07:38,000 --> 00:07:39,000
+Win8
+
+95
+00:07:39,000 --> 00:07:40,000
+Win8
+
+96
+00:07:40,000 --> 00:07:41,000
+Win8
+
+97
+00:07:41,000 --> 00:07:42,000
+Win8
+
+98
+00:07:42,000 --> 00:07:43,000
+Win8
+
+99
+00:07:43,000 --> 00:07:44,000
+Win8
+
+100
+00:07:44,000 --> 00:07:45,000
+Win8
+
+101
+00:07:45,000 --> 00:07:46,000
+Win8
+
+102
+00:07:46,000 --> 00:07:47,000
+Win8
+
+103
+00:07:47,000 --> 00:07:48,000
+Win8
+
+104
+00:07:48,000 --> 00:07:49,000
+Win8
+
+105
+00:07:49,000 --> 00:07:50,000
+Win8
+
+106
+00:07:50,000 --> 00:07:51,000
+Win8
+
+107
+00:07:51,000 --> 00:07:52,000
+Win8
+
+108
+00:07:52,000 --> 00:07:53,000
+Win8
+
+109
+00:07:53,000 --> 00:07:54,000
+Win8
+
+110
+00:07:54,000 --> 00:07:55,000
+Win8
+
+111
+00:07:55,000 --> 00:07:56,000
+Win8
+
+112
+00:07:56,000 --> 00:07:57,000
+Win8
+
+113
+00:07:57,000 --> 00:07:58,000
+Win8
+
+114
+00:07:58,000 --> 00:07:59,000
+Win8
+
+115
+00:07:59,000 --> 00:08:00,000
+Win8
+
+116
+00:08:00,000 --> 00:08:01,000
+Win8
+
+117
+00:08:01,000 --> 00:08:02,000
+Win8
+
+118
+00:08:02,000 --> 00:08:04,220
+2sc to this condition
+
+119
+00:08:04,780 --> 00:08:08,780
+After 2sc, it will continue to run to this line
+
+120
+00:08:09,840 --> 00:08:12,600
+Now it meets a return line
+
+121
+00:08:21,660 --> 00:08:24,200
+This return line will have the word
+
+122
+00:08:25,740 --> 00:08:27,800
+Enum, so we can
+
+123
+00:08:28,780 --> 00:08:31,860
+Create a stop return for it
+
+124
+00:08:32,420 --> 00:08:33,300
+then
+
+125
+00:08:34,660 --> 00:08:50,140
+In the same way
+
+126
+00:08:50,520 --> 00:08:54,180
+Next, there is the static
+
+127
+00:08:54,180 --> 00:08:58,600
+It will be valued at this end
+
+128
+00:08:59,340 --> 00:09:01,760
+In this line, we can also stop
+
+129
+00:09:01,760 --> 00:09:07,760
+This is a bool that can store values ​​back to it
+
+130
+00:09:07,760 --> 00:09:09,760
+Do or False
+
+131
+00:09:09,760 --> 00:09:13,760
+We can create two values ​​back
+
+132
+00:09:13,760 --> 00:09:17,760
+One is true, the other is false
+
+133
+00:09:17,760 --> 00:09:25,760
+In this case, we can add values ​​back to it
+
+134
+00:09:25,760 --> 00:09:41,760
+It also contains the above values ​​stops
+
+135
+00:09:41,760 --> 00:09:51,760
+This line has a shape value that we can stop according to the false set
+
+136
+00:09:51,760 --> 00:09:54,760
+Because in this set, we need to call the TrueScale of this line
+
+137
+00:09:54,760 --> 00:09:55,760
+We need to call the TrueScale of this line
+
+138
+00:09:55,760 --> 00:10:00,760
+I will give the value of its value as true
+
+139
+00:10:08,760 --> 00:10:16,760
+In the next step, the value of this static object is again reduced by the value of its value
+
+140
+00:10:17,760 --> 00:10:20,760
+Just like that
+
+141
+00:10:20,760 --> 00:10:24,760
+I will do the same for the value of its value
+
+142
+00:10:26,760 --> 00:10:29,760
+And the name of this object
+
+143
+00:10:32,760 --> 00:10:36,760
+I have set the value of this object by true
+
+144
+00:10:36,760 --> 00:10:39,760
+And the value of this object is reduced by the value of its value
+
+145
+00:10:39,760 --> 00:10:42,760
+It is now in the true state of this object
+
+146
+00:10:50,760 --> 00:10:54,760
+At this time, it will perform
+
+147
+00:10:54,760 --> 00:10:56,760
+According to the true state of the condition
+
+148
+00:10:56,760 --> 00:11:00,760
+It will perform call to this function
+
+149
+00:11:01,760 --> 00:11:05,760
+This function is an array, so it doesn't need any value
+
+150
+00:11:05,760 --> 00:11:07,760
+I just need to check it
+
+151
+00:11:07,760 --> 00:11:09,760
+Call to is OK
+
+152
+00:11:20,760 --> 00:11:29,760
+And the value of this object will be reattached by the value of the answer value of this object
+
+153
+00:11:32,760 --> 00:11:35,760
+I will also set this object as an array
+
+154
+00:11:35,760 --> 00:11:38,760
+Its return value will be true or false
+
+155
+00:11:45,760 --> 00:11:47,760
+I will introduce it as true
+
+156
+00:11:50,760 --> 00:11:54,760
+Then, the return value of the variable
+
+157
+00:11:54,760 --> 00:11:57,760
+The return value of the variable false
+
+158
+00:11:57,760 --> 00:12:02,760
+So the condition below this is also completely released
+
+159
+00:12:05,760 --> 00:12:09,760
+That means this array will be called
+
+160
+00:12:14,760 --> 00:12:17,760
+I will now set this variable to true
+
+161
+00:12:17,760 --> 00:12:20,760
+And the value of this object is 0
+
+162
+00:12:50,760 --> 00:12:56,200
+Next, because it's already in the logic tool of this one, so it will form a post
+
+163
+00:12:56,200 --> 00:12:58,200
+I put it in this point
+
+164
+00:12:58,200 --> 00:13:03,400
+And finally, in this function, it will perform on this line
+
+165
+00:13:11,400 --> 00:13:17,800
+This line has a variable value
+
+166
+00:13:17,800 --> 00:13:20,040
+Then I have a variable value for it
+
+167
+00:13:20,040 --> 00:13:24,600
+The same way as the value of the stop section
+
+168
+00:13:36,520 --> 00:13:39,480
+Here I type the name of it
+
+169
+00:13:39,480 --> 00:13:46,200
+So when it gets to this point, I will also type its name
+
+170
+00:13:46,200 --> 00:13:47,240
+1
+
+171
+00:13:47,240 --> 00:13:47,640
+2
+
+172
+00:13:47,640 --> 00:13:47,720
+3
+
+173
+00:13:47,720 --> 00:13:57,720
+At this time, I can comment that I will call the true scale of this condition
+
+174
+00:13:57,720 --> 00:14:24,720
+I have completed all the inputs, commands, and test scales, then I will continue to convert all of them
+
+175
+00:14:24,720 --> 00:14:27,720
+First of all, I will convert all of them
+
+176
+00:14:27,720 --> 00:14:36,720
+Then it will return by the value of the stop-nand value
+
+177
+00:14:36,720 --> 00:14:41,720
+When I said that the value returned will be 1
+
+178
+00:14:41,720 --> 00:14:54,720
+So here I will expect it to be this value
+
+179
+00:14:54,720 --> 00:14:58,720
+This value means that the value returned is 1
+
+180
+00:14:58,720 --> 00:15:01,720
+Similarly, this is a static piece
+
+181
+00:15:01,720 --> 00:15:05,720
+So I will also set the value returned for it
+
+182
+00:15:05,720 --> 00:15:08,720
+This static piece is attached here
+
+183
+00:15:08,720 --> 00:15:12,720
+And attached here, I will get the final attachment of it
+
+184
+00:15:12,720 --> 00:15:16,720
+Then I returned the value for this stop as true
+
+185
+00:15:16,720 --> 00:15:21,720
+This means that the value of this piece after returning
+
+186
+00:15:21,720 --> 00:15:23,720
+It will be fixed as true
+
+187
+00:15:23,720 --> 00:15:24,720
+Then it will be false
+
+188
+00:15:24,720 --> 00:15:35,720
+Next is the test-interrupted variable
+
+189
+00:15:35,720 --> 00:15:40,720
+This variable will receive the value returned of this function
+
+190
+00:15:40,720 --> 00:15:44,720
+When I set the value returned for this function
+
+191
+00:15:44,720 --> 00:15:45,720
+It will be true
+
+192
+00:15:45,720 --> 00:15:49,720
+So the value returned of this variable will also be true
+
+193
+00:15:49,720 --> 00:16:09,720
+And finally, the value returned of this function
+
+194
+00:16:09,720 --> 00:16:11,720
+When calling this function
+
+195
+00:16:11,720 --> 00:16:16,720
+Its value will be set by the value of the stop-nand value
+
+196
+00:16:16,720 --> 00:16:18,720
+And when I set the value for it by 1
+
+197
+00:16:18,720 --> 00:16:22,720
+Then at this time, the value returned of this variable will also be true
+
+198
+00:16:22,720 --> 00:16:38,720
+So all the static and global variables are normal
+
+199
+00:16:38,720 --> 00:16:40,720
+The value returned value has been checked
+
+200
+00:16:40,720 --> 00:16:45,720
+At this time you can run your Test-key
+
+201
+00:16:45,720 --> 00:16:47,720
+To see the result like that
+
+202
+00:16:47,720 --> 00:16:51,720
+I will choose Run Code
+
+203
+00:16:51,720 --> 00:16:57,720
+I choose the code that I want to test
+
+204
+00:16:57,720 --> 00:16:59,720
+I choose Test Game
+
+205
+00:16:59,720 --> 00:17:05,720
+I choose Test Game
+
+206
+00:17:05,720 --> 00:17:11,720
+I choose Test Game
+
+207
+00:17:11,720 --> 00:17:15,720
+I choose Test Game
+
+208
+00:17:15,720 --> 00:17:17,720
+I choose Test Game
+
+209
+00:17:27,720 --> 00:17:31,720
+In Console, I can check all of myヘープ
+
+210
+00:17:31,720 --> 00:17:33,720
+I can check all of myヘープ
+
+211
+00:17:33,720 --> 00:17:35,720
+That means, my japan trade is good
+
+212
+00:17:37,720 --> 00:17:39,720
+My foreign exchange ratio is good
+
+213
+00:17:39,720 --> 00:17:41,720
+Besides, I can't read
+
+214
+00:17:41,720 --> 00:17:43,720
+Besides, I can't read
+
+215
+00:17:43,720 --> 00:17:45,720
+Besides, I can't read
+
+216
+00:17:45,720 --> 00:17:51,720
+My test case has covered the conditions by CodeCoveredViewer
+
+217
+00:17:53,720 --> 00:17:59,720
+Here, according to my command, I will want to cover the tool case of this condition
+
+218
+00:18:00,720 --> 00:18:08,720
+So now, in this part, CodeCoveredViewer also shows that I have entered my tool case
+
+219
+00:18:08,720 --> 00:18:17,720
+Next, in CodeCoveredResult, I can also see
+
+220
+00:18:18,720 --> 00:18:25,720
+Here, it will display the total number of C0, C1, and I will use it to cover
+
+221
+00:18:38,720 --> 00:18:45,720
+And I will also show the total number of C0, C1, and I will use it to cover
+
+222
+00:18:46,720 --> 00:18:53,720
+And I will also show the total number of C0, C1, and I will use it to cover
+
+223
+00:18:54,720 --> 00:18:58,720
+Now, I will test my first test case to meet the purpose
+
+224
+00:18:59,720 --> 00:19:05,720
+Similarly, I will test my first test case for the whole function
+
+225
+00:19:06,720 --> 00:19:07,720
+as well as the test case for the second function
+
+226
+00:19:08,720 --> 00:19:11,720
+Let's have a look
+
+227
+00:19:29,720 --> 00:19:34,720
+Now, I will run my motherboard one more time
+
+228
+00:19:37,720 --> 00:19:38,720
+Let's have a look
+
+229
+00:19:38,720 --> 00:19:45,720
+As you can see, in CodeCoveredViewer, all the conditions are the same
+
+230
+00:19:49,720 --> 00:19:55,720
+And in CodeCoveredViewer, all the indexes have been set to 100%
+
+231
+00:19:55,720 --> 00:20:00,720
+Because I have done all the UT for this module
+
+232
+00:20:00,720 --> 00:20:12,720
+Then, I will choose my module to create a ZEN variable
+
+233
+00:20:12,720 --> 00:20:17,720
+In the variable, it will also show my indexes
+
+234
+00:20:17,720 --> 00:20:23,720
+For example, C0 is 100%, C1 is 100%, and CEC is also 100%
+
+235
+00:20:26,720 --> 00:20:29,720
+Now I have to load the folder
+
+236
+00:20:30,720 --> 00:20:36,720
+And if I want to create a ZEN variable, I can do it here
+
+237
+00:20:36,720 --> 00:20:44,720
+And I can check the result after creating the UT in CodeCoveredViewer
+
+238
+00:20:44,720 --> 00:20:47,720
+Result
+
+239
+00:20:47,720 --> 00:20:50,720
+Test Report
+
+240
+00:20:50,720 --> 00:20:57,720
+It will show the overall result of my code
+
+241
+00:20:57,720 --> 00:20:59,720
+Summary
+
+242
+00:20:59,720 --> 00:21:00,720
+Summary
+
+243
+00:21:00,720 --> 00:21:02,720
+And my test case is BatchFL
+
+244
+00:21:02,720 --> 00:21:04,720
+Here I will be Batch
+
+245
+00:21:04,720 --> 00:21:06,720
+My coverage will be 100%
+
+246
+00:21:06,720 --> 00:21:13,720
+And below it will also have a report for each test case
+
+247
+00:21:20,720 --> 00:21:23,720
+Next is Test Summary
+
+248
+00:21:23,720 --> 00:21:29,720
+Here my Test Summary overall result will also be Batch
+
+249
+00:21:29,720 --> 00:21:32,720
+And all the indexes will also be 100%
+
+250
+00:21:32,720 --> 00:21:40,720
+And now I have finished creating the UT with CodeCoveredViewer
+
+251
+00:21:40,720 --> 00:21:45,720
+Thank you for watching
+
