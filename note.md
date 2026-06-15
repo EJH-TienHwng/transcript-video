@@ -27,3 +27,25 @@ Note: Module lib ?
 
 4:30 
 So I'll choose the maximum value of 8 here
+
+
+UT Cantata Demo
+
+24
+00:03:03,000 --> 00:03:09,000
+I will select the file that I want to do, then select release
+
+ASP là gì ?
+
+3:30 -> 3:40 không nghe được
+
+
+29
+00:05:31,300 --> 00:05:54,750
+I will also update the corresponding CRP links. Then I will clear the formula and paste it back as values so it matches the validated status.
+
+30
+00:05:54,750 --> 00:07:03,740
+Okay. I will double-check the modules and remove the unnecessary columns. I also need to make sure that the related comments are still correct.
+
+dòng 30 kh có nói nhưng lại có dịch

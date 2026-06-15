@@ -15,8 +15,8 @@ Basic usage:
 	python transcript_video_tts_complete.py
 	python transcript_video_tts_complete.py --video my_video.mp4
 
-Generate subtitles only, then burn subtitles:
-	python transcript_video_tts_complete.py --video my_video.mp4 --task translate --language vi
+Generate clean Vietnamese subtitles first, then send the SRT to an LLM for translation:
+	python transcript_video_tts_complete.py --video my_video.mp4 --task transcribe --language vi --skip-burn
 
 Generate subtitles + Qwen TTS audio + final video with TTS audio:
 	python transcript_video_tts_complete.py --video my_video.mp4 --task translate --language vi --enable-tts
@@ -163,9 +163,155 @@ def parse_srt_timestamp(timestamp: str) -> float:
 	)
 
 
+# =========================
+# Hallucination filtering
+# =========================
+
+BAD_PHRASES = [
+	# Common Whisper hallucinations / subtitle credits / outros
+	"subtitles by the amara.org community",
+	"subtitle by the amara.org community",
+	"subtitles by amara.org community",
+	"amara.org community",
+
+	"subscribe to la la school",
+	"please subscribe to la la school",
+	"la la school channel",
+
+	"thanks for watching",
+	"thank you for watching",
+	"see you next time",
+
+	# Vietnamese-style outro hallucinations
+	"cảm ơn các bạn đã theo dõi",
+	"cảm ơn bạn đã theo dõi",
+	"hẹn gặp lại",
+	"đừng quên đăng ký kênh",
+	"nhớ đăng ký kênh",
+]
+
+
+def normalize_text_for_filter(text: str) -> str:
+	"""Normalize text for hallucination filtering."""
+	text = text.strip().lower()
+	text = re.sub(r"\s+", " ", text)
+	text = re.sub(r"[^\w\sÀ-ỹ]", "", text)
+	return text
+
+
+def is_bad_hallucination_text(text: str) -> bool:
+	"""Remove known hallucinated outro/subtitle-credit phrases."""
+	normalized = normalize_text_for_filter(text)
+
+	if not normalized:
+		return True
+
+	for phrase in BAD_PHRASES:
+		phrase_norm = normalize_text_for_filter(phrase)
+		if phrase_norm and phrase_norm in normalized:
+			return True
+
+	return False
+
+
+def remove_repeated_hallucination_segments(
+	segments: Iterable[SubtitleSegment],
+	max_same_text_count: int = 3,
+	short_segment_seconds: float = 4.0,
+) -> List[SubtitleSegment]:
+	"""Remove suspicious repeated short subtitle segments."""
+	cleaned: List[SubtitleSegment] = []
+	repeat_count_by_text = {}
+
+	for segment in segments:
+		text = (segment.text or "").strip()
+		normalized = normalize_text_for_filter(text)
+		duration = max(0.0, segment.end - segment.start)
+
+		if not normalized:
+			continue
+
+		repeat_count_by_text[normalized] = repeat_count_by_text.get(normalized, 0) + 1
+
+		is_short = duration <= short_segment_seconds
+		repeated_too_many = repeat_count_by_text[normalized] > max_same_text_count
+
+		if is_short and repeated_too_many:
+			logging.warning(
+				"Removed repeated hallucination: %.2f --> %.2f | %s",
+				segment.start,
+				segment.end,
+				text,
+			)
+			continue
+
+		cleaned.append(segment)
+
+	return cleaned
+
+
+def fix_too_short_or_invalid_timing(segments: Iterable[SubtitleSegment]) -> List[SubtitleSegment]:
+	"""Drop invalid timestamp segments and keep SRT timing safe."""
+	cleaned: List[SubtitleSegment] = []
+	last_end = 0.0
+
+	for segment in sorted(segments, key=lambda item: item.start):
+		if segment.end <= segment.start:
+			logging.warning(
+				"Removed invalid timing: %.2f --> %.2f | %s",
+				segment.start,
+				segment.end,
+				segment.text,
+			)
+			continue
+
+		# Avoid backward/overlapping timestamps caused by bad decoding.
+		start = max(segment.start, last_end)
+		end = max(segment.end, start + 0.2)
+		last_end = end
+
+		cleaned.append(SubtitleSegment(start=start, end=end, text=segment.text))
+
+	return cleaned
+
+
+def post_process_segments(segments: Iterable[SubtitleSegment]) -> List[SubtitleSegment]:
+	"""Main subtitle post-processing pipeline."""
+	filtered: List[SubtitleSegment] = []
+
+	for segment in segments:
+		text = (segment.text or "").strip()
+
+		if not text:
+			continue
+
+		if is_bad_hallucination_text(text):
+			logging.warning(
+				"Removed known hallucination: %.2f --> %.2f | %s",
+				segment.start,
+				segment.end,
+				text,
+			)
+			continue
+
+		filtered.append(
+			SubtitleSegment(
+				start=segment.start,
+				end=segment.end,
+				text=text,
+			)
+		)
+
+	filtered = remove_repeated_hallucination_segments(filtered)
+	filtered = fix_too_short_or_invalid_timing(filtered)
+
+	return filtered
+
+
 def write_srt(segments: Iterable[SubtitleSegment], srt_path: Path) -> None:
-	"""Write subtitle segments to an .srt file."""
+	"""Write subtitle segments to an .srt file after hallucination filtering."""
 	srt_path.parent.mkdir(parents=True, exist_ok=True)
+	segments = post_process_segments(segments)
 
 	with srt_path.open("w", encoding="utf-8") as file:
 		index = 1
@@ -509,6 +655,22 @@ def transcribe_with_faster_whisper(
 		task=task,
 		language=language,
 		beam_size=5,
+
+		# Anti-hallucination settings:
+		# 1) Do not let a hallucinated previous segment affect the next segment.
+		condition_on_previous_text=False,
+
+		# 2) VAD removes silent/non-speech parts before Whisper decoding.
+		vad_filter=True,
+		vad_parameters=dict(
+			min_silence_duration_ms=500,
+			speech_pad_ms=300,
+		),
+
+		# 3) Conservative thresholds to reduce false speech in silent/noisy regions.
+		no_speech_threshold=0.6,
+		compression_ratio_threshold=2.4,
+		log_prob_threshold=-1.0,
 	)
 
 	return [SubtitleSegment(s.start, s.end, s.text or "") for s in segments]
@@ -1622,8 +1784,8 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument(
 		"--task",
 		choices=["translate", "transcribe"],
-		default="translate",
-		help="translate = output English subtitles, transcribe = keep original language.",
+		default="transcribe",
+		help="transcribe = keep original language. Use this first for Vietnamese SRT. translate = output English subtitles directly.",
 	)
 	parser.add_argument(
 		"--language",
