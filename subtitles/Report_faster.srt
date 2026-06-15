@@ -70,235 +70,234 @@ Okay.
 00:03:00,170 --> 00:03:40,000
 I will apply for MT_Concat, MT_Needed as well as the Tester_Command column.
 
-21
+19
 00:03:43,420 --> 00:03:51,080
 I will apply it to all rows.
 
-22
+20
 00:03:58,080 --> 00:04:10,630
 I will filter the MT_Needed column.
 
-23
+21
 00:04:10,630 --> 00:04:18,220
 Then I will put Responsible here.
 
-24
+22
 00:04:18,220 --> 00:04:35,580
 These are the modules that have been tested and validated in this batch, with a total of 63 items.
 
-25
+23
 00:04:35,580 --> 00:04:45,450
 However, there are still some undefined modules here, and the tester has commented that these modules were
 
-26
+24
 00:04:45,450 --> 00:04:55,570
 already tested but item changed the check-in date. I will check whether there are any comments here.
 
-27
+25
 00:04:55,570 --> 00:05:04,810
 For example, this module was initially estimated and analyzed as a test module.
 
-28
+26
 00:05:04,810 --> 00:05:31,300
 However, when testing, the tester checked it again and confirmed that it is a valid module. So I will change this to Valid.
 
-29
+27
 00:05:31,300 --> 00:05:54,750
 I will also update the corresponding CRP links. Then I will clear the formula and paste it back as values so it matches the validated status.
 
-30
+28
 00:05:54,750 --> 00:07:03,740
 Okay. I will double-check the modules and remove the unnecessary columns. I also need to make sure that the related comments are still correct.
 
-31
+29
 00:07:03,740 --> 00:07:12,460
 For modules with CRP comments like this, they are usually modules whose coverage is below 100%.
 
-32
+30
 00:07:12,460 --> 00:07:45,690
 I will find the reason for them and add the comment accordingly. Next, I will check the modules that were just tested or validated.
 
-33
+31
 00:07:45,690 --> 00:07:57,120
 For the remaining modules, I will check whether their files have any reason or comment.
 
-34
+32
 00:07:57,120 --> 00:08:10,000
 Since they were already tested by Cantata from the beginning, and I already searched for them during the analysis phase, I will just map them here.
 
-35
+33
 00:08:10,000 --> 00:08:21,470
 Okay, I will clear it and check one more time to see whether all undefined modules already had their reasons?
 
-37
+34
 00:08:21,470 --> 00:08:29,760
 Okay, for these test modules, I will also put them here.
 
-38
+35
 00:08:29,760 --> 00:08:44,880
 I will put the information here as Undefined.
 
-39
+36
 00:08:44,880 --> 00:09:24,240
 Okay. I will put all of the coverage information into the comment cell.
 
-40
+37
 00:09:24,240 --> 00:09:26,740
 For the modules that were changed check-in date.
 
-41
+38
 00:09:26,740 --> 00:09:31,790
 It doesn't have the validation, so the results are not shown here.
 
-42
+39
 00:09:31,790 --> 00:09:33,790
 They were tested here.
 
-43
+40
 00:09:33,790 --> 00:09:41,090
 So I will add the comment and search for the information.
 
-44
+41
 00:09:41,090 --> 00:10:09,280
 I already searched for it in another file, so I will use VLOOKUP to do it faster.
 
-45
+42
 00:10:09,280 --> 00:10:33,850
 Okay. Please check whether the information is complete.
 
-46
+43
 00:10:33,850 --> 00:10:48,070
 All the tested information is included, including the check-in date,
 
-47
+44
 00:10:48,070 --> 00:10:58,520
 the UT result, the related link, and the reason attached in the comment.
 
-48
+45
 00:10:58,520 --> 00:11:05,670
 Okay, I will check one more time to make sure all modules have their reasons.
 
-49
+46
 00:11:05,670 --> 00:11:30,200
 Okay, everything is complete. Next, I will check the passed modules whose coverage is below 100% and find the reason for them.
 
-50
+47
 00:11:30,200 --> 00:11:48,220
 Here, I will also use VLOOKUP to get the reason, based on the concat key, from the tested database file.
 
-51
+48
 00:11:48,220 --> 00:11:58,660
 I will check it here first.
 
-52
+49
 00:11:58,660 --> 00:12:01,960
 I will check these modules.
 
-53
+50
 00:12:01,960 --> 00:12:04,750
 Then I will
 
-54
+51
 00:12:04,750 --> 00:12:07,750
 filter the modules that already have a reason
 
-55
+52
 00:12:07,750 --> 00:12:17,440
 and make them equal to this column.
 
-56
+53
 00:12:17,440 --> 00:12:25,110
 For the cases that do not have a reason yet.
 
-58
+54
 00:12:25,110 --> 00:12:45,320
 Okay, I will try to VLOOKUP to to find as many reasons as possible.
 
-61
+55
 00:13:18,660 --> 00:13:26,100
 Similarly, I will check with C1.
 
-64
+56
 00:13:50,140 --> 00:13:54,300
 This is MT Executed, and it is quite old.
 
-65
+57
 00:13:54,300 --> 00:14:07,790
 Also, the origin and entity are from another team, so we don't need to care about it when there is no reason.
 
-69
+58
 00:14:07,790 --> 00:14:11,440
 I will check it again one more time.
 
-70
+59
 00:14:14,440 --> 00:14:21,570
 For the remaining reasons,
 
-71
+60
 00:14:21,570 --> 00:14:27,110
 we can see that some reasons look unusual.
 
-72
+61
 00:14:27,110 --> 00:14:29,460
 For those cases,
 
-73
+62
 00:14:29,460 --> 00:14:36,930
 we will remove them from the comment.
 
-
-74
+63
 00:14:36,930 --> 00:14:47,040
 There are only a few Vietnamese owners here.
 
-75
+64
 00:14:47,040 --> 00:14:57,940
 But it is quite old, so we can skip it.
 
-76
+65
 00:14:57,940 --> 00:15:03,180
 I will check it again.
 
-78
+66
 00:15:09,270 --> 00:15:14,170
 I will check whether there are any comments for Not Applicable. No, there are none.
 
-79
+67
 00:15:14,170 --> 00:15:20,740
 For the Undefined column, all reasons are already complete.
 
-80
+68
 00:15:20,740 --> 00:15:26,510
 Next is the Pass below 100% column.
 
-81
+69
 00:15:26,510 --> 00:15:37,070
 It seems to be complete as well.
 
-82
+70
 00:15:37,070 --> 00:15:47,260
 Okay. I will paste it back as values.
 
-83
+71
 00:15:47,260 --> 00:15:51,760
 Then I will delete the unnecessary columns.
 
-84
+72
 00:15:51,760 --> 00:15:53,460
 I will keep only the columns
 
-85
+73
 00:15:53,460 --> 00:15:57,710
 Tester Comment, CRP Comment, and CRP Review Status.
 
-86
+74
 00:15:57,710 --> 00:16:21,020
 These 63 items are the modules that were either tested or validated in this batch.
 
-87
+75
 00:16:21,020 --> 00:16:43,370
 Okay, we can summarize that there are a total of 13 validated items and 50 tested items.
 
-88
+76
 00:16:43,370 --> 00:16:48,090
 This matches the initial total of 63 items.
