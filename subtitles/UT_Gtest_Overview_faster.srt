@@ -304,7 +304,7 @@ After the test cases have achieved 100% coverage,
 
 77
 00:17:55,290 --> 00:17:57,520
-we will submit them for review and continue with the next UT steps, such as Review, Deliver and BDC.
+we will submit them for review and continue with the next UT steps, such as Review, Deliver and PDC.
 
 78
 00:18:10,800 --> 00:18:15,000
