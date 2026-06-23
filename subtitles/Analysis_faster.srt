@@ -1,2600 +1,627 @@
 1
-00:00:00,000 --> 00:00:13,000
-Hi everyone, today I will share about how to receive a UT request and analyze it.
+00:00:01,620 --> 00:00:12,520
+Hi everyone. Today, I will share how I receive a task, a UT request, and how I analyze that task.
 
 2
-00:00:13,000 --> 00:00:21,000
-Here is a UT request of 6865008. I take this as an example.
+00:00:13,170 --> 00:00:20,730
+Here is a UT request for task 6865008. I will use this task as an example.
 
 3
-00:00:21,000 --> 00:00:29,000
-First, I will check if the information in the UT request is full of necessary information or not.
+00:00:22,090 --> 00:00:28,530
+First, I will check whether the UT request contains all the necessary information.
 
 4
-00:00:29,000 --> 00:00:42,000
-For example, in the C0C1 code coverage section, yes is checked, mcdc is checked, and dsd is not checked.
+00:00:28,530 --> 00:00:35,090
+For example, in the code coverage section, C0C1 is marked as Yes.
 
 5
-00:00:42,000 --> 00:00:49,000
-Thus, this test will test the code coverage and have the mcdc request.
+00:00:35,090 --> 00:00:41,680
+MCDC is Yes, and DSD is No.
 
 6
-00:00:49,000 --> 00:00:55,000
-Next is the BB and config information field.
+00:00:41,680 --> 00:00:48,510
+This means this test will cover code coverage and includes an MCDC request.
 
 7
-00:00:55,000 --> 00:00:59,000
-In this test, 2 BBs are requested.
+00:00:48,510 --> 00:00:54,280
+Next is the information field for BB and config.
 
 8
-00:00:59,000 --> 00:01:03,000
-87328 and 87329.
+00:00:54,280 --> 00:01:01,560
+In this test, the request is created for two BBs: 87328 and 87329.
 
 9
-00:01:03,000 --> 00:01:14,000
-However, here I will give an example for one BB, 87328, and the other BB will be the same.
+00:01:01,560 --> 00:01:15,000
+However, in this example, I will demonstrate one BB, which is 87328. The remaining BB will be handled in the same way.
 
 10
-00:01:14,000 --> 00:01:22,000
-Then, the next important information field is the information about the snapshot name or the information about the stream name.
+00:01:15,000 --> 00:01:21,700
+The next important information is Snapshot Name or Stream Name.
 
 11
-00:01:22,000 --> 00:01:28,000
-Here, I will receive the request test for the snapshot.
+00:01:21,700 --> 00:01:32,000
+Here, I received a test request for a Snapshot, and the Snapshot Name has already been provided.
 
 12
-00:01:28,000 --> 00:01:32,000
-And the snapshot name here has also been provided.
+00:01:32,000 --> 00:01:42,430 
+Next are the fields for ASCET, ASW, database, and CR, which provide the complete information.
 
 13
-00:01:32,000 --> 00:01:40,000
-Next is the ASCET database.
+00:01:42,430 --> 00:01:48,000
+Now, I will proceed to load the database.
 
 14
-00:01:40,000 --> 00:01:43,000
-Then, CR to provide full information.
+00:01:48,000 --> 00:01:58,060
+First, I will prepare a folder to load the database into. Here, I will load the database into this folder.
 
 15
-00:01:43,000 --> 00:01:48,000
-Now, I will load the database back.
+00:01:58,060 --> 00:02:03,160
+I will use SharCC.
 
 16
-00:01:48,000 --> 00:01:55,000
-After all the testing, I will prepare a folder to load the database back.
+00:02:18,160 --> 00:02:22,060
+I click Work Item.
 
 17
-00:01:55,000 --> 00:01:58,000
-Here, I will load the database back to this folder.
+00:02:22,060 --> 00:02:40,690
+Then, I create a repository connection, select the first line in the URL, and enter user ID and password.
 
 18
-00:01:58,000 --> 00:02:09,000
-I will use the cc file.
+00:02:55,690 --> 00:03:04,600
+After that, I search using the Snapshot information.
 
 19
-00:02:09,000 --> 00:02:22,000
-Then, I click on the item.
+00:03:04,600 --> 00:03:11,500
+I select Search, Jazz Source Control, and Snapshots.
 
 20
-00:02:22,000 --> 00:02:27,000
-After that, I will create a variable 0.03 connection.
+00:03:11,500 --> 00:03:22,080
+I will go back to the UT request information file and get the Snapshot Name.
 
 21
-00:02:27,000 --> 00:02:31,000
-I will select the first item.
+00:03:28,080 --> 00:03:37,000
+Then, I give it a name. Usually, I name it based on the task ID.
+
+21
+00:03:50,080 --> 00:03:55,000
+Then, Save it.
 
 22
-00:02:31,000 --> 00:02:42,000
-Then, enter the user id and the password.
+00:04:10,000 --> 00:04:25,170
+Next, I go to My Source Control and then My Workspace.
 
 23
-00:02:52,000 --> 00:03:09,000
-After that, I will search according to the information of Snapshot, select Search Jaisal Control Snapshot.
+00:04:25,170 --> 00:04:47,270
+I will find the repository I just created so I can load the database using the load rule file.
 
 24
-00:03:09,000 --> 00:03:19,000
-I will return to the utility press file to get the information of Snapshot name.
+00:04:47,270 --> 00:04:57,830
+I select Load, Load from a load rule file, and then Remote load rule file.
 
 25
-00:03:19,000 --> 00:03:34,000
-I will name it.
+00:04:57,830 --> 00:05:03,770
+After that, I find the load rule file.
 
 26
-00:03:34,000 --> 00:03:48,000
-Then I will name it as Snapshot ID.
+00:05:03,770 --> 00:05:12,470
+The load through file is located in the component ending with .project.
+
+26
+00:05:12,470 --> 00:05:30,470
+Here, the file is Daihatsu ESP10CP.loadrule.
 
 27
-00:03:49,000 --> 00:03:52,000
-Then I will name it as Snapshot ID.
+00:05:30,470 --> 00:05:38,210
+This process takes quite a long time, so I have prepared a database in advance. 
+
+27
+00:05:38,210 --> 00:05:46,210
+After loading is complete, the components will appear in green on the screen.
 
 28
-00:03:52,000 --> 00:04:10,000
-Then I will name it as Snapshot ID.
+00:05:46,210 --> 00:05:57,450
+Next, I will build MTC. I select MTC Build and enter the information provided in the UT request.
 
 29
-00:04:10,000 --> 00:04:16,000
-I will go to the My Source Control workspace.
+00:05:57,450 --> 00:06:15,270
+The information includes the configuration and BB number. To make sure it is correct, I will also paste the BB number.
 
 30
-00:04:16,000 --> 00:04:18,000
-I will go to the My Source Control workspace.
+00:06:15,270 --> 00:06:27,120
+This is the config and BB that I need to build. I will do the same for the remaining config.
 
 31
-00:04:19,000 --> 00:04:28,000
-I will go to the My Source Control workspace.
+00:06:27,120 --> 00:06:38,720
+After selecting them, I click Start Enable Build Jobs. This process also takes quite a long time.
 
 32
-00:04:28,000 --> 00:04:32,000
-I will look for the rebel that I just created.
+00:06:38,720 --> 00:06:53,710
+I will open a version that has already been built. In this section, a green dot is shown, which means the build was successful.
 
 33
-00:04:32,000 --> 00:04:36,000
-I will look for the rebel that I just created.
+00:06:53,710 --> 00:07:00,310
+After the build is complete, I will get the necessary files for analysis.
 
 34
-00:04:36,000 --> 00:04:38,000
-Here.
+00:07:01,720 --> 00:07:05,680
+Those files can be found in the following folder.
 
 35
-00:04:38,000 --> 00:04:40,000
-Here.
+00:07:08,180 --> 00:07:15,700
+Go to the database folder, then gen, and find the config that was built successfully.
 
 36
-00:04:40,000 --> 00:04:44,000
-I will load it.
+00:07:26,220 --> 00:07:35,180
+Select Build and then Make. The two files we need are genmax.cdv and the ASCET component file.
 
 37
-00:04:44,000 --> 00:04:45,000
-I will load it.
+00:07:35,930 --> 00:08:01,120
+I will move those two files outside. These two files are required for running TPA. I have already prepared them here.
 
 38
-00:04:45,000 --> 00:04:46,000
-I will load it.
+00:08:01,120 --> 00:08:11,700
+The next important step is to modify the .csv file so that its component matches the load through file.
 
 39
-00:04:46,000 --> 00:04:47,000
-I will load it.
+00:08:11,700 --> 00:08:27,240
+Here, I use the All-in-One tool, select Analysis Support, select CSP Amendation, and then input the CSP path.
 
 40
-00:04:47,000 --> 00:04:48,000
-I will load it.
+00:08:33,540 --> 00:08:46,210
+Next is the Load Profile file. I will go back to the database and find the Load Profile file that I used to load the database.
 
 41
-00:04:48,000 --> 00:04:49,000
-I will load it.
+00:08:52,280 --> 00:09:01,980
+To make sure, I open Open File Location. This path is correct, so I will take the path of this file.
 
 42
-00:04:49,000 --> 00:04:50,000
-I will load it.
+00:09:01,980 --> 00:09:21,520
+Next is the Saving Directory. I will save the output result after running the tool in the same folder that contains the .csv file from earlier.
 
 43
-00:04:50,000 --> 00:04:51,000
-I will load it.
+00:09:21,520 --> 00:09:37,920
+The tool will create a modified component that matches the load through file, and it will also create a new .csv file.
 
 44
-00:04:51,000 --> 00:04:52,000
-I will load it.
+00:09:37,920 --> 00:09:46,260
+Here, I will use this new .csv file and this xget.xml file to run TPA.
 
 45
-00:04:52,000 --> 00:04:53,000
-I will load it.
+00:09:46,260 --> 00:09:53,260
+I will copy them to the virtual machine, and I have already prepared them here.
 
 46
-00:04:53,000 --> 00:04:54,000
-I will load it.
+00:09:53,260 --> 00:10:07,980
+I will open the TPA Report Generation tool, then select the folder containing those two files.
 
 47
-00:04:54,000 --> 00:04:55,000
-I will load it.
+00:10:07,980 --> 00:10:18,920
+I paste the provided Snapshot link, then set the QT Assessment field to Yes.
 
 48
-00:04:55,000 --> 00:04:56,000
-I will load it.
+00:10:18,920 --> 00:10:26,070
+It will also automatically highlight the fields that I need to fill in.
 
 49
-00:04:56,000 --> 00:04:57,000
-I will load it.
+00:10:26,070 --> 00:10:37,310
+Here, I select the modified CSV file from earlier, which is this new file, and this ASCET file.
 
 50
-00:04:57,000 --> 00:04:58,000
-I will load it.
+00:10:38,790 --> 00:10:55,480
+The next important field is the exclude section. I will not analyze the RPA-CUBAS component, so I select Exclude Components and Exclude CPP/HPP, then click Generate Report.
 
 51
-00:04:58,000 --> 00:04:59,000
-I will load it.
+00:10:55,480 --> 00:11:02,870
+This process also takes quite a long time. During that time, I can get the ASCET database.
 
 52
-00:04:59,000 --> 00:05:00,000
-I will load it.
+00:11:02,870 --> 00:11:10,710
+I will use the ASCET database link provided in the UT request from earlier.
 
 53
-00:05:00,000 --> 00:05:01,000
-I will load it.
+00:11:10,710 --> 00:11:24,870
+I copy that link, open TCM on the virtual machine, and paste it here.
 
 54
-00:05:01,000 --> 00:05:02,000
-I will load it.
+00:11:24,870 --> 00:11:37,630
+I will copy and check its version number. Here, it is 25.3.
 
 55
-00:05:02,000 --> 00:05:03,000
-I will load it.
+00:11:37,630 --> 00:11:53,640
+So, I will download this ASCET database and copy it to my local machine. I have already prepared these files.
 
 56
-00:05:03,000 --> 00:05:04,000
-I will load it.
+00:11:53,640 --> 00:12:11,740
+After the TPA file is generated, it will appear as an Internal Report Snapshot. I will open this file.
 
 57
-00:05:04,000 --> 00:05:05,000
-I will load it.
+00:12:11,740 --> 00:12:42,920
+The initial file will look like this.
 
 58
-00:05:05,000 --> 00:05:06,000
-I will load it.
+00:12:42,920 --> 00:13:01,760
+This file contains many information fields, but I will focus on the MTVerdict column.
 
 59
-00:05:06,000 --> 00:05:07,000
-I will load it.
+00:13:01,760 --> 00:13:08,040
+Normally, I will perform UT for modules whose MTVerdict is Undefined.
 
 60
-00:05:07,000 --> 00:05:08,000
-I will load it.
+00:13:08,040 --> 00:13:16,850
+For unnecessary columns, I will hide them.
 
 61
-00:05:08,000 --> 00:05:09,000
-I will load it.
+00:13:16,850 --> 00:13:46,700
+Because I will analyze these modules, I usually paste a template here.
 
 62
-00:05:09,000 --> 00:05:10,000
-I will load it.
+00:13:46,700 --> 00:14:06,850
+After that, I use a tool to check whether those modules have already been tested.
 
 63
-00:05:10,000 --> 00:05:11,000
-I will load it.
+00:14:06,850 --> 00:14:39,960
+Once I have this file, I will save it in .xls format so the tool can read it.
 
 64
-00:05:11,000 --> 00:05:12,000
-I will load it.
+00:14:39,960 --> 00:14:56,060
+Here, I use the tool, select Analysis Support, and then select Preliminary Analysis.
 
 65
-00:05:12,000 --> 00:05:13,000
-I will load it.
+00:14:56,060 --> 00:15:10,340
+I will fill in the necessary information, including the Tested Database and the file I just converted.
 
 66
-00:05:13,000 --> 00:05:14,000
-I will load it.
+00:15:10,340 --> 00:15:30,490
+Then I click Execute. After it finishes running, I will receive a file like this. I have also prepared it in advance.
 
 67
-00:05:14,000 --> 00:05:15,000
-I will load it.
+00:15:30,490 --> 00:15:44,230
+Here, I will pay attention to the Item Name column and the concat column.
 
 68
-00:05:15,000 --> 00:05:16,000
-I will load it.
+00:15:45,910 --> 00:15:53,260
+The concat column is important for accurately checking whether a module has already been tested.
 
 69
-00:05:16,000 --> 00:05:17,000
-I will load it.
+00:15:55,640 --> 00:16:07,120
+In this column, I will concatenate the Item Name and the check-in date for C modules.
 
 70
-00:05:18,000 --> 00:05:22,000
-This is DHC-ESP10-CV.logRule.
+00:16:07,120 --> 00:16:22,740
+For ESP, I will concatenate the Item Name and Item Revision. Here, I have pasted the formula and applied it.
 
 71
-00:05:28,760 --> 00:05:35,760
-This process took quite a while, so I have prepared a database for it.
+00:16:22,740 --> 00:16:38,560
+As I mentioned earlier, I will check the Undefined modules. Usually, I will check the ESP modules first.
 
 72
-00:05:35,760 --> 00:05:40,760
-After loading, these components will appear in green,
+00:16:38,560 --> 00:17:12,760
+For EXP modules, they may have already been tested using Cantata, but MTVerdict still shows Undefined.
 
 73
-00:05:40,760 --> 00:05:43,760
-as shown on the screen.
+00:17:12,760 --> 00:17:17,980
+I will verify this by checking against the tested database file.
 
 74
-00:05:43,760 --> 00:05:47,760
-Next, I will build MTC.
+00:17:17,980 --> 00:18:13,040
+In the tested database file, it shows the items that have already been tested, along with the corresponding comments in column B. For this step, we only need to use VLOOKUP.
 
 75
-00:05:47,760 --> 00:05:51,760
-Select MTC Build,
+00:18:13,040 --> 00:18:29,340
+As shown on the screen, some items have already been tested. Because this module was tested using Cantata and the result was uploaded to TCM, the C0C1 result is displayed here.
 
 76
-00:05:51,760 --> 00:05:55,760
-and enter the information provided in the utility request,
+00:18:29,340 --> 00:18:57,940
+Therefore, I do not need to test it again. I will filter it separately and mark the MT_Needed column as N. For the remaining rows, I will delete them.
 
 77
-00:05:55,760 --> 00:06:00,760
-which is the configuration.
+00:18:57,940 --> 00:19:26,660
+There is a small issue in this step: I accidentally lost the item list here, so I will go back and redo the operation.
 
 78
-00:06:03,760 --> 00:06:08,760
-Next is the BB number.
+00:19:26,660 --> 00:19:30,660
+This column is the result generated from the All-in-One tool earlier.
 
 79
-00:06:08,760 --> 00:06:13,760
-I will definitely paste the BB number again.
+00:19:30,660 --> 00:19:45,780
+I will select the item list in the ASCET database, then select this item list.
 
 80
-00:06:15,760 --> 00:06:17,760
-This is it.
+00:19:45,780 --> 00:19:58,400
+After that, the tool will help me fill in the information for that module.
 
 81
-00:06:17,760 --> 00:06:21,760
-Now I need to build the config and the BB.
+00:19:58,400 --> 00:20:12,110
+After the information is filled in, I will filter the ESP modules again.
 
 82
-00:06:21,760 --> 00:06:27,760
-Similarly, I will build the rest of the config.
+00:20:12,110 --> 00:20:32,240
+For modules such as Parameter class, Message class, or Hierarchical, I will not test them. I will mark them as Valid instead.
 
 83
-00:06:27,760 --> 00:06:30,760
-I will do the same thing.
+00:20:32,240 --> 00:20:46,530
+First, after identifying these modules, I will filter them separately and mark this column as Valid.
 
 84
-00:06:30,760 --> 00:06:34,760
-After selecting, I will click on Start Enable Build Jobs.
+00:20:46,530 --> 00:21:02,520
+For the remaining modules, I will remove these filters and continue checking.
 
 85
-00:06:34,760 --> 00:06:38,760
-This process took quite a while,
+00:21:02,520 --> 00:21:14,870
+Among these, based on the tool result, there is one module that appears to be Hierarchical.
 
 86
-00:06:38,760 --> 00:06:42,760
-and I will open the one I have already built.
+00:21:14,870 --> 00:21:25,380
+I will check it again to make sure it is correct by verifying each module against the loaded database.
 
 87
-00:06:42,760 --> 00:06:45,760
-Here, it will...
+00:21:25,380 --> 00:21:52,060
+After checking, this module is indeed Hierarchical, so I will add a comment saying that this module is Hierarchical. I will also mark it as Valid and will not test it.
 
 88
-00:06:45,760 --> 00:06:50,760
-This part will display the .xam,
+00:21:52,060 --> 00:22:10,220
+I have also searched and checked the other modules. Besides the previous module, this module here is also Hierarchical.
 
 89
-00:06:50,760 --> 00:06:53,760
-which means it is already built successfully.
+00:22:10,220 --> 00:22:42,180
+I will add a comment for it and mark the status as Valid. This module is the same as well.
 
 90
-00:06:53,760 --> 00:07:01,760
-After building, I will use the required file to analyze.
+00:22:42,180 --> 00:22:57,720
+For the remaining modules, I will analyze them based on ELOCK. In this ELOCK column, I have not filled in the information yet.
 
 91
-00:07:01,760 --> 00:07:06,760
-That file is found in the following folder.
+00:22:57,720 --> 00:23:11,900
+Going back, I still have some C modules that have not been analyzed yet.
 
 92
-00:07:06,760 --> 00:07:11,760
-Go to the Database folder.
+00:23:11,900 --> 00:23:32,270
+I will use the Cmetrix tool to get the ELOCK value of the modules in the database.
 
 93
-00:07:11,760 --> 00:07:13,760
-Go to Gen.
+00:23:32,270 --> 00:23:56,050
+After opening Cmetrix, I click the plus icon, paste the database path, and then click OK.
 
 94
-00:07:13,760 --> 00:07:16,760
-Find the successfully built config.
+00:23:56,050 --> 00:24:11,640
+I have already run it here. Then, I click Analyze Project Source Files.
 
 95
-00:07:25,760 --> 00:07:26,760
-Select Build.
+00:24:11,640 --> 00:24:19,650
+After the result is generated, I click View Output File Metric.
 
 96
-00:07:26,760 --> 00:07:28,760
-MEC.
+00:24:19,650 --> 00:24:25,320
+I will save the result to the database location, which is my workspace.
 
 97
-00:07:28,760 --> 00:07:32,760
-Those two files are GenMEC.cdv
+00:24:25,320 --> 00:24:44,620
+After that, I import the File Metric into this TPA file to support the analysis.
 
 98
-00:07:32,760 --> 00:07:35,760
-and Asket component files.
+00:24:44,620 --> 00:25:08,170
+At the same time, I will also run the MCDC tool to build the modules that need to be tested for C files. Here, I only select the C files.
 
 99
-00:07:35,760 --> 00:07:38,760
-I will take those two files out.
+00:25:08,170 --> 00:25:20,550
+I will take all the modules here and export them as a list.
 
 100
-00:07:38,760 --> 00:07:42,760
-This file is needed for the GenTPA process.
+00:25:20,550 --> 00:25:29,080
+Because this process takes quite a long time, I will let the tool run in parallel with the analysis process to save time.
 
 101
-00:07:42,760 --> 00:07:51,760
-I will leave it here.
+00:25:29,080 --> 00:25:44,830
+After I have the information, I will use the MCDC tool from earlier, open the hostconfig.xml file, and fill in the MTC output file.
 
 102
-00:07:51,760 --> 00:07:54,760
-I will leave it here.
+00:25:44,830 --> 00:26:06,860
+Here is a small trick: I will fill in the information from the bottom to the top. At the beginning of the file, I will enter Pass.
 
 103
-00:07:54,760 --> 00:07:56,760
-Because I have already created it.
+00:26:06,860 --> 00:26:16,480
+Because MTC has already been completed, while the remaining steps have not, I enter Pass so the tool can run and fill it in for me.
 
 104
-00:07:56,760 --> 00:08:04,760
-Next, the next important step is that I have to fix the CSV file.
+00:26:16,480 --> 00:26:49,490
+I will find that MTC output file in the gen folder. I go back to the database, select gen, and then find the config from earlier.
 
 105
-00:08:04,760 --> 00:08:11,760
-So that its component is similar to the FileAppRule.
+00:26:49,490 --> 00:27:06,640
+Here, I select View. This is the file after I have filled in the corresponding information in the fields below, and then I will move upward.
 
 106
-00:08:11,760 --> 00:08:14,760
-I will check the CWF one time.
+00:27:06,640 --> 00:27:39,760
+Next is BB. Note that I will use the database that I just loaded.
 
 107
-00:08:14,760 --> 00:08:17,760
-This time I need to fix the CSV file in the CSV folder.
+00:27:39,760 --> 00:27:50,470
+Here, I have also zipped the database, so I will take its path.
 
 108
-00:08:17,760 --> 00:08:20,760
-In this case, I need to use this file.
+00:27:50,470 --> 00:28:13,700
+I fill in the path here. The list of modules has also been filled in, so I will fill it in here. After entering all the required information, I select mcdctool.bat to run the tool.
 
 109
-00:08:20,760 --> 00:08:22,760
-Select a file named TuneOnline1.
+00:28:13,700 --> 00:28:30,780
+After the tool finishes running, it will create this folder.
 
 110
-00:08:22,760 --> 00:08:24,760
-Then here we can choose Analysis Support,
+00:28:30,780 --> 00:28:37,260
+The folder name will include the database name and the BB number that I just ran.
 
 111
-00:08:24,760 --> 00:08:26,760
-and CWF by CWF.
+00:28:37,260 --> 00:28:59,030
+After the tool finishes running, it will create a TPA file. This file contains information that helps me check the result more easily after testing is complete.
 
 112
-00:08:26,760 --> 00:08:29,760
-Then I need to return the CSV file to the CWF folder.
+00:28:59,030 --> 00:29:22,400
+I will take the necessary information from here and put it into the analysis file. Here, I named it tool print and placed it here. Then I go back to the TPA file from earlier.
 
 113
-00:08:29,760 --> 00:08:31,760
-And then I will copy this file to the CWF folder.
+00:29:22,400 --> 00:29:37,470
+I will find the ELOCK values for the modules that need to be tested here so I can check them again.
 
 114
-00:08:31,760 --> 00:08:34,760
-Next we need to replace the polyfill of the CFPF and I will try to do the same thing on the CWF one time.
+00:29:37,470 --> 00:29:47,870
+Here, I use VLOOKUP based on Item Name and MATRIX.
 
 115
-00:08:34,760 --> 00:08:35,760
-We need to take the file.
+00:29:47,870 --> 00:30:04,430
+The important information to retrieve is the ELOCK column, which is column C.
 
 116
-00:08:35,760 --> 00:08:36,760
-There is no much change.
+00:30:04,430 --> 00:30:21,360
+Next are the Function column and the MaxCc column. I will apply this to all modules here.
 
 117
-00:08:36,760 --> 00:08:37,760
-First, we need to replace the CWF folder.
+00:30:22,190 --> 00:30:33,030
+First, I have a preliminary table like this.
 
 118
-00:08:37,760 --> 00:08:38,760
-Next, we need to redo the Windows file.
+00:30:37,660 --> 00:30:53,320
+After getting the ELOCK information, I will check again whether any C module has Function equal to 0.
 
 119
-00:08:38,760 --> 00:08:40,760
-And then we need to restore theетabiles file.
+00:30:53,320 --> 00:30:57,960
+If Function is equal to 0, it means there is no function, so I will map it as Valid. Here, there are none.
 
 120
-00:08:40,760 --> 00:08:47,760
-I will find the file that I want to load the database to.
+00:30:57,960 --> 00:31:20,840
+Therefore, I will proceed as usual. The tool has helped me collect information on whether the modules were tested before, and I will also check whether they have been tested in recent years.
 
 121
-00:08:51,760 --> 00:08:57,760
-I will open the open file location.
+00:31:25,280 --> 00:31:50,620
+I have also created a formula for this, so I will paste the formula here.
 
 122
-00:08:57,760 --> 00:09:03,760
-The path is correct, so I will take the path of this file.
+00:31:50,620 --> 00:32:03,330
+My formula will check against the tested database file and the test assignment file.
 
 123
-00:09:05,760 --> 00:09:08,760
-Next is saving directory.
+00:32:03,330 --> 00:32:37,130
+Here, I will check whether the module has already been tested using Cantata or GTest.
 
 124
-00:09:08,760 --> 00:09:13,760
-I will load the output after running the tool.
+00:32:37,130 --> 00:33:07,670
+If it has already been tested, the formula will return the latest test environment for that module. If it is a C module, it will be tested using Cantata or GTest. If it is an ASW or ESP module, it will be tested using ESP.
 
 125
-00:09:13,760 --> 00:09:21,760
-It is about the common file that contains the csv file just now.
+00:33:09,540 --> 00:33:31,640
+The MT_Needed column is used to show whether the module has already been tested. If it has, it will be mapped as Delta, and the effort for Delta will also be calculated.
 
 126
-00:09:26,760 --> 00:09:33,760
-Then the tool will run out of the components that have been changed to match the load rule.
+00:33:31,640 --> 00:34:52,230
+I will apply the formula to all items here. I have highlighted it slightly, and now I have checked all the information completely.
 
 127
-00:09:34,760 --> 00:09:37,760
-At the same time, it will also create a new csv file.
+00:34:52,230 --> 00:35:15,260
+If a module has not been tested, it will be indicated in this MT_Needed column. However, this test has already been tested, so my tested database file has been updated accordingly.
 
 128
-00:09:37,760 --> 00:09:38,760
-Here.
+00:35:15,260 --> 00:35:36,080
+Therefore, most modules in the MT_Needed column are Delta.
 
 129
-00:09:38,760 --> 00:09:46,760
-I will use this new csv file and this xcat.xml file to generate TBA.
+00:35:36,080 --> 00:35:50,300
+Next, I will calculate the effort based on ELOCK to calculate the total effort for each module according to ELOCK, Delta or New status, and test environment.
 
 130
-00:09:46,760 --> 00:09:53,760
-Then I will copy it through the library and I have already prepared it here.
+00:35:50,300 --> 00:36:09,100
+To calculate this quickly, I have already written a formula and pasted it here. If I mark it as Valid, a C module will be counted as 0.1 and the test environment will be checked.
 
 131
-00:09:58,760 --> 00:10:05,760
-I will turn on the TBA report generator tool.
+00:36:09,100 --> 00:36:20,360
+If that C module is tested using GTest, it will be calculated based on a different ELOCK rule. If it is tested using Cantata, it will be calculated based on another ELOCK rule.
 
 132
-00:10:05,760 --> 00:10:07,760
-Then I select the folder.
+00:36:20,360 --> 00:36:36,510
+The same applies to ASW. If it is ESP, it will be calculated using the ESP formula.
 
 133
-00:10:07,760 --> 00:10:10,760
-I will go to the folder that contains my previous two files.
+00:36:36,510 --> 00:36:45,780
+Here, it is Delta, so the total effort will be this value multiplied by 0.4.
 
 134
-00:10:10,760 --> 00:10:12,760
-Paste the snapshot link.
+00:36:45,780 --> 00:36:52,840
+Because the minimum effort for one module is 0.6, my formula gives 0.6 here.
 
 135
-00:10:12,760 --> 00:10:15,760
-It is provided.
+00:36:52,840 --> 00:37:14,360
+I will apply this formula to all items here.
 
 136
-00:10:15,760 --> 00:10:21,760
-Next, select the Qt assessment yes field.
+00:37:14,360 --> 00:37:54,840
+Earlier, I had not calculated ELOCK for some modules, so I will check again and fill them in completely.
 
 137
-00:10:21,760 --> 00:10:26,760
-It will automatically highlight the fields that I need to load.
+00:37:54,840 --> 00:38:27,410
+To make the file cleaner, I will adjust the formatting so it is consistent.
 
 138
-00:10:26,760 --> 00:10:27,760
-Here.
+00:38:27,410 --> 00:38:58,910
+After that, I will check all the information again, especially the Undefined modules, to see whether I have analyzed everything completely.
 
 139
-00:10:27,760 --> 00:10:33,760
-I will choose the csv file that was saved earlier.
+00:38:58,910 --> 00:39:09,340
+I will also check the MT_Needed column again. Now, I have finished checking.
 
 140
-00:10:33,760 --> 00:10:35,760
-This file is new.
+00:39:09,340 --> 00:39:25,900
+For the C modules, I will filter them separately.
 
 141
-00:10:35,760 --> 00:10:36,760
-And this xcat file.
+00:39:25,900 --> 00:39:36,380
+I will fill in the C0C1 and CFG columns so the tester can update them easily after finishing the work.
 
 142
-00:10:36,760 --> 00:10:37,760
-Next.
+00:39:36,380 --> 00:39:53,790
+I will take the result from the MCDC tool from earlier.
 
 143
-00:10:37,760 --> 00:10:41,760
-The next important thing is this part.
+00:39:53,790 --> 00:40:05,690
+Now, I will use VLOOKUP based on Item Name to get the corresponding result.
 
 144
-00:10:41,760 --> 00:10:45,760
-I will not analyze the component rba-qbash.
+00:40:05,690 --> 00:40:47,260
+I will adjust it slightly so there are no issues.
 
 145
-00:10:45,760 --> 00:10:48,760
-So I choose exclude components.
+00:40:47,260 --> 00:41:34,290
+I will select the tool again. That is correct, so I will apply it to all items here.
 
 146
-00:10:48,760 --> 00:10:51,760
-And at the same time, I also choose exclude cpp-hpp.
+00:41:34,290 --> 00:41:49,540
+Now, I have finished analyzing one task. I will check it again.
 
 147
-00:10:51,760 --> 00:10:55,760
-Then click on generate report.
+00:41:49,540 --> 00:42:12,940
+I will summarize it. Here, there are 51 items that need to be tested and 12 items that need to be validated.
 
 148
-00:10:55,760 --> 00:10:59,760
-This process also takes quite a long time.
+00:42:12,940 --> 00:42:26,980
+For BB 87328, there are 63 items that need to undergo UT. Among them, 12 items need to be validated and 51 items need to be tested.
 
 149
-00:10:59,760 --> 00:11:04,760
-And at that time, I can get the xcat database.
+00:42:26,980 --> 00:42:38,410
+For this file, I will create an additional Estimation file to send to SEA.
 
 150
-00:11:04,760 --> 00:11:11,760
-I will use the xcat database link provided in the previous request utility.
+00:42:38,410 --> 00:42:49,420
+Now, I will save it as an Estimation file.
 
 151
-00:11:11,760 --> 00:11:13,760
-Here.
+00:42:49,420 --> 00:43:09,290
+In this file, I will convert everything into values and avoid leaving formulas.
 
 152
-00:11:13,760 --> 00:11:16,760
-I will take that link.
+00:43:09,290 --> 00:43:22,250
+I will keep the MT_Needed column so the recipient can know which modules need to be tested and which modules need to be validated.
 
 153
-00:11:16,760 --> 00:11:21,760
-Go to TCM on the computer.
+00:43:22,250 --> 00:43:36,900
+After that, I will filter the Undefined modules again to remove unnecessary items.
 
 154
-00:11:21,760 --> 00:11:28,760
-Paste it here.
-
-155
-00:11:28,760 --> 00:11:31,760
-Then.
-
-156
-00:11:31,760 --> 00:11:32,760
-I will copy.
-
-157
-00:11:32,760 --> 00:11:33,760
-I will cut the version.
-
-158
-00:11:33,760 --> 00:11:35,760
-The second number of it.
-
-159
-00:11:35,760 --> 00:11:38,760
-25.3.
-
-160
-00:11:38,760 --> 00:11:40,760
-And.
-
-161
-00:11:40,760 --> 00:11:41,760
-Here.
-
-162
-00:11:41,760 --> 00:11:42,760
-It is correct.
-
-163
-00:11:42,760 --> 00:11:43,760
-25.3.
-
-164
-00:11:43,760 --> 00:11:44,760
-Then.
-
-165
-00:11:44,760 --> 00:11:49,760
-So I will take this xcat database and copy it to my local.
-
-166
-00:11:49,760 --> 00:11:50,760
-Then.
-
-167
-00:11:50,760 --> 00:11:55,760
-I have prepared all these files.
-
-168
-00:11:55,760 --> 00:12:00,760
-Ok.
-
-169
-00:12:00,760 --> 00:12:01,760
-After generating.
-
-170
-00:12:01,760 --> 00:12:02,760
-File tba.
-
-171
-00:12:02,760 --> 00:12:05,760
-Then it will look like this.
-
-172
-00:12:05,760 --> 00:12:08,760
-Internal report snapshot.
-
-173
-00:12:08,760 --> 00:12:09,760
-Then.
-
-174
-00:12:09,760 --> 00:12:11,760
-I will turn this file on.
-
-175
-00:12:11,760 --> 00:12:12,760
-Ok.
-
-176
-00:12:12,760 --> 00:12:13,760
-Ok.
-
-177
-00:12:13,760 --> 00:12:14,760
-Ok.
-
-178
-00:12:14,760 --> 00:12:15,760
-Ok.
-
-179
-00:12:15,760 --> 00:12:16,760
-Ok.
-
-180
-00:12:16,760 --> 00:12:17,760
-Ok.
-
-181
-00:12:17,760 --> 00:12:18,760
-Ok.
-
-182
-00:12:18,760 --> 00:12:19,760
-Ok.
-
-183
-00:12:19,760 --> 00:12:20,760
-Ok.
-
-184
-00:12:20,760 --> 00:12:21,760
-Ok.
-
-185
-00:12:21,760 --> 00:12:22,760
-Ok.
-
-186
-00:12:22,760 --> 00:12:23,760
-Ok.
-
-187
-00:12:23,760 --> 00:12:24,760
-Ok.
-
-188
-00:12:24,760 --> 00:12:25,760
-Ok.
-
-189
-00:12:25,760 --> 00:12:26,760
-Ok.
-
-190
-00:12:26,760 --> 00:12:27,760
-Ok.
-
-191
-00:12:27,760 --> 00:12:28,760
-Ok.
-
-192
-00:12:28,760 --> 00:12:29,760
-Ok.
-
-193
-00:12:29,760 --> 00:12:30,760
-Ok.
-
-194
-00:12:32,760 --> 00:12:52,760
-Ok.
-
-195
-00:12:52,760 --> 00:12:53,760
-Ok.
-
-196
-00:12:53,760 --> 00:12:54,760
-Ok.
-
-197
-00:12:54,760 --> 00:12:55,760
-Ok.
-
-198
-00:12:55,760 --> 00:12:56,760
-Ok.
-
-199
-00:12:56,760 --> 00:12:58,760
-Ok fine.
-
-200
-00:12:58,760 --> 00:12:59,760
-Remove.
-
-201
-00:12:59,760 --> 00:13:00,760
-Okay.
-
-202
-00:13:00,760 --> 00:13:08,760
-For empty verdict, I will usually use testUT for the undefined modules here.
-
-203
-00:13:13,760 --> 00:13:17,760
-For unnecessary modules, I will hide them again.
-
-204
-00:13:30,760 --> 00:13:46,760
-Basically, I will analyze for these modules.
-
-205
-00:13:46,760 --> 00:13:53,760
-I usually paste a template here.
-
-206
-00:13:53,760 --> 00:13:57,760
-Then I will use tool to check.
-
-207
-00:13:57,760 --> 00:13:59,760
-That's all.
-
-208
-00:13:59,760 --> 00:14:00,760
-Thank you for watching.
-
-209
-00:14:00,760 --> 00:14:02,760
-See you next time.
-
-210
-00:14:30,760 --> 00:14:32,760
-Bye for now.
-
-211
-00:15:00,760 --> 00:15:11,760
-I will test the database and the file that I have just changed the format of it.
-
-212
-00:15:13,760 --> 00:15:17,760
-Then, after running, I click Execute.
-
-213
-00:15:18,760 --> 00:15:22,760
-After running, I will get a file like this.
-
-214
-00:15:23,760 --> 00:15:25,760
-I have prepared this before.
-
-215
-00:15:25,760 --> 00:15:29,760
-The file will be like this.
-
-216
-00:15:30,760 --> 00:15:32,760
-I will click Execute.
-
-217
-00:15:33,760 --> 00:15:34,760
-OK.
-
-218
-00:15:35,760 --> 00:15:43,760
-Here, I will put it in the item name and concat column.
-
-219
-00:15:44,760 --> 00:15:53,760
-The concat column is an important column so that I can accurately check whether that module has been tested or not.
-
-220
-00:15:54,760 --> 00:15:55,760
-And...
-
-221
-00:15:56,760 --> 00:15:58,760
-In this column, I will concat between...
-
-222
-00:15:59,760 --> 00:16:06,760
-For example, like module C, it will be the name, item name and checking date.
-
-223
-00:16:07,760 --> 00:16:14,760
-As for ESP, it will be item name and item revision.
-
-224
-00:16:15,760 --> 00:16:17,760
-Here, I have put the formula for it.
-
-225
-00:16:21,760 --> 00:16:22,760
-Apply the formula for it.
-
-226
-00:16:23,760 --> 00:16:24,760
-As I said earlier,
-
-227
-00:16:24,760 --> 00:16:28,760
-I will check the undefined modules.
-
-228
-00:16:32,760 --> 00:16:38,760
-And here, usually, I will check the ESP modules first.
-
-229
-00:16:39,760 --> 00:16:42,760
-So that these two modules will not be used.
-
-230
-00:16:43,760 --> 00:16:44,760
-OK.
-
-231
-00:16:48,760 --> 00:16:53,760
-For the ESP modules,
-
-232
-00:16:54,760 --> 00:16:57,760
-it is possible that it has been tested.
-
-233
-00:16:58,760 --> 00:16:59,760
-And it is tested by Candata.
-
-234
-00:16:59,760 --> 00:17:03,760
-So, in the empty verdict, it is now undefined.
-
-235
-00:17:04,760 --> 00:17:08,760
-I will check it by checking the database file.
-
-236
-00:17:09,760 --> 00:17:10,760
-Here.
-
-237
-00:17:11,760 --> 00:17:15,760
-In the database file, it will show the items that have been tested.
-
-238
-00:17:15,760 --> 00:17:17,760
-At the same time, with the corresponding commands.
-
-239
-00:17:19,760 --> 00:17:20,760
-In the B column.
-
-240
-00:17:21,760 --> 00:17:27,760
-In this stage, only VNUC-COP is used.
-
-241
-00:17:29,760 --> 00:17:31,760
-VNUC-COP.
-
-242
-00:17:31,760 --> 00:17:33,760
-In this column.
-
-243
-00:17:33,760 --> 00:17:34,760
-And...
-
-244
-00:17:34,760 --> 00:17:36,760
-In this column.
-
-245
-00:17:36,760 --> 00:17:38,760
-For example,
-
-246
-00:18:08,760 --> 00:18:26,760
-As shown on the screen, some items have already been tested because this module has been tested by the data channel and deleted the result to TCM, so the result is that C0 and C1 are displayed here.
-
-247
-00:18:26,760 --> 00:18:30,760
-So I don't need to test these modules anymore.
-
-248
-00:18:30,760 --> 00:18:33,760
-Ok, I will log in for it.
-
-249
-00:18:33,760 --> 00:18:52,760
-And in the Empty Netted module, I will hit it again.
-
-250
-00:18:52,760 --> 00:18:56,760
-Ok, for the rest, I will delete it.
-
-251
-00:18:56,760 --> 00:19:01,760
-Ok, done.
-
-252
-00:19:01,760 --> 00:19:03,760
-In this module,
-
-253
-00:19:03,760 --> 00:19:06,760
-there is a problem.
-
-254
-00:19:06,760 --> 00:19:26,760
-I have removed the item list here, so I will paste it back in the data channel.
-
-255
-00:19:26,760 --> 00:19:31,760
-This is the result after running TCM just now.
-
-256
-00:19:31,760 --> 00:19:32,760
-Here.
-
-257
-00:19:32,760 --> 00:19:33,760
-Ah.
-
-258
-00:19:33,760 --> 00:19:43,760
-I will select the item list that is in the SketchDatabase.v.
-
-259
-00:19:43,760 --> 00:19:46,760
-Here, I will select this item list.
-
-260
-00:19:46,760 --> 00:19:47,760
-There.
-
-261
-00:19:47,760 --> 00:19:52,760
-Then, the tool will help me fill in the information of that module.
-
-262
-00:19:52,760 --> 00:19:53,760
-Ah.
-
-263
-00:19:53,760 --> 00:19:56,760
-In this step,
-
-264
-00:19:56,760 --> 00:20:00,760
-after filling in,
-
-265
-00:20:00,760 --> 00:20:02,760
-the second step is the same.
-
-266
-00:20:02,760 --> 00:20:04,760
-Ok, I will click here.
-
-267
-00:20:04,760 --> 00:20:05,760
-Ok.
-
-268
-00:20:05,760 --> 00:20:06,760
-Ok, I will fill in the information.
-
-269
-00:20:06,760 --> 00:20:07,760
-Ok.
-
-270
-00:20:07,760 --> 00:20:08,760
-Ok.
-
-271
-00:20:08,760 --> 00:20:10,760
-Ok, I will copy it back for the ESV modules.
-
-272
-00:20:10,760 --> 00:20:11,760
-Ok.
-
-273
-00:20:11,760 --> 00:20:12,760
-Ok, I will copy it back for the ESV modules.
-
-274
-00:20:12,760 --> 00:20:15,760
-Ok.
-
-275
-00:20:15,760 --> 00:20:16,760
-Ok.
-
-276
-00:20:16,760 --> 00:20:20,760
-For the modules such as Parameter Class, Message Class, or Hierarchical,
-
-277
-00:20:20,760 --> 00:20:21,760
-I will not test them.
-
-278
-00:20:21,760 --> 00:20:22,760
-I will valid them.
-
-279
-00:20:22,760 --> 00:20:23,760
-Ok.
-
-280
-00:20:23,760 --> 00:20:24,760
-Ok.
-
-281
-00:20:24,760 --> 00:20:25,760
-Ok.
-
-282
-00:20:25,760 --> 00:20:26,760
-Ok.
-
-283
-00:20:26,760 --> 00:20:27,760
-Ok.
-
-284
-00:20:27,760 --> 00:20:28,760
-Ok.
-
-285
-00:20:28,760 --> 00:20:29,760
-Ok.
-
-286
-00:20:29,760 --> 00:20:30,760
-Ok.
-
-287
-00:20:30,760 --> 00:20:39,760
-First of all, there are these modules, then we will load it out
-
-288
-00:20:39,760 --> 00:20:41,760
-This is the page
-
-289
-00:20:41,760 --> 00:20:47,760
-The link is valid
-
-290
-00:20:47,760 --> 00:20:55,760
-And what about the rest?
-
-291
-00:20:55,760 --> 00:21:00,760
-I will check the rest
-
-292
-00:21:00,760 --> 00:21:08,760
-Among the modules that I can run, this module is hierarchical
-
-293
-00:21:08,760 --> 00:21:18,760
-I will check again to see if it is correct by checking each module here
-
-294
-00:21:18,760 --> 00:21:22,760
-With the database that I can load back
-
-295
-00:21:22,760 --> 00:21:25,760
-I will check this module
-
-296
-00:21:25,760 --> 00:21:29,760
-Select
-
-297
-00:21:39,760 --> 00:21:43,760
-Yes, it is hierarchical class
-
-298
-00:21:43,760 --> 00:21:46,760
-Then I will comment here
-
-299
-00:21:46,760 --> 00:21:53,760
-This module, in the hierarchical form, will be valid or not tested
-
-300
-00:21:53,760 --> 00:21:54,760
-Then
-
-301
-00:21:54,760 --> 00:21:55,760
-OK
-
-302
-00:21:55,760 --> 00:22:02,760
-I have also searched and checked those modules.
-
-303
-00:22:02,760 --> 00:22:07,760
-Here, in addition to the module that has just been released, there is also this module.
-
-304
-00:22:07,760 --> 00:22:12,760
-It is also a high-radical type.
-
-305
-00:22:12,760 --> 00:22:16,760
-Check it out here.
-
-306
-00:22:25,760 --> 00:22:33,760
-OK. I will type it in.
-
-307
-00:22:33,760 --> 00:22:38,760
-And it is valid.
-
-308
-00:22:38,760 --> 00:22:42,760
-This is correct. This is also correct.
-
-309
-00:22:42,760 --> 00:22:51,760
-For the rest of the modules, I will analyze based on ELOCK.
-
-310
-00:22:51,760 --> 00:22:55,760
-Then, in ELOCK, I haven't checked it yet.
-
-311
-00:22:55,760 --> 00:22:58,760
-I haven't received the yellow information.
-
-312
-00:22:58,760 --> 00:23:03,760
-Then, I also have the modules that haven't been analyzed yet.
-
-313
-00:23:03,760 --> 00:23:12,760
-OK.
-
-314
-00:23:12,760 --> 00:23:24,760
-Then, I will use the tool Cmetrix to get the ELOCK number.
-
-315
-00:23:24,760 --> 00:23:25,760
-OK.
-
-316
-00:23:25,760 --> 00:23:29,760
-Then, I will use the tool Cmetrix to get the ELOCK number of the modules in the database.
-
-317
-00:23:29,760 --> 00:23:33,760
-Then, after turning Cmetrix on, it will help me.
-
-318
-00:23:33,760 --> 00:23:36,760
-I click on the plus sign.
-
-319
-00:23:36,760 --> 00:23:42,760
-I paste the yellow database into the yellow database.
-
-320
-00:23:42,760 --> 00:23:47,760
-Then, I press the OK button.
-
-321
-00:23:47,760 --> 00:23:53,760
-After Cheryl sex on, I press the OK button.
-
-322
-00:23:53,760 --> 00:23:54,760
-Okay.
-
-323
-00:23:54,760 --> 00:23:55,760
-I press the OK button.
-
-324
-00:23:55,760 --> 00:23:58,760
-Here, I have the ELOCK results in her request.
-
-325
-00:23:58,760 --> 00:24:01,760
-Next, I'll press this button to analyze,
-
-326
-00:24:01,760 --> 00:24:03,760
-A-N-A-L-I-ZE
-
-327
-00:24:04,760 --> 00:24:07,760
-.
-
-328
-00:24:07,760 --> 00:24:09,480
-Then I press D,
-
-329
-00:24:09,480 --> 00:24:11,480
-When the ELOCK object has run,
-
-330
-00:24:11,480 --> 00:24:11,760
-Press the station.
-
-331
-00:24:11,760 --> 00:24:15,200
-I click View Output File Metric
-
-332
-00:24:15,200 --> 00:24:20,000
-I will save the current result about my database
-
-333
-00:24:20,000 --> 00:24:22,000
-My workspace
-
-334
-00:24:22,000 --> 00:24:24,000
-Click Save
-
-335
-00:24:24,000 --> 00:24:26,000
-After that
-
-336
-00:24:26,000 --> 00:24:31,000
-I import to this File TBA to analyze
-
-337
-00:24:31,000 --> 00:24:34,000
-Here, my File Metric
-
-338
-00:24:34,000 --> 00:24:40,000
-Then
-
-339
-00:24:40,000 --> 00:24:42,000
-And at the same time
-
-340
-00:24:42,000 --> 00:24:48,000
-I will also build MTC
-
-341
-00:24:48,000 --> 00:24:50,000
-I will build MTC Tools
-
-342
-00:24:50,000 --> 00:24:54,000
-That is, build the necessary modules for File C
-
-343
-00:24:54,000 --> 00:24:58,000
-I will choose each File C
-
-344
-00:24:58,000 --> 00:25:03,000
-Then I will take all these modules
-
-345
-00:25:03,000 --> 00:25:04,000
-Here
-
-346
-00:25:04,000 --> 00:25:06,000
-I will give
-
-347
-00:25:06,000 --> 00:25:09,000
-Analyze the list of modules here
-
-348
-00:25:09,000 --> 00:25:11,000
-This process
-
-349
-00:25:11,000 --> 00:25:13,000
-Because this process takes a long time
-
-350
-00:25:13,000 --> 00:25:15,000
-So I will build
-
-351
-00:25:15,000 --> 00:25:17,000
-Let the tool run along with the analyze process
-
-352
-00:25:17,000 --> 00:25:20,000
-To save more time
-
-353
-00:25:20,000 --> 00:25:22,000
-Then
-
-354
-00:25:22,000 --> 00:25:24,000
-After getting the information here
-
-355
-00:25:24,000 --> 00:25:27,000
-Then next is I will use Tool
-
-356
-00:25:27,000 --> 00:25:30,000
-MTC Tools just now
-
-357
-00:25:30,000 --> 00:25:33,000
-I will open this file
-
-358
-00:25:33,000 --> 00:25:36,000
-config.xml
-
-359
-00:25:36,000 --> 00:25:38,000
-Here
-
-360
-00:25:38,000 --> 00:25:40,000
-I will load the file
-
-361
-00:25:40,000 --> 00:25:42,000
-MTC
-
-362
-00:25:42,000 --> 00:25:45,000
-MTC Output
-
-363
-00:25:45,000 --> 00:25:47,000
-Here
-
-364
-00:25:47,000 --> 00:25:49,000
-And there is a small trick
-
-365
-00:25:49,000 --> 00:25:51,000
-I will load the line from the bottom to the top
-
-366
-00:25:51,000 --> 00:25:53,000
-For the information
-
-367
-00:25:53,000 --> 00:25:55,000
-In this part
-
-368
-00:25:55,000 --> 00:25:58,000
-And at the top
-
-369
-00:25:58,000 --> 00:26:00,000
-Of the file
-
-370
-00:26:00,000 --> 00:26:02,000
-I will load
-
-371
-00:26:02,000 --> 00:26:03,000
-The other line
-
-372
-00:26:03,000 --> 00:26:04,000
-The word Batch
-
-373
-00:26:04,000 --> 00:26:05,000
-To load
-
-374
-00:26:05,000 --> 00:26:07,000
-Because the MTC button has been detected
-
-375
-00:26:07,000 --> 00:26:09,000
-And the other steps have not yet
-
-376
-00:26:09,000 --> 00:26:12,000
-So I will load the other Batch
-
-377
-00:26:12,000 --> 00:26:14,000
-To load and build
-
-378
-00:26:14,000 --> 00:26:16,000
-For me
-
-379
-00:26:16,000 --> 00:26:19,000
-I will find the MTC file
-
-380
-00:26:19,000 --> 00:26:21,000
-That output in
-
-381
-00:26:21,000 --> 00:26:23,000
-The Gen object
-
-382
-00:26:23,000 --> 00:26:26,000
-I will return to the database
-
-383
-00:26:26,000 --> 00:26:28,000
-Select
-
-384
-00:26:28,000 --> 00:26:29,000
-Select Gen
-
-385
-00:26:29,000 --> 00:26:31,000
-Then
-
-386
-00:26:31,000 --> 00:26:34,000
-I will go to find
-
-387
-00:26:34,000 --> 00:26:36,000
-Configure just now
-
-388
-00:26:36,000 --> 00:26:37,000
-Exactly
-
-389
-00:26:37,000 --> 00:26:39,000
-Configure just now
-
-390
-00:26:44,000 --> 00:26:45,000
-Here
-
-391
-00:26:45,000 --> 00:26:47,000
-Select Build
-
-392
-00:26:47,000 --> 00:26:48,000
-Here
-
-393
-00:26:48,000 --> 00:26:50,000
-This is the file after
-
-394
-00:26:50,000 --> 00:26:52,000
-MTC successfully
-
-395
-00:26:52,000 --> 00:26:53,000
-I have this file
-
-396
-00:26:53,000 --> 00:26:55,000
-I choose
-
-397
-00:26:55,000 --> 00:26:57,000
-Batch Copy
-
-398
-00:26:57,000 --> 00:26:59,000
-Then I will load the corresponding
-
-399
-00:26:59,000 --> 00:27:00,000
-In
-
-400
-00:27:00,000 --> 00:27:02,000
-I will load the information
-
-401
-00:27:02,000 --> 00:27:04,000
-Down here
-
-402
-00:27:04,000 --> 00:27:06,000
-Then I will go upside down
-
-403
-00:27:06,000 --> 00:27:07,000
-Up
-
-404
-00:27:07,000 --> 00:27:08,000
-Up
-
-405
-00:27:08,000 --> 00:27:10,000
-Up
-
-406
-00:27:10,000 --> 00:27:11,000
-Up
-
-407
-00:27:11,000 --> 00:27:12,000
-Up
-
-408
-00:27:12,000 --> 00:27:13,000
-Up
-
-409
-00:27:13,000 --> 00:27:14,000
-Up
-
-410
-00:27:14,000 --> 00:27:15,000
-Up
-
-411
-00:27:15,000 --> 00:27:16,000
-Up
-
-412
-00:27:16,000 --> 00:27:17,000
-Up
-
-413
-00:27:17,000 --> 00:27:18,000
-Up
-
-414
-00:27:18,000 --> 00:27:19,000
-Up
-
-415
-00:27:19,000 --> 00:27:20,000
-Up
-
-416
-00:27:20,000 --> 00:27:21,000
-Up
-
-417
-00:27:21,000 --> 00:27:22,000
-Up
-
-418
-00:27:22,000 --> 00:27:23,000
-Up
-
-419
-00:27:23,000 --> 00:27:24,000
-Up
-
-420
-00:27:24,000 --> 00:27:25,000
-Up
-
-421
-00:27:25,000 --> 00:27:26,000
-Up
-
-422
-00:27:26,000 --> 00:27:27,000
-Up
-
-423
-00:27:27,000 --> 00:27:28,000
-Up
-
-424
-00:27:28,000 --> 00:27:29,000
-Up
-
-425
-00:27:29,000 --> 00:27:30,000
-Up Up
-
-426
-00:27:30,000 --> 00:27:32,000
-Up Up
-
-427
-00:27:32,000 --> 00:27:33,000
-Up Up
-
-428
-00:27:33,000 --> 00:27:34,000
-Up Up
-
-429
-00:27:34,000 --> 00:27:35,000
-Up Up
-
-430
-00:27:35,000 --> 00:27:36,000
-Up Up
-
-431
-00:27:36,000 --> 00:27:37,000
-Up
-
-432
-00:27:37,000 --> 00:27:43,000
-And note that I will zip the database just now
-
-433
-00:27:43,000 --> 00:27:46,000
-The database I logged back
-
-434
-00:27:46,000 --> 00:27:48,000
-Here I have also zipped
-
-435
-00:27:48,000 --> 00:27:51,000
-Here I will see the page of it
-
-436
-00:27:55,000 --> 00:27:58,000
-Fill in here
-
-437
-00:27:58,000 --> 00:28:03,000
-Then List of Modules
-
-438
-00:28:03,000 --> 00:28:06,000
-I have also zipped
-
-439
-00:28:06,000 --> 00:28:09,000
-I will fill in here
-
-440
-00:28:09,000 --> 00:28:11,000
-Then
-
-441
-00:28:11,000 --> 00:28:14,000
-After filling in all the information
-
-442
-00:28:14,000 --> 00:28:20,000
-I will go to mcdctool.bat
-
-443
-00:28:20,000 --> 00:28:22,000
-Run the tool
-
-444
-00:28:22,000 --> 00:28:27,000
-After running the tool, it will come out
-
-445
-00:28:27,000 --> 00:28:31,000
-This item
-
-446
-00:28:31,000 --> 00:28:33,000
-Name, Database
-
-447
-00:28:33,000 --> 00:28:38,000
-And the number of BBs that I just ran
-
-448
-00:28:38,000 --> 00:28:40,000
-See
-
-449
-00:28:43,000 --> 00:28:49,000
-After running the tool, it will come out a file for me
-
-450
-00:28:49,000 --> 00:28:51,000
-This TBA file
-
-451
-00:28:51,000 --> 00:28:55,000
-This file will have the information to help me
-
-452
-00:28:55,000 --> 00:28:57,000
-Skype
-
-453
-00:28:57,000 --> 00:29:01,000
-After the test is done, it will be easier
-
-454
-00:29:01,000 --> 00:29:02,000
-As well as
-
-455
-00:29:02,000 --> 00:29:04,000
-Other information
-
-456
-00:29:04,000 --> 00:29:09,000
-I will take the information here
-
-457
-00:29:09,000 --> 00:29:12,000
-Then I also put it in the file
-
-458
-00:29:12,000 --> 00:29:13,000
-Analysis
-
-459
-00:29:13,000 --> 00:29:15,000
-Here I set it to Toolprint
-
-460
-00:29:15,000 --> 00:29:17,000
-I will leave it here
-
-461
-00:29:18,000 --> 00:29:23,000
-Then go back to the TBA file just now
-
-462
-00:29:23,000 --> 00:29:24,000
-Then
-
-463
-00:29:26,000 --> 00:29:28,000
-I will boot
-
-464
-00:29:28,000 --> 00:29:30,000
-I will find the in-log
-
-465
-00:29:30,000 --> 00:29:34,000
-For the modules that need to be tested here
-
-466
-00:29:34,000 --> 00:29:37,000
-I will go back to the TBA file
-
-467
-00:29:37,000 --> 00:29:39,000
-Then
-
-468
-00:29:39,000 --> 00:29:41,000
-So
-
-469
-00:29:41,000 --> 00:29:42,000
-Here
-
-470
-00:29:42,000 --> 00:29:44,000
-I will use VLOOKUP
-
-471
-00:29:44,000 --> 00:29:46,000
-Item Name
-
-472
-00:29:46,000 --> 00:29:47,000
-And
-
-473
-00:29:47,000 --> 00:29:49,000
-Grammetric
-
-474
-00:29:57,000 --> 00:29:59,000
-3 important database information
-
-475
-00:29:59,000 --> 00:30:02,000
-It is
-
-476
-00:30:02,000 --> 00:30:04,000
-It's effect
-
-477
-00:30:04,000 --> 00:30:05,000
-C
-
-478
-00:30:05,000 --> 00:30:08,000
-Next is a
-
-479
-00:30:08,000 --> 00:30:09,000
-A
-
-480
-00:30:09,000 --> 00:30:10,000
-A
-
-481
-00:30:10,000 --> 00:30:11,000
-Now
-
-482
-00:30:11,000 --> 00:30:12,000
-A
-
-483
-00:30:12,000 --> 00:30:14,000
-A function
-
-484
-00:30:14,000 --> 00:30:16,000
-Is a
-
-485
-00:30:16,000 --> 00:30:17,000
-Max
-
-486
-00:30:17,000 --> 00:30:18,000
-Easy
-
-487
-00:30:18,000 --> 00:30:19,000
-Ok
-
-488
-00:30:19,000 --> 00:30:20,000
-Function
-
-489
-00:30:20,000 --> 00:30:23,000
-I'm kind of Ok
-
-490
-00:30:23,000 --> 00:30:26,000
-Will apply to all the models here
-
-491
-00:30:26,000 --> 00:30:27,000
-Ok
-
-492
-00:30:27,000 --> 00:30:28,000
-Ok
-
-493
-00:30:28,000 --> 00:30:33,000
-Okay, first of all, I have a table like this.
-
-494
-00:30:37,000 --> 00:30:46,000
-Then, after having the ilog information here,
-
-495
-00:30:46,000 --> 00:30:49,000
-I will check again that for the C modules,
-
-496
-00:30:49,000 --> 00:30:53,000
-which module has the function equal to 0,
-
-497
-00:30:53,000 --> 00:30:55,000
-which means there is no function,
-
-498
-00:30:55,000 --> 00:30:57,000
-which means I will make a list,
-
-499
-00:30:57,000 --> 00:30:59,000
-then no, it doesn't exist here.
-
-500
-00:30:59,000 --> 00:31:05,000
-Then, I will do as usual.
-
-501
-00:31:05,000 --> 00:31:09,000
-Tune helps me to collect the information
-
-502
-00:31:09,000 --> 00:31:13,000
-that has been tested before or not,
-
-503
-00:31:13,000 --> 00:31:17,000
-and at the same time, I will also go to check
-
-504
-00:31:17,000 --> 00:31:22,000
-whether it has been tested in recent years or not.
-
-505
-00:31:22,000 --> 00:31:23,000
-Ah.
-
-506
-00:31:24,000 --> 00:31:26,000
-OK.
-
-507
-00:31:38,000 --> 00:31:45,000
-Then, I have also built a formula for this.
-
-508
-00:31:48,000 --> 00:31:52,000
-Then, I will show you the formula here.
-
-509
-00:31:52,000 --> 00:31:53,000
-Here.
-
-510
-00:31:53,000 --> 00:31:59,000
-My formula is to check again with the TestedDatabase file.
-
-511
-00:31:59,000 --> 00:32:02,000
-The TestedDatabase file.
-
-512
-00:32:02,000 --> 00:32:04,000
-This file here.
-
-513
-00:32:10,000 --> 00:32:12,000
-This file.
-
-514
-00:32:12,000 --> 00:32:14,000
-Ah. This file.
-
-515
-00:32:17,000 --> 00:32:18,000
-Here.
-
-516
-00:32:21,000 --> 00:32:22,000
-OK.
-
-517
-00:32:22,000 --> 00:32:26,000
-Then, I will check that the test is done.
-
-518
-00:32:26,000 --> 00:32:31,000
-Here, I will check whether that module has been tested
-
-519
-00:32:31,000 --> 00:32:36,000
-by, ah, has been tested by, ah,
-
-520
-00:32:36,000 --> 00:32:39,000
-by Candata or G-Test,
-
-521
-00:32:39,000 --> 00:32:41,000
-or is tested.
-
-522
-00:32:41,000 --> 00:32:45,000
-Then, there is only one, ah,
-
-523
-00:32:45,000 --> 00:32:48,000
-if it has been, ah,
-
-524
-00:32:48,000 --> 00:32:50,000
-and it will give the final test environment here.
-
-525
-00:32:50,000 --> 00:32:57,000
-For that module, if it is a C module, it will be tested by Kanata or G-Test.
-
-526
-00:32:57,000 --> 00:33:08,000
-And if it is an ASW module, an ISP module, here, Atomsize ISP, then it will be tested by G-Test.
-
-527
-00:33:08,000 --> 00:33:16,000
-Then, this node, MTnit, is the display node for testing that module.
-
-528
-00:33:16,000 --> 00:33:21,000
-If it is already tested, it will be marked as Delta.
-
-529
-00:33:21,000 --> 00:33:29,000
-And it will also calculate the effort for Delta.
-
-530
-00:33:29,000 --> 00:33:37,000
-Here, I will apply it to all the items here.
-
-531
-00:33:38,000 --> 00:33:44,000
-Do you understand?
-
-532
-00:33:44,000 --> 00:33:48,000
-If you have questions, please send your inquiries.
-
-533
-00:33:48,000 --> 00:33:53,780
-And this module is for testing
-
-534
-00:33:53,780 --> 00:33:57,780
-And this module is for testing
-
-535
-00:33:57,780 --> 00:34:01,780
-And this module is for testing
-
-536
-00:34:01,780 --> 00:34:05,780
-Thank you for watching.
-
-537
-00:34:08,000 --> 00:34:12,000
-Please subscribe to La La School channel to not miss the fascinating videos
-
-538
-00:34:38,000 --> 00:34:46,000
-I'm a bit laggy
-
-539
-00:34:46,000 --> 00:34:53,000
-I have checked all the necessary information here
-
-540
-00:34:53,000 --> 00:34:59,000
-If the module has not been tested, it will be new in this anti-nit-nit node
-
-541
-00:34:59,000 --> 00:35:06,000
-However, this tab has already been tested, so my FILE TEXTED DATABASE has been updated appropriately
-
-542
-00:35:06,000 --> 00:35:16,000
-This means that most of the modules in the anti-nit-nit node are all delta
-
-543
-00:35:16,000 --> 00:35:22,000
-Next, I will calculate the effort according to ELOCK
-
-544
-00:35:22,000 --> 00:35:33,000
-From there, I will calculate the total effort for that module based on the effort according to ELOCK and the state of delta or new
-
-545
-00:35:33,000 --> 00:35:35,000
-The test will end here
-
-546
-00:35:36,000 --> 00:35:46,000
-To calculate quickly, I have already written a formula for this
-
-547
-00:35:46,000 --> 00:35:50,000
-Then paste it in here
-
-548
-00:35:50,000 --> 00:36:00,000
-If I type Valid here, if the module is C, it will be 0.1
-
-549
-00:36:00,000 --> 00:36:04,000
-And I will check the test environment here
-
-550
-00:36:04,000 --> 00:36:07,000
-If the module is C, it will be tested according to the test, then it will calculate another ELOCK
-
-551
-00:36:07,000 --> 00:36:09,000
-And if it is tested according to the test, it will calculate another ELOCK
-
-552
-00:36:09,000 --> 00:36:14,000
-And similarly for ASCII
-
-553
-00:36:14,000 --> 00:36:19,000
-If it is ESP, it will calculate according to the formula of ASCII
-
-554
-00:36:19,000 --> 00:36:21,000
-Then
-
-555
-00:36:21,000 --> 00:36:28,000
-And here is the delta, so it is
-
-556
-00:36:28,000 --> 00:36:32,000
-The total effort will be equal to
-
-557
-00:36:32,000 --> 00:36:37,000
-It will be equal to this times 0.4
-
-558
-00:36:37,000 --> 00:36:43,000
-And because the minimum effort for a module is 0.6
-
-559
-00:36:43,000 --> 00:36:46,000
-So my formula is 0.6 here
-
-560
-00:36:46,000 --> 00:36:49,000
-Then
-
-561
-00:36:49,000 --> 00:36:53,000
-I will apply it to all the items here
-
-562
-00:36:53,000 --> 00:36:59,000
-Then
-
-563
-00:36:59,000 --> 00:37:00,000
-OK
-
-564
-00:37:00,000 --> 00:37:01,000
-Then
-
-565
-00:37:01,000 --> 00:37:29,640
-the
-
-566
-00:37:29,640 --> 00:37:30,600
-Let's start here
-
-567
-00:37:30,600 --> 00:37:30,960
-One more time
-
-568
-00:37:31,000 --> 00:37:54,880
-I'm not sure for it, I'm not sure for it, if you want to get it, I'll
-
-569
-00:37:54,880 --> 00:38:09,620
-count it as 0.05, this is this, and so on, ok, ok,
-
-570
-00:38:09,620 --> 00:38:10,540
-ok,
-
-571
-00:38:10,540 --> 00:38:11,540
-ok,
-
-572
-00:38:11,540 --> 00:38:12,540
-ok,
-
-573
-00:38:12,540 --> 00:38:13,540
-ok,
-
-574
-00:38:13,540 --> 00:38:14,540
-ok,
-
-575
-00:38:14,540 --> 00:38:15,540
-ok,
-
-576
-00:38:15,540 --> 00:38:16,540
-ok,
-
-577
-00:38:16,540 --> 00:38:17,540
-ok,
-
-578
-00:38:17,540 --> 00:38:18,540
-ok,
-
-579
-00:38:18,540 --> 00:38:19,540
-ok,
-
-580
-00:38:19,540 --> 00:38:20,540
-ok,
-
-581
-00:38:20,540 --> 00:38:21,540
-ok,
-
-582
-00:38:21,540 --> 00:38:22,540
-ok,
-
-583
-00:38:22,540 --> 00:38:23,540
-ok,
-
-584
-00:38:23,540 --> 00:38:24,540
-ok,
-
-585
-00:38:24,540 --> 00:38:28,540
-To make it more beautiful, I will make it look like a cloud.
-
-586
-00:38:40,540 --> 00:38:49,540
-After that, I will check the information in the Basically Filter.
-
-587
-00:38:49,540 --> 00:38:52,540
-I will check it again.
-
-588
-00:38:52,540 --> 00:38:59,540
-After that, I will check the mode undefined to see if I have analyzed enough for all of them.
-
-589
-00:39:01,540 --> 00:39:05,540
-I have checked all of them.
-
-590
-00:39:14,540 --> 00:39:19,540
-For the C modules, I will list them separately.
-
-591
-00:39:22,540 --> 00:39:36,540
-I will fill in the CECFCG columns to make it easier for the tester to install after they have finished.
-
-592
-00:39:40,540 --> 00:39:44,540
-I will also use Reboot Cup.
-
-593
-00:39:44,540 --> 00:39:46,540
-And this one.
-
-594
-00:39:46,540 --> 00:39:51,540
-And for the button part, I will get the result from the MCDCTool.
-
-595
-00:39:51,540 --> 00:39:52,540
-MCDCTool.com.
-
-596
-00:39:52,540 --> 00:39:54,540
-This is the result.
-
-597
-00:39:54,540 --> 00:39:56,540
-Now, I will look up.
-
-598
-00:39:56,540 --> 00:39:58,540
-I will look up.
-
-599
-00:39:58,540 --> 00:40:00,540
-Atom name.
-
-600
-00:40:00,540 --> 00:40:02,540
-And...
-
-601
-00:40:04,540 --> 00:40:06,540
-Wait a minute.
-
-602
-00:40:10,540 --> 00:40:12,540
-Wait a minute.
-
-603
-00:40:22,540 --> 00:40:35,540
-OK.
-
-604
-00:40:35,540 --> 00:40:38,540
-It looks fine.
-
-605
-00:40:38,540 --> 00:40:40,540
-And finally, we have a question.
-
-606
-00:40:40,540 --> 00:40:41,540
-OK.
-
-607
-00:40:41,540 --> 00:40:43,540
-I will go back to my desk for a while.
-
-608
-00:40:43,540 --> 00:40:44,540
-There are no questions.
-
-609
-00:40:44,540 --> 00:40:47,540
-I will pick up their questions.
-
-610
-00:40:47,540 --> 00:40:48,540
-I will choose to do it again.
-
-611
-00:40:48,540 --> 00:40:50,540
-I will pick up their questions.
-
-612
-00:40:50,540 --> 00:40:51,540
-Then...
-
-613
-00:40:51,540 --> 00:40:52,620
-Thank you for watching.
-
-614
-00:41:21,540 --> 00:41:43,540
-OK, that's right, I'll apply it to all of them here, OK, so I've done the analysis,
-
-615
-00:41:43,540 --> 00:42:12,540
-then I'll go back to Samurai, here there are 51 items that need to be tested, and 12 items that need to be valid.
-
-616
-00:42:12,540 --> 00:42:13,540
-Here, I'll go back to Samurai, and here there are 51 items that need to be tested, and 12 items that need to be valid.
-
-617
-00:42:13,540 --> 00:42:27,540
-As for bmp873428, it will have 63 items which need perform UC, and in that there are 12 items that need to be valid and 51 items that need to be tested.
-
-618
-00:42:30,540 --> 00:42:32,540
-For.I will...
-
-619
-00:42:32,540 --> 00:42:41,540
-For this file, I will create another estimation file, to send to xia.
-
-620
-00:42:41,540 --> 00:42:46,540
-I will save it as a file
-
-621
-00:42:46,540 --> 00:42:50,540
-Estimation
-
-622
-00:42:50,540 --> 00:42:54,540
-OK
-
-623
-00:42:54,540 --> 00:43:00,540
-OK
-
-624
-00:43:00,540 --> 00:43:04,540
-In this file, I will give it
-
-625
-00:43:04,540 --> 00:43:08,540
-all values, not the formula
-
-626
-00:43:08,540 --> 00:43:12,540
-I will save the elog
-
-627
-00:43:12,540 --> 00:43:15,540
-anti-command, anti-nitid
-
-628
-00:43:15,540 --> 00:43:17,540
-and total effort
-
-629
-00:43:17,540 --> 00:43:21,540
-for a module
-
-630
-00:43:21,540 --> 00:43:25,540
-undefined
-
-631
-00:43:25,540 --> 00:43:29,540
-I will go and fill in the undefined modules
-
-632
-00:43:29,540 --> 00:43:33,540
-Here
-
-633
-00:43:33,540 --> 00:43:37,540
-I will remove these
-
-634
-00:43:37,540 --> 00:43:38,540
-too
-
-635
-00:43:38,540 --> 00:43:39,540
-OK
-
-636
-00:43:39,540 --> 00:43:41,540
-Basically, it's done
-
-637
-00:43:41,540 --> 00:43:43,540
-1 task
-
-638
-00:43:43,540 --> 00:43:44,540
-So
-
-639
-00:43:44,540 --> 00:43:46,540
-Like
-
-640
-00:43:46,540 --> 00:43:48,540
-OK
-
-641
-00:43:48,540 --> 00:43:50,540
-OK
-
-642
-00:43:50,540 --> 00:43:52,540
-OK
-
-643
-00:43:52,540 --> 00:43:54,540
-OK
-
-644
-00:43:54,540 --> 00:43:56,540
-OK
-
-645
-00:43:56,540 --> 00:43:58,540
-OK
-
-646
-00:43:58,540 --> 00:44:00,540
-OK
-
-647
-00:44:00,540 --> 00:44:02,540
-OK
-
-648
-00:44:02,540 --> 00:44:04,540
-OK
-
-649
-00:44:04,540 --> 00:44:06,540
-OK
-
-650
-00:44:06,540 --> 00:44:08,540
-OK
-
+00:43:36,900 --> 00:43:48,920
+Basically, I have completed the analysis for one task.
