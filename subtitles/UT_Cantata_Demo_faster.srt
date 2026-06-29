@@ -1,1004 +1,687 @@
 1
-00:00:00,000 --> 00:00:06,000
-Hello everyone. In this video, we will implement UT with Kanata.
+00:00:00,790 --> 00:00:05,110
+Hello everyone. In this video, we will perform UT using Cantata.
 
 2
-00:00:06,000 --> 00:00:12,000
-First, we will have the list of modules that need to implement UT with Kanata.
+00:00:06,180 --> 00:00:10,400
+First, we will have a list of modules that need to be tested using Cantata.
 
 3
-00:00:12,000 --> 00:00:18,000
-In this video, we will implement UT for the first module.
+00:00:11,680 --> 00:00:17,850
+In this video, we will perform UT for the first module.
 
 4
-00:00:18,000 --> 00:00:26,000
-Before implementing UT for Kanata, we will provide the database files.
+00:00:18,640 --> 00:00:25,830
+Before performing UT using Cantata, we will be provided with the database files.
 
 5
-00:00:26,000 --> 00:00:37,000
-There will be a header folder in this database. It will hold all header files that could be used in the FACI.
+00:00:25,830 --> 00:00:28,890
+In this database, there will be a header folder.
 
 6
-00:00:37,000 --> 00:00:44,000
-Besides, all Kanata left blocks will be there.
+00:00:28,890 --> 00:00:35,580
+It contains all the header files used in the C file.
 
 7
-00:00:44,000 --> 00:00:55,000
-At this time, we can only copy the header file and Kanata file at the same time we need to implement UT.
+00:00:37,580 --> 00:00:43,960
+Besides that, it also contains all Cantata folders for each module.
 
 8
-00:00:55,000 --> 00:00:56,000
-For example, in OpenS preached C Lane, the file directly defined by Uogl is the error value.
+00:00:43,960 --> 00:00:47,170
+So when we need to perform Cantata testing,
 
 9
-00:00:56,000 --> 00:01:06,000
-In this video, I will use UT008, then I will copy TSD and UT008 to my Workspace
+00:00:47,170 --> 00:00:55,040
+we only need to copy the header file and the corresponding Cantata file for the C file we need to test.
 
 10
-00:01:06,000 --> 00:01:15,000
-After copying to my Workspace, I will open Canata
+00:00:55,040 --> 00:01:06,380
+For example, in this video, I will perform UT for UT008, so I will copy the header file and the UT008 file into my workspace.
 
 11
-00:01:26,000 --> 00:01:45,000
-After opening Canata, we will change it to C++
+00:01:06,380 --> 00:01:12,180
+After copying them into my workspace, I will open Cantata.
 
 12
-00:01:45,000 --> 00:01:55,000
-Then we will open two folders, header and UT folder
+00:01:40,830 --> 00:01:45,210
+After opening the Cantata interface, we will switch it to C/C++ mode.
 
 13
-00:01:55,000 --> 00:01:56,000
-I will copy to my Workspace
+00:01:49,210 --> 00:01:56,230
+After that, we will open the header folder and the UT folder that we need to work on.
 
 14
-00:01:56,000 --> 00:02:01,000
-Then I will change to C++
+00:02:50,150 --> 00:02:55,560
+Cantata is a release folder, but we can delete it and perform it again.
 
 15
-00:02:01,000 --> 00:02:07,000
-After un-copy and UPLOAD, we will come to work space
+00:02:58,560 --> 00:03:03,050
+First, I will perform the release step.
 
 16
-00:02:07,000 --> 00:02:12,000
-Then we are done
+00:03:03,050 --> 00:03:07,090
+I will select the C file that I need to perform.
 
 17
-00:02:26,000 --> 00:02:31,000
-Go to your computer and try out the new mode
+00:03:07,090 --> 00:03:16,680
+Then I will select Release.
 
 18
-00:02:31,000 --> 00:02:36,000
-To remove the play button, just know that the play button is going to be locked
+00:03:16,680 --> 00:03:21,680
+When the console window shows the line containing WinMan@16,
 
 19
-00:02:36,000 --> 00:02:41,000
-Select the play button for the player
+00:03:21,680 --> 00:03:25,820
+it means that the release step has completed successfully.
 
 20
-00:02:41,000 --> 00:02:46,000
-Select the play button
+00:03:25,820 --> 00:03:31,820
+Now I can create a test case for this C file.
 
 21
-00:02:46,000 --> 00:02:51,000
-To remove the play button, just know that the play button is going to be locked
+00:03:33,820 --> 00:03:57,090
+I can copy the C file name, then simulate test script.
 
 22
-00:02:51,000 --> 00:02:56,000
-It is a refolder, but I can delete it and do it again
+00:03:57,090 --> 00:03:59,090
+For the coverage rule, I will select
 
 23
-00:02:59,000 --> 00:03:02,000
-First I will do release
+00:03:59,090 --> 00:04:01,090
+Report All Methods.
 
 24
-00:03:03,000 --> 00:03:09,000
-I will select the file that I want to do, then select release
-
-25
-00:03:09,000 --> 00:03:25,000
-When the control panel appears, the line has WinManArc16, it means that my release is inside
-
-26
-00:03:26,000 --> 00:03:32,000
-Now I can create a test case for this C file
+00:04:01,090 --> 00:04:07,090
+At this point, Cantata will report all coverage metrics such as C0, C1, and MCDC.
 
 27
-00:03:33,000 --> 00:03:38,000
-I can type the name of the C file, then click on the test case
+00:04:07,090 --> 00:04:09,320
+After that,
 
 28
-00:03:39,000 --> 00:03:55,000
-The name of the test case will usually start with A test, then the name of the PC
+00:04:09,320 --> 00:04:17,640
+I will select Finish.
 
 29
-00:03:56,000 --> 00:04:01,000
-Next, I will choose the COVID rule, which is Reboot on Equip
+00:04:17,640 --> 00:04:19,640
+Then I will select test case.
 
 30
-00:04:02,000 --> 00:04:08,000
-At this time, it will reboot all the values ​​such as C0, C1, C1C
-
-31
-00:04:09,000 --> 00:04:12,000
-I will choose Finish
+00:04:19,640 --> 00:04:24,840
+At this point, Cantata has not created any Test case for us yet.
 
 32
-00:04:17,000 --> 00:04:19,000
-Then I choose Test Case
+00:04:24,840 --> 00:04:32,570
+So I will create a test case for this module.
 
 33
-00:04:20,000 --> 00:04:23,000
-On this side, Canada has not created a test case yet
-
-34
-00:04:24,000 --> 00:04:27,000
-I will create a test case for this module
+00:04:32,570 --> 00:04:36,570
+Here, I will create a test case for the first function.
 
 35
-00:04:32,000 --> 00:04:38,000
-Here I will create a test case for the first function, which is this function
-
-36
-00:04:40,000 --> 00:04:46,000
-Copy the function and select this function
+00:04:36,570 --> 00:04:41,520
+Copy the Function. Then select it.
 
 37
-00:04:49,000 --> 00:04:53,000
-This is a test case model, it will have the name of the test case
+00:04:43,520 --> 00:04:52,580
+This is a sample test case, and it will contain the test case name.
 
 38
-00:04:54,000 --> 00:05:00,000
-Where it is used to attach the value of global variables
+00:04:55,580 --> 00:05:04,380
+This is where we assign values to global variables, input variables, and expected values.
 
 39
-00:05:01,000 --> 00:05:02,000
-Input variables
+00:05:04,380 --> 00:05:12,000
+This is also where we assign values to the global variables after calculation.
 
 40
-00:05:03,000 --> 00:05:04,000
-And
+00:05:14,000 --> 00:05:19,200
+Next is the test case description section.
 
 41
-00:05:05,000 --> 00:05:07,000
-It will be the place where
+00:05:19,200 --> 00:05:24,200
+Here, when I cover any section, I can add comments here.
 
 42
-00:05:07,000 --> 00:05:14,000
-I attach the value of global variables after it has been calculated
+00:05:24,200 --> 00:05:27,600
+Next is the expected calls section.
 
 43
-00:05:15,000 --> 00:05:20,000
-Next is the test case's Deprivation
+00:05:27,600 --> 00:05:35,600
+For UT, we only set the source code for a single C module.
 
 44
-00:05:21,000 --> 00:05:25,000
-When I go to which part, I can click here
+00:05:35,600 --> 00:05:40,670
+Therefore, some functions may be implemented in other modules.
 
 45
-00:05:26,000 --> 00:05:28,000
-Next is Inspector Call
+00:05:40,670 --> 00:05:43,670
+Here, I will perform stub for those functions.
 
 46
-00:05:29,000 --> 00:05:36,000
-For UT, I will set the code line for a single C module
+00:05:45,670 --> 00:05:50,670
+I will not run the actual code of the other functions.
 
 47
-00:05:36,000 --> 00:05:41,000
-So there are functions that will be executed in other modules
+00:05:50,670 --> 00:05:55,870
+Here, it will include all of them.
 
 48
-00:05:41,000 --> 00:05:44,000
-So here I will do stop for these functions
-
-49
-00:05:44,000 --> 00:05:47,000
-And do not run the code
+00:06:00,870 --> 00:06:04,100
+Next, this is the function that we are calling to.
 
 50
-00:05:47,000 --> 00:05:50,000
-Actually for the top functions
-
-51
-00:05:50,000 --> 00:05:53,000
-So here it will have all the
+00:06:04,340 --> 00:06:06,340
+Finally is the check function,
 
 52
-00:06:01,000 --> 00:06:05,000
-Next is the F function that I should call to
+00:06:06,340 --> 00:06:09,740
+which will check all global variables
 
 53
-00:06:05,000 --> 00:06:07,000
-And finally is the check function
+00:06:09,740 --> 00:06:12,200
+declared in the C file,
 
 54
-00:06:07,000 --> 00:06:12,000
-With this check function, it will check all the global variables in the FACI report
+00:06:12,200 --> 00:06:17,580
+including static variables.
 
 55
-00:06:12,000 --> 00:06:14,000
-Including the static variables
+00:06:27,580 --> 00:06:29,760
+This function returns a value.
 
 56
-00:06:27,000 --> 00:06:30,000
-Return from the value of this function
+00:06:29,760 --> 00:06:32,380
+For this function, we can
 
 57
-00:06:30,000 --> 00:06:33,000
-And this function I can
+00:06:32,380 --> 00:06:34,940
+perform stub on it.
 
 58
-00:06:33,000 --> 00:06:35,000
-Actually stop it
-
-59
-00:06:35,000 --> 00:06:40,000
-So the stop work will be done at the bottom of the test case
-
-60
-00:06:40,000 --> 00:06:43,000
-I can search for the name of the function here
+00:06:35,940 --> 00:06:39,580
+The stubbing work will be done below the test case
 
 61
-00:06:44,000 --> 00:06:45,000
-And
+00:06:41,000 --> 00:06:43,880
+We can search for the function.
 
 62
-00:06:45,000 --> 00:06:48,000
-This function will have the value of Win8
+00:06:44,880 --> 00:06:47,960
+This function will return a value of 8-bit signed interger.
 
 63
-00:06:48,000 --> 00:06:49,000
-So
+00:06:49,960 --> 00:06:52,280
+So we will consider this condition,
 
 64
-00:06:50,000 --> 00:06:51,000
-To
+00:06:52,280 --> 00:06:57,980
+this condition is TRUE when the return value of this following function is 1.
 
 65
-00:06:51,000 --> 00:06:52,000
-I will do this
+00:06:57,980 --> 00:07:10,930
+So I can stub the value and give it a name that I can call later.
 
 66
-00:06:52,000 --> 00:06:58,000
-This condition while the return value of this function will be 1
-
-67
-00:06:59,000 --> 00:07:01,000
-And I can stop the value
+00:07:10,930 --> 00:07:16,290
+So that when I call it by function, it will return the value 1.
 
 68
-00:07:01,000 --> 00:07:02,000
-For the next
-
-69
-00:07:03,000 --> 00:07:08,000
-This is the name of the function
+00:07:24,230 --> 00:07:27,230
+At this point, when Cantata reads this function,
 
 70
-00:07:08,000 --> 00:07:11,000
-That I can call it
-
-71
-00:07:11,000 --> 00:07:16,000
-When I call it, it will have the value of Win8
+00:07:27,070 --> 00:07:32,630
+it will understand that the return value of this function is 1.
 
 72
-00:07:16,000 --> 00:07:17,000
-Win8
-
-73
-00:07:17,000 --> 00:07:18,000
-Win8
-
-74
-00:07:18,000 --> 00:07:19,000
-Win8
+00:07:32,050 --> 00:07:38,010
+At the same time, we can also set the variables returned by this function.
 
 75
-00:07:19,000 --> 00:07:20,000
-Win8
-
-76
-00:07:20,000 --> 00:07:21,000
-Win8
-
-77
-00:07:21,000 --> 00:07:22,000
-Win8
-
-78
-00:07:22,000 --> 00:07:23,000
-Win8
-
-79
-00:07:23,000 --> 00:07:24,000
-Win8
-
-80
-00:07:24,000 --> 00:07:25,000
-Win8
+00:07:39,300 --> 00:07:45,950
+For example, I can set the value returned by this function by 0.
 
 81
-00:07:25,000 --> 00:07:26,000
-Win8
+00:07:59,120 --> 00:08:05,880
+With this condition setup, I have covered the true case of this condition.
 
 82
-00:07:26,000 --> 00:07:27,000
-Win8
+00:08:05,880 --> 00:08:09,880
+After the true case, the code will continue to this line.
 
 83
-00:07:27,000 --> 00:07:28,000
-Win8
+00:08:09,880 --> 00:08:15,360
+It will meet another return function.
 
 84
-00:07:28,000 --> 00:07:29,000
-Win8
+00:08:21,360 --> 00:08:26,320
+This return function has an enum type.
 
 85
-00:07:29,000 --> 00:07:30,000
-Win8
-
-86
-00:07:30,000 --> 00:07:31,000
-Win8
+00:08:26,320 --> 00:08:43,550
+So I can create a stub return value for it in the same way (enum type).
 
 87
-00:07:31,000 --> 00:07:32,000
-Win8
+00:08:43,070 --> 00:08:46,060
+I can also copy its name.
 
 88
-00:07:32,000 --> 00:07:33,000
-Win8
-
-89
-00:07:33,000 --> 00:07:34,000
-Win8
+00:08:49,060 --> 00:08:53,250
+Next is the static variable
 
 90
-00:07:34,000 --> 00:07:35,000
-Win8
-
-91
-00:07:35,000 --> 00:07:36,000
-Win8
+00:08:53,250 --> 00:08:56,990
+It will be assigned using the return value of the helper function.
 
 92
-00:07:36,000 --> 00:07:37,000
-Win8
-
-93
-00:07:37,000 --> 00:07:38,000
-Win8
+00:09:00,470 --> 00:09:04,010
+Here, we can also stub its return value.
 
 94
-00:07:38,000 --> 00:07:39,000
-Win8
-
-95
-00:07:39,000 --> 00:07:40,000
-Win8
-
-96
-00:07:40,000 --> 00:07:41,000
-Win8
-
-97
-00:07:41,000 --> 00:07:42,000
-Win8
-
-98
-00:07:42,000 --> 00:07:43,000
-Win8
-
-99
-00:07:43,000 --> 00:07:44,000
-Win8
+00:09:04,550 --> 00:09:09,880
+This is a boolean function to stub its return value into TRUE or FALSE 
 
 100
-00:07:44,000 --> 00:07:45,000
-Win8
-
-101
-00:07:45,000 --> 00:07:46,000
-Win8
+00:09:16,500 --> 00:09:25,940
+In this case, I can assign its return value as TRUE.
 
 102
-00:07:46,000 --> 00:07:47,000
-Win8
+00:09:36,940 --> 00:09:42,180
+This is similar to the previous stub configurations.
 
 103
-00:07:47,000 --> 00:07:48,000
-Win8
+00:09:42,180 --> 00:09:46,780
+This function has a boolean return type.
 
 104
-00:07:48,000 --> 00:07:49,000
-Win8
+00:09:46,780 --> 00:09:52,140
+So we can stub its return value as either TRUE or FALSE.
 
 105
-00:07:49,000 --> 00:07:50,000
-Win8
+00:09:52,140 --> 00:09:56,140
+So in this case I need to cover the TRUE case of this function,
 
 106
-00:07:50,000 --> 00:07:51,000
-Win8
+00:09:56,140 --> 00:10:08,960
+I will set its return value to TRUE.
 
 107
-00:07:51,000 --> 00:07:52,000
-Win8
+00:10:08,960 --> 00:10:11,960
+Next is the value of this static variable
 
 108
-00:07:52,000 --> 00:07:53,000
-Win8
+00:10:11,960 --> 00:10:14,960
+which is again assigned using the return value of this function.
 
 109
-00:07:53,000 --> 00:07:54,000
-Win8
+00:10:17,960 --> 00:10:26,960
+Similarly, I will stub the return value for it.
 
 110
-00:07:54,000 --> 00:07:55,000
-Win8
+00:10:26,960 --> 00:10:34,650
+Here, I have assigned this variable to true.
 
 111
-00:07:55,000 --> 00:07:56,000
-Win8
+00:10:34,650 --> 00:10:39,660
+The value of this variable was also assigned to true earlier.
 
 112
-00:07:56,000 --> 00:07:57,000
-Win8
+00:10:39,660 --> 00:10:46,350
+So it will enter the true case of this condition.
 
 113
-00:07:57,000 --> 00:07:58,000
-Win8
+00:10:52,350 --> 00:10:56,640
+At this point, when it enters the true case of the condition,
 
 114
-00:07:58,000 --> 00:07:59,000
-Win8
+00:10:56,640 --> 00:11:00,650
+it will call this function.
 
 115
-00:07:59,000 --> 00:08:00,000
-Win8
+00:11:00,650 --> 00:11:05,840
+This function is a void function, so I do not need a return value.
 
 116
-00:08:00,000 --> 00:08:01,000
-Win8
+00:11:05,840 --> 00:11:10,340
+I only need to check if it is called.
 
 117
-00:08:01,000 --> 00:08:02,000
-Win8
+00:11:20,340 --> 00:11:30,420
+The value of this variable will then be assigned to the negated return value of this function.
 
 118
-00:08:02,000 --> 00:08:04,220
-2sc to this condition
+00:11:30,420 --> 00:11:36,060
+This function is also a boolean function.
 
 119
-00:08:04,780 --> 00:08:08,780
-After 2sc, it will continue to run to this line
+00:11:36,060 --> 00:11:42,060
+So its return value will be either TRUE or FALSE.
 
 120
-00:08:09,840 --> 00:08:12,600
-Now it meets a return line
+00:11:45,060 --> 00:11:52,020
+Here, its value is true.
 
 121
-00:08:21,660 --> 00:08:24,200
-This return line will have the word
+00:11:52,020 --> 00:12:06,790
+Since the return value of this function is false, the condition below is also satisfied.
 
 122
-00:08:25,740 --> 00:08:27,800
-Enum, so we can
+00:12:06,790 --> 00:12:30,140
+This also means that this function will be called.
 
 123
-00:08:28,780 --> 00:08:31,860
-Create a stop return for it
+00:12:50,140 --> 00:12:55,360
+Next, as the logic entered the true branch, it won't enter the false branch.
 
 124
-00:08:32,420 --> 00:08:33,300
-then
+00:12:55,360 --> 00:12:58,740
+So I skip this false function right here, 
 
-125
-00:08:34,660 --> 00:08:50,140
-In the same way
+124
+00:12:58,740 --> 00:13:11,740
+and finally in this function, a call for this function will be perform.
 
 126
-00:08:50,520 --> 00:08:54,180
-Next, there is the static
+00:13:12,740 --> 00:13:17,600
+As this function has only 1 variable,
 
 127
-00:08:54,180 --> 00:08:58,600
-It will be valued at this end
+00:13:17,600 --> 00:13:19,680
+we can assign a value to it
 
 128
-00:08:59,340 --> 00:09:01,760
-In this line, we can also stop
-
-129
-00:09:01,760 --> 00:09:07,760
-This is a bool that can store values ​​back to it
+00:13:19,680 --> 00:13:24,760
+by setting the value of the variable in the stub section.
 
 130
-00:09:07,760 --> 00:09:09,760
-Do or False
-
-131
-00:09:09,760 --> 00:09:13,760
-We can create two values ​​back
-
-132
-00:09:13,760 --> 00:09:17,760
-One is true, the other is false
+00:13:36,200 --> 00:13:39,720
+Here, I will give it a name.
 
 133
-00:09:17,760 --> 00:09:25,760
-In this case, we can add values ​​back to it
+00:13:47,650 --> 00:13:52,100
+Here, I can add a comment saying that
 
 134
-00:09:25,760 --> 00:09:41,760
-It also contains the above values ​​stops
+00:13:52,100 --> 00:13:53,760
+I will cover
 
 135
-00:09:41,760 --> 00:09:51,760
-This line has a shape value that we can stop according to the false set
-
-136
-00:09:51,760 --> 00:09:54,760
-Because in this set, we need to call the TrueScale of this line
+00:13:53,760 --> 00:13:57,540
+the true case of this condition.
 
 137
-00:09:54,760 --> 00:09:55,760
-We need to call the TrueScale of this line
+00:14:15,500 --> 00:14:18,240
+After that, for all inputs
 
 138
-00:09:55,760 --> 00:10:00,760
-I will give the value of its value as true
+00:14:18,240 --> 00:14:19,560
+of the functions
 
 139
-00:10:08,760 --> 00:10:16,760
-In the next step, the value of this static object is again reduced by the value of its value
+00:14:19,560 --> 00:14:21,820
+and the test case comments,
 
 140
-00:10:17,760 --> 00:10:20,760
-Just like that
+00:14:21,820 --> 00:14:24,300
+as well as their return variables,
 
 141
-00:10:20,760 --> 00:10:24,760
-I will do the same for the value of its value
-
-142
-00:10:26,760 --> 00:10:29,760
-And the name of this object
-
-143
-00:10:32,760 --> 00:10:36,760
-I have set the value of this object by true
-
-144
-00:10:36,760 --> 00:10:39,760
-And the value of this object is reduced by the value of its value
+00:14:24,300 --> 00:14:36,990
+first, this variable will return the value assigned from the return value of this stub function.
 
 145
-00:10:39,760 --> 00:10:42,760
-It is now in the true state of this object
-
-146
-00:10:50,760 --> 00:10:54,760
-At this time, it will perform
-
-147
-00:10:54,760 --> 00:10:56,760
-According to the true state of the condition
+00:14:36,220 --> 00:14:42,340
+Earlier, I already configured its return value to be 1,
 
 148
-00:10:56,760 --> 00:11:00,760
-It will perform call to this function
-
-149
-00:11:01,760 --> 00:11:05,760
-This function is an array, so it doesn't need any value
-
-150
-00:11:05,760 --> 00:11:07,760
-I just need to check it
+00:14:49,480 --> 00:14:56,020
+so here I will expect it to be this value, which means 1.
 
 151
-00:11:07,760 --> 00:11:09,760
-Call to is OK
-
-152
-00:11:20,760 --> 00:11:29,760
-And the value of this object will be reattached by the value of the answer value of this object
+00:15:00,490 --> 00:15:03,490
+Similarly, this is a static variable, 
 
 153
-00:11:32,760 --> 00:11:35,760
-I will also set this object as an array
+00:15:03,510 --> 00:15:05,810
+I will also set a clear value for it.
 
 154
-00:11:35,760 --> 00:11:38,760
-Its return value will be true or false
+00:15:05,810 --> 00:15:08,590
+This static variable is assigned here,
 
 155
-00:11:45,760 --> 00:11:47,760
-I will introduce it as true
+00:15:08,590 --> 00:15:10,290
+and also assigned here.
 
 156
-00:11:50,760 --> 00:11:54,760
-Then, the return value of the variable
+00:15:10,290 --> 00:15:12,870
+So I will take its latest assigned value.
 
 157
-00:11:54,760 --> 00:11:57,760
-The return value of the variable false
-
-158
-00:11:57,760 --> 00:12:02,760
-So the condition below this is also completely released
+00:15:11,870 --> 00:15:16,690
+Since I set the return value of this stub to TRUE,
 
 159
-00:12:05,760 --> 00:12:09,760
-That means this array will be called
-
-160
-00:12:14,760 --> 00:12:17,760
-I will now set this variable to true
+00:15:16,490 --> 00:15:20,360
+that means the value of this variable after assignment
 
 161
-00:12:17,760 --> 00:12:20,760
-And the value of this object is 0
+00:15:20,360 --> 00:15:23,580
+will be the negation of TRUE,
 
 162
-00:12:50,760 --> 00:12:56,200
-Next, because it's already in the logic tool of this one, so it will form a post
+00:15:23,580 --> 00:15:24,760
+so it will be false.
 
 163
-00:12:56,200 --> 00:12:58,200
-I put it in this point
-
-164
-00:12:58,200 --> 00:13:03,400
-And finally, in this function, it will perform on this line
+00:15:30,760 --> 00:15:35,280
+Next is the test interrupted variable
 
 165
-00:13:11,400 --> 00:13:17,800
-This line has a variable value
-
-166
-00:13:17,800 --> 00:13:20,040
-Then I have a variable value for it
-
-167
-00:13:20,040 --> 00:13:24,600
-The same way as the value of the stop section
+00:15:35,500 --> 00:15:40,740
+This variable will receive the return value of this function.
 
 168
-00:13:36,520 --> 00:13:39,480
-Here I type the name of it
-
-169
-00:13:39,480 --> 00:13:46,200
-So when it gets to this point, I will also type its name
+00:15:40,740 --> 00:15:45,560
+Earlier, I set the return value of this function to TRUE.
 
 170
-00:13:46,200 --> 00:13:47,240
-1
-
-171
-00:13:47,240 --> 00:13:47,640
-2
+00:15:45,560 --> 00:15:49,180
+So the returned value of this variable will also be TRUE.
 
 172
-00:13:47,640 --> 00:13:47,720
-3
+00:16:05,180 --> 00:16:08,260
+Finally, the return value of this variable,
 
 173
-00:13:47,720 --> 00:13:57,720
-At this time, I can comment that I will call the true scale of this condition
+00:16:08,260 --> 00:16:11,110
+when this function is called,
 
 174
-00:13:57,720 --> 00:14:24,720
-I have completed all the inputs, commands, and test scales, then I will continue to convert all of them
+00:16:11,110 --> 00:16:13,210
+it will be assigned
 
 175
-00:14:24,720 --> 00:14:27,720
-First of all, I will convert all of them
-
-176
-00:14:27,720 --> 00:14:36,720
-Then it will return by the value of the stop-nand value
+00:16:13,210 --> 00:16:16,060
+using the value returned by the stub function.
 
 177
-00:14:36,720 --> 00:14:41,720
-When I said that the value returned will be 1
+00:16:16,120 --> 00:16:18,660
+Earlier, I set its value to one.
 
 178
-00:14:41,720 --> 00:14:54,720
-So here I will expect it to be this value
-
-179
-00:14:54,720 --> 00:14:58,720
-This value means that the value returned is 1
+00:16:18,660 --> 00:16:23,800
+So at this point, the return value of this variable will also be one.
 
 180
-00:14:58,720 --> 00:15:01,720
-Similarly, this is a static piece
+00:16:34,280 --> 00:16:36,070
+So all static variables
 
 181
-00:15:01,720 --> 00:15:05,720
-So I will also set the value returned for it
+00:16:36,070 --> 00:16:38,800
+and normal global variables
 
 182
-00:15:05,720 --> 00:15:08,720
-This static piece is attached here
+00:16:38,800 --> 00:16:41,080
+have had their expected values checked.
 
 183
-00:15:08,720 --> 00:15:12,720
-And attached here, I will get the final attachment of it
-
-184
-00:15:12,720 --> 00:15:16,720
-Then I returned the value for this stop as true
-
-185
-00:15:16,720 --> 00:15:21,720
-This means that the value of this piece after returning
+00:16:41,080 --> 00:16:47,060
+Now I can run my test case to see whether the result is as expected.
 
 186
-00:15:21,720 --> 00:15:23,720
-It will be fixed as true
+00:16:47,660 --> 00:16:50,650
+I will select Run,
 
 187
-00:15:23,720 --> 00:15:24,720
-Then it will be false
+00:16:50,650 --> 00:16:55,610
+select the input module,
 
 188
-00:15:24,720 --> 00:15:35,720
-Next is the test-interrupted variable
+00:16:55,610 --> 00:16:58,010
+and select the test case.
 
 189
-00:15:35,720 --> 00:15:40,720
-This variable will receive the value returned of this function
+00:16:58,010 --> 00:17:27,210
+Here, I will run it.
 
 190
-00:15:40,720 --> 00:15:44,720
-When I set the value returned for this function
+00:17:27,210 --> 00:17:29,230
+In the console window, I can check that all of my check lines
 
 191
-00:15:44,720 --> 00:15:45,720
-It will be true
-
-192
-00:15:45,720 --> 00:15:49,720
-So the value returned of this variable will also be true
+00:17:29,230 --> 00:17:32,720
+check that all of my check lines have passed.
 
 193
-00:15:49,720 --> 00:16:09,720
-And finally, the value returned of this function
-
-194
-00:16:09,720 --> 00:16:11,720
-When calling this function
+00:17:32,720 --> 00:17:37,500
+This means that the expected values and the actual values match.
 
 195
-00:16:11,720 --> 00:16:16,720
-Its value will be set by the value of the stop-nand value
+00:17:37,500 --> 00:17:51,100
+Besides that, I can also view which conditions my testcase has covered using Code Coverage Viewer.
 
 196
-00:16:16,720 --> 00:16:18,720
-And when I set the value for it by 1
+00:17:51,100 --> 00:17:59,060
+Here, according to my comment, I expect to cover the true case of this condition.
 
 197
-00:16:18,720 --> 00:16:22,720
-Then at this time, the value returned of this variable will also be true
+00:17:59,060 --> 00:18:07,630
+Now, in Code Coverage Viewer, it also shows that I have entered the true case.
 
 198
-00:16:22,720 --> 00:16:38,720
-So all the static and global variables are normal
+00:18:12,630 --> 00:18:18,630
+Next is the code coverage result, I can also check here, 
+
+198
+00:18:18,630 --> 00:18:25,900
+where it shows the total C0, C1, and MCDC coverage metrics.
 
 199
-00:16:38,720 --> 00:16:40,720
-The value returned value has been checked
+00:18:56,900 --> 00:19:04,050
+If the result meets my testing purpose, I will continue creating testcases for the entire function in the same way.
 
 200
-00:16:40,720 --> 00:16:45,720
-At this time you can run your Test-key
+00:19:04,050 --> 00:19:09,150
+The first function is a set of testcases, and the second function will also have its own set of testcases.
 
 201
-00:16:45,720 --> 00:16:47,720
-To see the result like that
+00:19:17,150 --> 00:19:21,390
+Now I will run it again one more time.
 
 202
-00:16:47,720 --> 00:16:51,720
-I will choose Run Code
+00:19:38,390 --> 00:19:48,830
+As you can see here, in Code Coverage Viewer, all of my conditions have been covered.
 
 203
-00:16:51,720 --> 00:16:57,720
-I choose the code that I want to test
+00:19:48,830 --> 00:19:55,980
+In Code Coverage Viewer, all metrics have also reached 100%.
 
 204
-00:16:57,720 --> 00:16:59,720
-I choose Test Game
+00:19:55,980 --> 00:20:00,020
+At this point, I have completed all UT tasks for this module.
 
 205
-00:16:59,720 --> 00:17:05,720
-I choose Test Game
+00:20:00,020 --> 00:20:11,030
+I will select my module
 
 206
-00:17:05,720 --> 00:17:11,720
-I choose Test Game
+00:20:11,030 --> 00:20:12,610
+to generate the report.
 
 207
-00:17:11,720 --> 00:17:15,720
-I choose Test Game
-
-208
-00:17:15,720 --> 00:17:17,720
-I choose Test Game
-
-209
-00:17:27,720 --> 00:17:31,720
-In Console, I can check all of myヘープ
+00:20:12,610 --> 00:20:18,170
+In this report, it will also show my coverage metrics, such as
 
 210
-00:17:31,720 --> 00:17:33,720
-I can check all of myヘープ
-
-211
-00:17:33,720 --> 00:17:35,720
-That means, my japan trade is good
+00:20:18,170 --> 00:20:23,010
+C0, C1 and MCDC which are 100%.
 
 212
-00:17:37,720 --> 00:17:39,720
-My foreign exchange ratio is good
-
-213
-00:17:39,720 --> 00:17:41,720
-Besides, I can't read
-
-214
-00:17:41,720 --> 00:17:43,720
-Besides, I can't read
+00:20:26,710 --> 00:20:31,120
+Now I can close my Cantata folder.
 
 215
-00:17:43,720 --> 00:17:45,720
-Besides, I can't read
+00:20:31,480 --> 00:20:34,600
+If I need to perform UT for another module,
 
 216
-00:17:45,720 --> 00:17:51,720
-My test case has covered the conditions by CodeCoveredViewer
+00:20:34,600 --> 00:20:36,600
+I can continue from here.
 
 217
-00:17:53,720 --> 00:17:59,720
-Here, according to my command, I will want to cover the tool case of this condition
-
-218
-00:18:00,720 --> 00:18:08,720
-So now, in this part, CodeCoveredViewer also shows that I have entered my tool case
-
-219
-00:18:08,720 --> 00:18:17,720
-Next, in CodeCoveredResult, I can also see
+00:20:36,600 --> 00:20:42,490
+I can also check the result after performing UT
 
 220
-00:18:18,720 --> 00:18:25,720
-Here, it will display the total number of C0, C1, and I will use it to cover
+00:20:42,490 --> 00:20:44,840
+in the Cantata folder,
 
 221
-00:18:38,720 --> 00:18:45,720
-And I will also show the total number of C0, C1, and I will use it to cover
+00:20:44,840 --> 00:20:47,360
+in the Result,
 
 222
-00:18:46,720 --> 00:18:53,720
-And I will also show the total number of C0, C1, and I will use it to cover
+00:20:47,360 --> 00:20:50,570
+then Test Report.
 
 223
-00:18:54,720 --> 00:18:58,720
-Now, I will test my first test case to meet the purpose
+00:20:50,570 --> 00:20:54,160
+Here, it will show
 
 224
-00:18:59,720 --> 00:19:05,720
-Similarly, I will test my first test case for the whole function
+00:20:54,160 --> 00:20:57,300
+the overview for this module.
 
 225
-00:19:06,720 --> 00:19:07,720
-as well as the test case for the second function
-
-226
-00:19:08,720 --> 00:19:11,720
-Let's have a look
-
-227
-00:19:29,720 --> 00:19:34,720
-Now, I will run my motherboard one more time
+00:20:57,300 --> 00:21:02,620
+We can summarize that the test result is Pass or Fail.
 
 228
-00:19:37,720 --> 00:19:38,720
-Let's have a look
-
-229
-00:19:38,720 --> 00:19:45,720
-As you can see, in CodeCoveredViewer, all the conditions are the same
+00:21:02,620 --> 00:21:06,500
+Here, the result is Pass, The coverage is 100%.
 
 230
-00:19:49,720 --> 00:19:55,720
-And in CodeCoveredViewer, all the indexes have been set to 100%
-
-231
-00:19:55,720 --> 00:20:00,720
-Because I have done all the UT for this module
-
-232
-00:20:00,720 --> 00:20:12,720
-Then, I will choose my module to create a ZEN variable
+00:21:06,500 --> 00:21:13,180
+Below this section, there is also a test report for each test case.
 
 233
-00:20:12,720 --> 00:20:17,720
-In the variable, it will also show my indexes
+00:21:20,180 --> 00:21:22,700
+Next is the Test Summary.
 
 234
-00:20:17,720 --> 00:20:23,720
-For example, C0 is 100%, C1 is 100%, and CEC is also 100%
-
-235
-00:20:26,720 --> 00:20:29,720
-Now I have to load the folder
+00:21:22,700 --> 00:21:26,720
+Here, the Overall Result is also Pass.
 
 236
-00:20:30,720 --> 00:20:36,720
-And if I want to create a ZEN variable, I can do it here
-
-237
-00:20:36,720 --> 00:20:44,720
-And I can check the result after creating the UT in CodeCoveredViewer
+00:21:26,880 --> 00:21:31,920
+And all of my coverage metrics are also 100%.
 
 238
-00:20:44,720 --> 00:20:47,720
-Result
-
-239
-00:20:47,720 --> 00:20:50,720
-Test Report
-
-240
-00:20:50,720 --> 00:20:57,720
-It will show the overall result of my code
+00:21:31,920 --> 00:21:40,260
+At this point, I have completed the UT implementation using Cantata for this module.
 
 241
-00:20:57,720 --> 00:20:59,720
-Summary
-
-242
-00:20:59,720 --> 00:21:00,720
-Summary
-
-243
-00:21:00,720 --> 00:21:02,720
-And my test case is BatchFL
-
-244
-00:21:02,720 --> 00:21:04,720
-Here I will be Batch
-
-245
-00:21:04,720 --> 00:21:06,720
-My coverage will be 100%
-
-246
-00:21:06,720 --> 00:21:13,720
-And below it will also have a report for each test case
-
-247
-00:21:20,720 --> 00:21:23,720
-Next is Test Summary
-
-248
-00:21:23,720 --> 00:21:29,720
-Here my Test Summary overall result will also be Batch
-
-249
-00:21:29,720 --> 00:21:32,720
-And all the indexes will also be 100%
-
-250
-00:21:32,720 --> 00:21:40,720
-And now I have finished creating the UT with CodeCoveredViewer
-
-251
-00:21:40,720 --> 00:21:45,720
-Thank you for watching
-
+00:21:40,260 --> 00:21:44,880
+Thank you for watching.

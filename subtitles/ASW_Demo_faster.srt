@@ -1,812 +1,235 @@
 1
-00:00:00,000 --> 00:00:05,000
-This is a demo video of how to make an iDubbbz
+00:00:00,180 --> 00:00:15,360
+This is a video demonstrating how to work on ASW. 
 
 2
-00:00:14,000 --> 00:00:21,000
-First, turn on the admin to access the iDubbbz tool
+00:00:15,360 --> 00:00:20,360
+First, enable admin access so you can access the tool.
+
+2
+00:00:37,360 --> 00:01:12,670
+After that, open the Ascet tool, 
 
 3
-00:00:30,000 --> 00:00:39,000
-Then, open tuner cache
+00:01:14,670 --> 00:01:25,670
+then import the databases that were loaded from TCM.
+
+3
+00:01:41,670 --> 00:01:50,960
+These are the databases loaded from TCM. We will take the item name and search for it.
 
 4
-00:00:39,000 --> 00:00:45,000
-Open tuner cache
+00:01:55,960 --> 00:02:20,700
+in the component name section. 
+
+4
+00:02:20,700 --> 00:02:25,700
+After finding the item, check whether the version is correct.
 
 5
-00:01:00,000 --> 00:01:20,000
-After that, we will import the database from TCM
+00:02:25,700 --> 00:02:40,350
+Then create the ATT and a test environment folder for that item.
+
+5
+00:03:02,000 --> 00:03:05,350
+This step creates the necessary files.
 
 6
-00:01:20,000 --> 00:01:44,000
-This is the database from TCM
+00:03:05,350 --> 00:03:25,660
+These files are used for the Alinoe tool. 
+
+6
+00:03:25,660 --> 00:04:09,660
+Create the ATT folder for the item and find the missing parameter variables.
+
+6
+00:04:09,660 --> 00:04:20,660
+Find the missing parameter variables.
 
 7
-00:01:44,000 --> 00:01:49,000
-This is the database from TCM
+00:05:25,660 --> 00:05:30,890
+Continue searching until all missing Parameters have been found.
 
 8
-00:01:50,000 --> 00:01:58,000
-We will get the name of the item and find it in the component name
+00:05:54,890 --> 00:05:59,390
+Search for the missing Formula after adding the Parameters.
 
 9
-00:01:58,000 --> 00:02:18,000
-We will get the name of the item and find it in the component name
+00:07:08,810 --> 00:07:15,370
+Import the Formula that was exported.
+
+9
+00:07:33,000 --> 00:07:37,510
+After completing the ATT folder creation step.
 
 10
-00:02:18,000 --> 00:02:24,000
-After finding the item, check if the version is correct
+00:07:37,510 --> 00:07:43,230
+Next, we will use the Alinoe tool to create the test design.
 
 11
-00:02:24,000 --> 00:02:26,000
-After finding the item, check if the version is correct
+00:08:37,230 --> 00:08:44,520
+Create the necessary files in the ATT folder of the item.
 
 12
-00:02:26,000 --> 00:02:28,000
-Then create an ITT
+00:08:44,520 --> 00:08:48,620
+This is required so that GenTestDesign can be used.
 
 13
-00:02:28,000 --> 00:02:33,000
-Create a test environment for the item
+00:09:46,620 --> 00:09:51,470
+After that, fill in the required information fields into the Alinoe tool.
 
 14
-00:02:33,000 --> 00:02:37,000
-Create a test environment for the item
-
-15
-00:02:48,000 --> 00:02:59,000
-This is a test environment for the item
+00:09:52,470 --> 00:09:55,450
+This is needed to generate the test design, 
 
 16
-00:02:59,000 --> 00:03:11,000
-Create a test environment for the item
+00:09:55,450 --> 00:10:10,860
+module name, version, sequence number, the folder where the module will be created and the location that contains the test design.
 
 17
-00:03:11,000 --> 00:03:17,000
-This is a test environment for the item
+00:10:12,860 --> 00:10:20,960
+After that, import the DCM file that was exported earlier.
 
 18
-00:03:18,000 --> 00:03:33,000
-Create an ITT item for Atom
+00:10:16,960 --> 00:10:23,660
+Then run GenTestDesign.
 
 19
-00:03:48,000 --> 00:04:12,000
-Find missing parameters
+00:10:30,660 --> 00:10:34,740
+After checking the Min, Max, and Mid fields,
 
 20
-00:04:12,000 --> 00:04:17,000
-Find missing parameters
+00:10:34,740 --> 00:10:38,740
+and the necessary information of the variables in the class,
 
 21
-00:04:18,000 --> 00:04:23,000
-Find missing parameters
+00:10:38,740 --> 00:10:42,360
+we will search for the missing information.
 
 22
-00:04:23,000 --> 00:04:28,000
-Find missing parameters
+00:10:42,360 --> 00:10:49,460
+Then add it to the Local Parameter variables.
 
 23
-00:04:28,000 --> 00:04:33,000
-Find missing parameters
-
-24
-00:04:33,000 --> 00:04:38,000
-Find missing parameters
+00:11:07,460 --> 00:11:15,480
+Proceed to check the Min, Max, Tolerance values of the input variables.
 
 25
-00:04:38,000 --> 00:04:43,000
-Find missing parameters
+00:13:24,880 --> 00:13:32,040
+Find the missing Min, Max, Mid, and tolerance values for the Imported Parameter variables.
 
 26
-00:04:43,000 --> 00:04:46,000
-Find missing parameters
+00:14:47,140 --> 00:14:51,960
+Check whether the formulas of the Local Parameter variables are correct.
 
 27
-00:04:46,000 --> 00:04:47,000
-Find missing parameters
+00:15:21,660 --> 00:15:24,650
+After that, proceed to enter the Input.
 
 28
-00:04:48,000 --> 00:04:58,000
-Please subscribe to La La School channel to not miss the fascinating videos
+00:15:42,160 --> 00:15:45,940
+Write the formula for the Return Value variables.
 
 29
-00:05:18,000 --> 00:05:32,000
-Thanks for watching and see you next time!
+00:16:13,780 --> 00:16:17,460
+Then click Generate Test Case to create the test design.
 
 30
-00:05:48,000 --> 00:06:03,000
-Find the missing formulas after adding the parameters
-
-31
-00:06:18,000 --> 00:06:22,000
-Thanks for watching and see you next time!
-
-32
-00:06:48,000 --> 00:07:08,000
-Find the missing formulas after adding the parameters
-
-33
-00:07:09,000 --> 00:07:17,000
-Import the formulas that have been exported
-
-34
-00:07:18,000 --> 00:07:34,000
-Import the formulas that have been exported
-
-35
-00:07:35,000 --> 00:07:38,000
-After completing the step of creating an ITT item
-
-36
-00:07:39,000 --> 00:07:47,000
-Next, we will use the Align tool to create a test design
-
-37
-00:07:49,000 --> 00:07:52,900
-Pay attention to this
-
-38
-00:07:54,000 --> 00:07:58,980
-Next is the Preset tool
-
-39
-00:08:00,000 --> 00:08:07,000
-This tool will display the number of values according to the loweruka
-
-40
-00:08:09,000 --> 00:08:16,000
-Then we will use the Line tool
-
-41
-00:08:16,000 --> 00:08:45,000
-Create the required files in the ITT section of ITEM
-
-42
-00:08:45,000 --> 00:08:49,000
-to be able to use GenTestDesign
-
-43
-00:09:15,000 --> 00:09:20,000
-Thanks for watching and see you next time
-
-44
-00:09:45,000 --> 00:09:54,000
-After that, enter the required information in the Alino tool to be able to use GenTestDesign
-
-45
-00:09:54,000 --> 00:10:12,000
-The name of the module, the version, the number of characters, the item to create the module, where to store GenTestDesign
-
-46
-00:10:12,000 --> 00:10:14,000
-After that, import the .dcm file
-
-47
-00:10:15,000 --> 00:10:18,000
-For GenTestDesign
-
-48
-00:10:18,000 --> 00:10:22,000
-Go to GenTestDesign
-
-49
-00:10:22,000 --> 00:10:28,000
-After that, go to Xport
-
-50
-00:10:28,000 --> 00:10:30,000
-Go to GenTestDesign
-
-51
-00:10:30,000 --> 00:10:39,000
-After that, copy the correct information in the class
-
-52
-00:10:39,000 --> 00:10:44,000
-and add them to the .dcm file
-
-53
-00:10:44,000 --> 00:11:13,000
-Then, we will use the local parameters to check the min and max tolerance of the inputs.
-
-54
-00:11:13,000 --> 00:11:15,000
-Please subscribe to La La School channel to not miss the fascinating videos
-
-55
-00:11:43,000 --> 00:11:45,000
-Thanks for watching
-
-56
-00:12:13,000 --> 00:12:15,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-57
-00:12:43,000 --> 00:12:45,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-58
-00:13:13,000 --> 00:13:15,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-59
-00:13:15,000 --> 00:13:17,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-60
-00:13:17,000 --> 00:13:19,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-61
-00:13:19,000 --> 00:13:21,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-62
-00:13:21,000 --> 00:13:23,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-63
-00:13:23,000 --> 00:13:25,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-64
-00:13:25,000 --> 00:13:27,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-65
-00:13:27,000 --> 00:13:29,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-66
-00:13:29,000 --> 00:13:31,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-67
-00:13:31,000 --> 00:13:33,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-68
-00:13:33,000 --> 00:13:35,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-69
-00:13:35,000 --> 00:13:37,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-70
-00:13:37,000 --> 00:13:39,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-71
-00:13:39,000 --> 00:13:41,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-72
-00:13:41,000 --> 00:13:43,000
-Subscribe to La La School channel to not miss the fascinating videos
-
-73
-00:13:43,000 --> 00:13:46,000
-Subtitles by the Amara.org community
-
-74
-00:14:13,000 --> 00:14:16,000
-Subtitles by the Amara.org community
-
-75
-00:14:43,000 --> 00:14:46,000
-Subtitles by the Amara.org community
-
-76
-00:14:46,000 --> 00:14:49,000
-Check the local parameters
-
-77
-00:14:49,000 --> 00:14:52,000
-Check the local parameters
-
-78
-00:15:13,000 --> 00:15:18,000
-Check the local parameters
-
-79
-00:15:18,000 --> 00:15:21,000
-Check the local parameters
-
-80
-00:15:21,000 --> 00:15:24,000
-Password you enter
-
-81
-00:15:24,000 --> 00:15:26,000
-Password you enter
-
-82
-00:15:26,000 --> 00:15:46,000
-Go ahead and write the formula for the return value variable.
-
-83
-00:15:46,000 --> 00:16:15,000
-Then press Generate Test Case.
-
-84
-00:16:15,000 --> 00:16:16,000
-To start the test, click Generate Test Case.
-
-85
-00:16:16,000 --> 00:16:18,000
-To start the test, click Generate Test Case.
-
-86
-00:16:46,000 --> 00:16:59,000
-To start the test, click Generate Test Case.
-
-87
-00:17:00,000 --> 00:17:10,000
+00:16:59,580 --> 00:17:02,880
 The test design has been created successfully.
 
-88
-00:17:16,000 --> 00:17:44,000
-After creating the test design, we will create the test case to cover the second test case.
-
-89
-00:17:44,000 --> 00:18:04,000
-The new rebate of this test only requires C0C1, so we will only create the test case to cover C0C1.
-
-90
-00:18:14,000 --> 00:18:38,000
-This is the main information tab of the class, including the review source, testers, and the percentage of C0C1 MCDC of the class.
-
-91
-00:18:38,000 --> 00:18:43,000
-Next, we will proceed to the step of importing the test case.
-
-92
-00:18:43,000 --> 00:18:44,000
-Import the test case.
-
-93
-00:18:44,000 --> 00:18:49,000
-Next, we will import the test case into the test design in the ATT department.
-
-94
-00:19:14,000 --> 00:19:23,000
-We will selectных the part name and promoteпарm.
-
-95
-00:19:23,000 --> 00:19:34,000
-We will use the Smart ATT tool to import the test case into the ATT department.
-
-96
-00:19:34,000 --> 00:19:39,000
-We will choose the tools selected.
-
-97
-00:19:39,000 --> 00:19:49,000
-Enter the required information into the tool to be able to type the test case.
-
-98
-00:20:09,000 --> 00:20:15,000
-The test case is ready.
-
-99
-00:20:15,000 --> 00:20:18,000
-You may begin the test.
-
-100
-00:20:18,000 --> 00:20:22,000
-Please touch the work.
-
-101
-00:20:22,000 --> 00:20:26,000
-The test has been completed.
-
-102
-00:20:28,000 --> 00:20:30,000
-Please be careful.
-
-103
-00:20:30,000 --> 00:20:34,000
-Please be careful when using the test.
-
-104
-00:20:34,000 --> 00:20:37,000
-The test is ready.
-
-105
-00:20:37,000 --> 00:20:38,000
-End of the test.
-
-106
-00:20:39,000 --> 00:21:08,000
-After that, we will run the test to see the result of the test.
-
-107
-00:21:08,000 --> 00:21:15,000
-As you can see, the item has been full 100%
-
-108
-00:21:38,000 --> 00:21:45,000
-These are the test cases that have been added from testdesign into ITT
-
-109
-00:22:08,000 --> 00:22:10,000
-Thank you for watching
-
-110
-00:22:38,000 --> 00:22:41,000
-Subtitles by the Amara.org community
-
-111
-00:23:08,000 --> 00:23:11,000
-Subtitles by the Amara.org community
-
-112
-00:23:38,000 --> 00:23:41,000
-Subtitles by the Amara.org community
-
-113
-00:24:08,000 --> 00:24:11,000
-Subtitles by the Amara.org community
-
-114
-00:24:38,000 --> 00:24:41,000
-Subtitles by the Amara.org community
-
-115
-00:25:08,000 --> 00:25:11,000
-Subtitles by the Amara.org community
-
-116
-00:25:38,000 --> 00:25:41,000
-Subtitles by the Amara.org community
-
-117
-00:26:08,000 --> 00:26:11,000
-Subtitles by the Amara.org community
-
-118
-00:26:32,000 --> 00:26:37,000
-This is the result of the display of the % of V001
-
-119
-00:26:37,000 --> 00:26:38,000
-Thank you for watching
-
-120
-00:26:38,000 --> 00:26:41,000
-Subtitles by the Amara.org community
-
-121
-00:27:08,000 --> 00:27:11,000
-Subtitles by the Amara.org community
-
-122
-00:27:38,020 --> 00:27:44,000
-ativa
-
-123
-00:27:48,640 --> 00:27:51,640
-Subtitles by the Amara.org community
-
-124
-00:27:52,960 --> 00:27:55,960
-Subtitles by the Amara.org community
-
-125
-00:28:08,000 --> 00:28:11,000
-Subtitles by the Amara.org community
-
-126
-00:28:38,000 --> 00:28:41,000
-Subtitles by the Amara.org community
-
-127
-00:29:08,000 --> 00:29:11,000
-Subtitles by the Amara.org community
-
-128
-00:29:20,000 --> 00:29:26,000
-After creating the VOT, we will proceed to the transformation.
-
-129
-00:29:38,000 --> 00:29:41,000
-Subtitles by the Amara.org community
-
-130
-00:30:08,000 --> 00:30:11,000
-Subtitles by the Amara.org community
-
-131
-00:30:38,000 --> 00:30:41,000
-Subtitles by the Amara.org community
-
-132
-00:31:08,000 --> 00:31:11,000
-Subtitles by the Amara.org community
-
-133
-00:31:26,000 --> 00:31:31,000
-After creating the VOT, we will proceed to the TCM.
-
-134
-00:31:38,000 --> 00:31:41,000
-Subtitles by the Amara.org community
-
-135
-00:32:08,000 --> 00:32:11,000
-Subtitles by the Amara.org community
-
-136
-00:32:38,000 --> 00:32:41,000
-Subtitles by the Amara.org community
-
-137
-00:32:42,000 --> 00:32:45,000
-Subtitles by the Amara.org community
-
-138
-00:32:46,000 --> 00:32:59,000
-Because this item does not require MCDC, we will select a region for the conditions that need to be MCDC
-
-139
-00:33:00,000 --> 00:33:03,000
-MCDC does not require
-
-140
-00:33:08,000 --> 00:33:11,000
-Subtitles by the Amara.org community
-
-141
-00:33:38,000 --> 00:33:41,000
-Subtitles by the Amara.org community
-
-142
-00:34:08,000 --> 00:34:11,000
-Subtitles by the Amara.org community
-
-143
-00:34:38,000 --> 00:34:41,000
-Subtitles by the Amara.org community
-
-144
-00:35:08,000 --> 00:35:11,000
-Subtitles by the Amara.org community
-
-145
-00:35:38,000 --> 00:35:41,000
-Subtitles by the Amara.org community
-
-146
-00:36:08,000 --> 00:36:11,000
-Subtitles by the Amara.org community
-
-147
-00:36:38,000 --> 00:36:41,000
-Subtitles by the Amara.org community
-
-148
-00:37:08,000 --> 00:37:11,000
-Subtitles by the Amara.org community
-
-149
-00:37:38,000 --> 00:37:41,000
-Subtitles by the Amara.org community
-
-150
-00:38:08,000 --> 00:38:11,000
-Subtitles by the Amara.org community
-
-151
-00:38:38,000 --> 00:38:41,000
-Subtitles by the Amara.org community
-
-152
-00:39:08,000 --> 00:39:11,000
-Subtitles by the Amara.org community
-
-153
-00:39:38,000 --> 00:39:41,000
-Subtitles by the Amara.org community
-
-154
-00:40:08,000 --> 00:40:11,000
-Subtitles by the Amara.org community
-
-155
-00:40:38,000 --> 00:40:41,000
-Subtitles by the Amara.org community
-
-156
-00:41:08,000 --> 00:41:11,000
-Subtitles by the Amara.org community
-
-157
-00:41:38,000 --> 00:41:41,000
-Subtitles by the Amara.org community
-
-158
-00:41:42,000 --> 00:41:45,000
-Subtitles by the Amara.org community
-
-159
-00:41:51,000 --> 00:41:58,000
-Subtitles by the Amara.org community
-
-160
-00:42:08,000 --> 00:42:11,000
-Subtitles by the Amara.org community
-
-161
-00:42:38,000 --> 00:42:41,000
-Subtitles by the Amara.org community
-
-162
-00:43:08,000 --> 00:43:11,000
-Subtitles by the Amara.org community
-
-163
-00:43:31,000 --> 00:43:37,000
-Enter the necessary schools in the MCTC tool to create a workroom.
-
-164
-00:43:38,000 --> 00:43:41,000
-Enter the necessary schools in the MCTC tool to create a workroom.
-
-165
-00:44:08,000 --> 00:44:32,740
-け
-
-166
-00:44:33,200 --> 00:44:34,000
-Well done.
-
-167
-00:44:34,000 --> 00:44:36,000
-Well done.
-
-168
-00:44:36,000 --> 00:44:37,000
-Thank you!
-
-169
-00:44:38,000 --> 00:44:52,000
-After that, we will create a new rule for the item
-
-170
-00:44:58,000 --> 00:45:07,000
-Next step is to get the link on TCM
-
-171
-00:45:08,000 --> 00:45:16,000
-Click on the link to get the link
-
-172
-00:45:16,000 --> 00:45:24,000
-Now we will create a new rule for the item
-
-173
-00:45:24,000 --> 00:45:30,000
-Then click on the link to get the link
-
-174
-00:45:30,000 --> 00:45:36,000
-Now we will create a new rule for the item
-
-175
-00:45:36,000 --> 00:45:42,000
-Now we will create a new rule for the item
-
-176
-00:45:42,000 --> 00:45:46,000
-Now we will create a new rule for the item
-
-177
-00:45:46,000 --> 00:45:52,000
-Now we will create a new rule for the item
-
-178
-00:46:06,000 --> 00:46:09,000
-Subtitles by the Amara.org community
-
-179
-00:46:36,000 --> 00:46:39,000
-Subtitles by the Amara.org community
-
-180
-00:47:06,000 --> 00:47:09,000
-Subtitles by the Amara.org community
-
-181
-00:47:36,000 --> 00:47:39,000
-Subtitles by the Amara.org community
-
-182
-00:48:06,000 --> 00:48:09,000
-Subtitles by the Amara.org community
-
-183
-00:48:36,000 --> 00:48:39,000
-Subtitles by the Amara.org community
-
-184
-00:49:06,000 --> 00:49:09,000
-Subtitles by the Amara.org community
-
-185
-00:49:36,000 --> 00:49:39,000
-Subtitles by the Amara.org community
-
-186
-00:50:06,000 --> 00:50:09,000
-Subtitles by the Amara.org community
-
-187
-00:50:36,000 --> 00:50:39,000
-Subtitles by the Amara.org community
-
-188
-00:51:06,000 --> 00:51:09,000
-Subtitles by the Amara.org community
-
-189
-00:51:36,000 --> 00:51:39,000
-Subtitles by the Amara.org community
-
-190
-00:52:06,000 --> 00:52:09,000
-Subtitles by the Amara.org community
-
-191
-00:52:09,000 --> 00:52:12,000
-Subtitles by the Amara.org community
-
-192
-00:52:12,000 --> 00:52:15,000
-Subtitles by the Amara.org community
-
-193
-00:52:15,000 --> 00:52:18,000
-Subtitles by the Amara.org community
-
-194
-00:52:18,000 --> 00:52:21,000
-Subtitles by the Amara.org community
-
-195
-00:52:21,000 --> 00:52:24,000
-Subtitles by the Amara.org community
-
-196
-00:52:24,000 --> 00:52:27,000
-Subtitles by the Amara.org community
-
-197
-00:52:27,000 --> 00:52:30,000
-Subtitles by the Amara.org community
-
-198
-00:52:30,000 --> 00:52:33,000
-Subtitles by the Amara.org community
-
-199
-00:52:33,000 --> 00:52:36,000
-Subtitles by the Amara.org community
-
-200
-00:52:36,000 --> 00:52:39,000
-Subtitles by the Amara.org community
-
-201
-00:53:06,000 --> 00:53:09,000
-Subtitles by the Amara.org community
-
-202
-00:53:36,000 --> 00:53:39,000
-Subtitles by the Amara.org community
-
-203
-00:54:06,000 --> 00:54:09,000
-Subtitles by the Amara.org community
-
+31
+00:17:36,880 --> 00:17:47,420
+After creating the test design, we will create the test cases to cover C0, C1 and MCDC.
+
+32
+00:17:52,420 --> 00:18:05,740
+Because this test request only requires C0 and C1, we will only create test cases to cover C0 and C1.
+
+33
+00:18:18,880 --> 00:18:22,430
+This is the basic information tab of the Class.
+
+34
+00:18:22,430 --> 00:18:29,180
+It includes the review source, tester, and the C0, C1 and MCDC percentages of the Class.
+
+35
+00:18:39,180 --> 00:18:48,180
+Next, we will import the test cases from the test design into the ATT folder.
+
+36
+00:19:23,180 --> 00:19:34,000
+We will use the Smart ATT tool to import the test cases from the test design into the ATT folder.
+
+37
+00:19:43,000 --> 00:19:50,640
+Fill in the required information into the tool so the test cases can be imported.
+
+38
+00:21:00,640 --> 00:21:17,730
+After importing the test cases into ATT, we will run a trial to check whether the C0, C1 result of the module or item has reached 100%.
+
+39
+00:21:38,960 --> 00:21:43,460
+These are the test cases that were added from the test design into ATT.
+
+40
+00:26:32,220 --> 00:26:42,440
+This is the result table showing the C0, C1 and MCDC percentages for the item.
+
+41
+00:27:46,440 --> 00:27:55,860
+After the result has passed, copy the folder from the ATT_Temp into the workspace folder.
+
+42
+00:28:44,860 --> 00:28:49,800
+After that, create the PLT folder for the item.
+
+43
+00:29:19,800 --> 00:29:25,150
+After the PLT folder is created, we will proceed to color the variables.
+
+44
+00:31:25,150 --> 00:31:31,360
+After coloring for the PLT file is complete, we will send the result to TCM.
+
+45
+00:32:46,360 --> 00:33:01,050
+As this item does not require MCDC, so for the conditions required for MCDC coverage, we will select the reason as "MCDC is not required".
+
+46
+00:33:47,020 --> 00:33:50,880
+After that, we will send the result to TCM.
+
+47
+00:41:50,820 --> 00:42:34,400
+After sending is complete, we will create a walkthrough for the item and enter the required fields in the MCDC tool.
+
+47
+00:43:30,820 --> 00:43:34,400
+Fill in the required fields in the MCDC tool to create walkthrough.
+
+48
+00:44:42,400 --> 00:44:51,370
+After filling in all the information in the make walkthrough MCDC tool, we will create walkthrough for the item.
+
+49
+00:44:58,370 --> 00:45:06,090
+Next is the step of getting the link on TCM. 
+
+49
+00:45:30,370 --> 00:45:36,090
+Currently, after the result has been sent, the status is shown as Complete.
+
+50
+00:45:36,090 --> 00:49:08,780
+However, UT result has not been uploaded to TCM yet, we can reload the database to check again.
+
+51
+00:49:08,780 --> 00:49:19,230
+After checking that the version on TCM matches the UT design version that I sent to TCM, we will get the link to create the walkthrough.
+
+52
+00:52:09,230 --> 00:52:19,870
+Once the walkthrough is created, we will proceed to upload the walkthrough to TCM.

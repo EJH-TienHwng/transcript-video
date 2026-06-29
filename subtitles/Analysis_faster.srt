@@ -147,56 +147,60 @@ After the build is complete, I will get the necessary files for analysis.
 Those files can be found in the following folder.
 
 35
-00:07:08,180 --> 00:07:15,700
-Go to the database folder, then gen, and find the config that was built successfully.
+00:07:08,180 --> 00:07:18,700
+Go to the database folder, then Gen, and find the config that was built successfully.
 
 36
 00:07:26,220 --> 00:07:35,180
-Select Build and then Make. The two files we need are genmax.cdv and the ASCET component file.
+Select Build_ and then Make. The two files we need are _GenMake.csv and the ASCET component file.
 
 37
-00:07:35,930 --> 00:08:01,120
-I will move those two files outside. These two files are required for running TPA. I have already prepared them here.
+00:07:35,930 --> 00:07:50,930
+I will move those two files outside. These two files are required for running TPA.
+
+37
+00:07:50,930 -> 00:08:01,120
+I will leave them here.
 
 38
-00:08:01,120 --> 00:08:11,700
-The next important step is to modify the .csv file so that its component matches the load through file.
+00:08:01,120 --> 00:08:15,700
+The next important step is to modify the .csv file so that its component matches the load rule file.
 
 39
-00:08:11,700 --> 00:08:27,240
-Here, I use the All-in-One tool, select Analysis Support, select CSP Amendation, and then input the CSP path.
+00:08:15,700 --> 00:08:27,240
+Here, I use the All-in-One tool, select Analysis Support, select CSV Emendation, and then input the CSV's path.
 
 40
 00:08:33,540 --> 00:08:46,210
-Next is the Load Profile file. I will go back to the database and find the Load Profile file that I used to load the database.
+Next is the Load Profile file. I will go back to the database and find the Load Rule file that I used to load the database.
 
 41
-00:08:52,280 --> 00:09:01,980
+00:08:52,280 --> 00:09:05,980
 To make sure, I open Open File Location. This path is correct, so I will take the path of this file.
 
 42
-00:09:01,980 --> 00:09:21,520
+00:09:05,980 --> 00:09:25,520
 Next is the Saving Directory. I will save the output result after running the tool in the same folder that contains the .csv file from earlier.
 
 43
-00:09:21,520 --> 00:09:37,920
-The tool will create a modified component that matches the load through file, and it will also create a new .csv file.
+00:09:25,520 --> 00:09:37,920
+The tool will create a modified component that matches the load rule file, and it will also create a new .csv file.
 
 44
 00:09:37,920 --> 00:09:46,260
-Here, I will use this new .csv file and this xget.xml file to run TPA.
+Here, I will use this New_..._.csv file and this ASCET .xml file to run TPA.
 
 45
-00:09:46,260 --> 00:09:53,260
+00:09:46,260 --> 00:09:58,260
 I will copy them to the virtual machine, and I have already prepared them here.
 
 46
-00:09:53,260 --> 00:10:07,980
+00:09:58,260 --> 00:10:10,980
 I will open the TPA Report Generation tool, then select the folder containing those two files.
 
 47
-00:10:07,980 --> 00:10:18,920
-I paste the provided Snapshot link, then set the QT Assessment field to Yes.
+00:10:10,980 --> 00:10:18,920
+I paste the provided Snapshot link, then set the QG Assessment field to Yes.
 
 48
 00:10:18,920 --> 00:10:26,070
@@ -207,15 +211,18 @@ It will also automatically highlight the fields that I need to fill in.
 Here, I select the modified CSV file from earlier, which is this new file, and this ASCET file.
 
 50
-00:10:38,790 --> 00:10:55,480
-The next important field is the exclude section. I will not analyze the RPA-CUBAS component, so I select Exclude Components and Exclude CPP/HPP, then click Generate Report.
+00:10:38,790 --> 00:10:45,480
+The next important field is this section.
+
+00:10:45,480 -> 00:10:57,480
+I will not analyze the rpa.CUBAS component, so I select Exclude Components and Exclude CPP/HPP, then click Generate Report.
 
 51
-00:10:55,480 --> 00:11:02,870
+00:10:57,480 --> 00:11:05,870
 This process also takes quite a long time. During that time, I can get the ASCET database.
 
 52
-00:11:02,870 --> 00:11:10,710
+00:11:05,870 --> 00:11:10,710
 I will use the ASCET database link provided in the UT request from earlier.
 
 53
@@ -224,58 +231,58 @@ I copy that link, open TCM on the virtual machine, and paste it here.
 
 54
 00:11:24,870 --> 00:11:37,630
-I will copy and check its version number. Here, it is 25.3.
+I will copy and check its version number. Here, it is 25.3. And it is correct
 
 55
-00:11:37,630 --> 00:11:53,640
+00:11:37,630 --> 00:11:58,640
 So, I will download this ASCET database and copy it to my local machine. I have already prepared these files.
 
 56
-00:11:53,640 --> 00:12:11,740
+00:11:59,640 --> 00:12:17,740
 After the TPA file is generated, it will appear as an Internal Report Snapshot. I will open this file.
 
 57
-00:12:11,740 --> 00:12:42,920
+00:12:38,740 --> 00:12:46,920
 The initial file will look like this.
 
 58
-00:12:42,920 --> 00:13:01,760
+00:12:50,920 --> 00:13:01,760
 This file contains many information fields, but I will focus on the MTVerdict column.
 
 59
-00:13:01,760 --> 00:13:08,040
+00:13:01,760 --> 00:13:12,040
 Normally, I will perform UT for modules whose MTVerdict is Undefined.
 
 60
-00:13:08,040 --> 00:13:16,850
+00:13:12,040 --> 00:13:20,850
 For unnecessary columns, I will hide them.
 
 61
-00:13:16,850 --> 00:13:46,700
+00:13:40,850 --> 00:13:52,700
 Because I will analyze these modules, I usually paste a template here.
 
 62
-00:13:46,700 --> 00:14:06,850
+00:13:52,700 --> 00:14:06,850
 After that, I use a tool to check whether those modules have already been tested.
 
 63
-00:14:06,850 --> 00:14:39,960
+00:14:22,850 --> 00:14:39,960
 Once I have this file, I will save it in .xls format so the tool can read it.
 
 64
-00:14:39,960 --> 00:14:56,060
+00:14:39,960 --> 00:14:54,060
 Here, I use the tool, select Analysis Support, and then select Preliminary Analysis.
 
 65
-00:14:56,060 --> 00:15:10,340
+00:14:54,060 --> 00:15:10,340
 I will fill in the necessary information, including the Tested Database and the file I just converted.
 
 66
-00:15:10,340 --> 00:15:30,490
+00:15:14,340 --> 00:15:30,490
 Then I click Execute. After it finishes running, I will receive a file like this. I have also prepared it in advance.
 
 67
-00:15:30,490 --> 00:15:44,230
+00:15:30,490 --> 00:15:45,910
 Here, I will pay attention to the Item Name column and the concat column.
 
 68
@@ -288,38 +295,54 @@ In this column, I will concatenate the Item Name and the check-in date for C mod
 
 70
 00:16:07,120 --> 00:16:22,740
-For ESP, I will concatenate the Item Name and Item Revision. Here, I have pasted the formula and applied it.
+And for EXP, I will concatenate the Item Name and Item Revision. Here, I have pasted the formula and applied it.
 
 71
 00:16:22,740 --> 00:16:38,560
-As I mentioned earlier, I will check the Undefined modules. Usually, I will check the ESP modules first.
+As I mentioned earlier, I will check the Undefined modules. Usually, I will check the EXP modules first.
 
 72
-00:16:38,560 --> 00:17:12,760
+00:16:38,560 --> 00:17:05,760
 For EXP modules, they may have already been tested using Cantata, but MTVerdict still shows Undefined.
 
 73
-00:17:12,760 --> 00:17:17,980
+00:17:05,760 --> 00:17:13,980
 I will verify this by checking against the tested database file.
 
 74
-00:17:17,980 --> 00:18:13,040
-In the tested database file, it shows the items that have already been tested, along with the corresponding comments in column B. For this step, we only need to use VLOOKUP.
+00:17:13,980 --> 00:17:24,980
+In the tested database file, it shows the items that have already been tested, along with the corresponding comments in column P.
+
+74
+00:17:24,980 -> 00:17:33,000
+For this step, we only need to use VLOOKUP.
 
 75
-00:18:13,040 --> 00:18:29,340
-As shown on the screen, some items have already been tested. Because this module was tested using Cantata and the result was uploaded to TCM, the C0C1 result is displayed here.
+00:18:09,040 --> 00:18:15,340
+As shown on the screen, some items have already been tested.
+
+75
+00:18:15,340 --> 00:18:29,340
+Because this module was tested using Cantata and the result was delivered to TCM, the C0C1 result is displayed here.
 
 76
-00:18:29,340 --> 00:18:57,940
-Therefore, I do not need to test it again. I will filter it separately and mark the MT_Needed column as N. For the remaining rows, I will delete them.
+00:18:29,340 --> 00:18:49,940
+Therefore, I do not need to test it again. I will filter it separately and mark the MT_Needed column as NA.
+
+76
+00:18:49,940 --> 00:18:57,940
+For the remaining rows, I will delete them.
 
 77
-00:18:57,940 --> 00:19:26,660
-There is a small issue in this step: I accidentally lost the item list here, so I will go back and redo the operation.
+00:19:00,000 --> 00:19:09,000
+There is a small issue in this Item List column.
+
+77
+00:19:09,000 --> 00:19:25,000
+I accidentally lost the item list here, so I will go back and redo the operation.
 
 78
-00:19:26,660 --> 00:19:30,660
+00:19:25,000 --> 00:19:30,660
 This column is the result generated from the All-in-One tool earlier.
 
 79
@@ -327,11 +350,11 @@ This column is the result generated from the All-in-One tool earlier.
 I will select the item list in the ASCET database, then select this item list.
 
 80
-00:19:45,780 --> 00:19:58,400
+00:19:45,780 --> 00:19:57,400
 After that, the tool will help me fill in the information for that module.
 
 81
-00:19:58,400 --> 00:20:12,110
+00:19:57,400 --> 00:20:12,110
 After the information is filled in, I will filter the ESP modules again.
 
 82
@@ -355,95 +378,115 @@ Among these, based on the tool result, there is one module that appears to be Hi
 I will check it again to make sure it is correct by verifying each module against the loaded database.
 
 87
-00:21:25,380 --> 00:21:52,060
-After checking, this module is indeed Hierarchical, so I will add a comment saying that this module is Hierarchical. I will also mark it as Valid and will not test it.
+00:21:35,380 --> 00:21:48,500
+After checking, this module is indeed Hierarchical, so I will add a comment saying that this module is Hierarchical. 
+
+87
+00:21:48,500 --> 00:21:55,060
+I will also mark it as Valid and will not test it.
 
 88
-00:21:52,060 --> 00:22:10,220
+00:21:55,060 --> 00:22:15,220
 I have also searched and checked the other modules. Besides the previous module, this module here is also Hierarchical.
 
 89
-00:22:10,220 --> 00:22:42,180
+00:22:30,220 --> 00:22:45,180
 I will add a comment for it and mark the status as Valid. This module is the same as well.
 
 90
-00:22:42,180 --> 00:22:57,720
-For the remaining modules, I will analyze them based on ELOCK. In this ELOCK column, I have not filled in the information yet.
+00:22:45,180 --> 00:22:52,000
+For the remaining modules, I will analyze them based on ELOC.
+
+90
+00:22:52,000 --> 00:23:00,000
+In this ELOC column, I have not filled in the information yet.
 
 91
-00:22:57,720 --> 00:23:11,900
+00:23:00,000 --> 00:23:11,900
 Going back, I still have some C modules that have not been analyzed yet.
 
 92
 00:23:11,900 --> 00:23:32,270
-I will use the Cmetrix tool to get the ELOCK value of the modules in the database.
+I will use the CMetrics tool to get the ELOC value of the modules in the database.
 
 93
 00:23:32,270 --> 00:23:56,050
-After opening Cmetrix, I click the plus icon, paste the database path, and then click OK.
+After opening CMetrics, I click the plus icon, paste the database path, and then click OK.
 
 94
-00:23:56,050 --> 00:24:11,640
-I have already run it here. Then, I click Analyze Project Source Files.
+00:23:58,050 --> 00:24:08,640
+I have already run it here. Then, I click this button to Analyze Project Source Files.
 
 95
-00:24:11,640 --> 00:24:19,650
+00:24:08,640 --> 00:24:16,650
 After the result is generated, I click View Output File Metric.
 
 96
-00:24:19,650 --> 00:24:25,320
+00:24:16,650 --> 00:24:25,320
 I will save the result to the database location, which is my workspace.
 
 97
-00:24:25,320 --> 00:24:44,620
+00:24:25,320 --> 00:24:41,620
 After that, I import the File Metric into this TPA file to support the analysis.
 
 98
-00:24:44,620 --> 00:25:08,170
+00:24:41,620 --> 00:25:00,000
 At the same time, I will also run the MCDC tool to build the modules that need to be tested for C files. Here, I only select the C files.
 
 99
-00:25:08,170 --> 00:25:20,550
+00:25:00,000 --> 00:25:10,550
 I will take all the modules here and export them as a list.
 
 100
-00:25:20,550 --> 00:25:29,080
+00:25:10,550 --> 00:25:21,080
 Because this process takes quite a long time, I will let the tool run in parallel with the analysis process to save time.
 
 101
-00:25:29,080 --> 00:25:44,830
-After I have the information, I will use the MCDC tool from earlier, open the hostconfig.xml file, and fill in the MTC output file.
+00:25:24,080 --> 00:25:44,830
+After I have the information, I will use the MCDC tool from earlier, open the Master_Config.xml file, and fill in the MTC output file.
 
 102
-00:25:44,830 --> 00:26:06,860
-Here is a small trick: I will fill in the information from the bottom to the top. At the beginning of the file, I will enter Pass.
+00:25:49,830 --> 00:26:06,860
+Here is a small trick: I will fill in the information from the bottom to the top. At the beginning of the file, I will fill in something different from Passed.
 
 103
 00:26:06,860 --> 00:26:16,480
-Because MTC has already been completed, while the remaining steps have not, I enter Pass so the tool can run and fill it in for me.
+Because MTC has already been completed, while the remaining steps have not, I fill in something different from Passed so the tool can run and build it for me.
 
 104
-00:26:16,480 --> 00:26:49,490
-I will find that MTC output file in the gen folder. I go back to the database, select gen, and then find the config from earlier.
+00:26:16,480 --> 00:26:46,490
+I will find that MTC output file in the Gen folder. I go back to the database, select Gen, and then find the config from earlier.
 
 105
-00:26:49,490 --> 00:27:06,640
-Here, I select View. This is the file after I have filled in the corresponding information in the fields below, and then I will move upward.
+00:26:46,490 --> 00:26:57,640
+Here, I select Build. This is the file after I have built successfully, and then I will choose path copy.
 
 106
-00:27:06,640 --> 00:27:39,760
-Next is BB. Note that I will use the database that I just loaded.
+00:26:57,640 --> 00:27:05,640
+I will fill it in the hidden information fields respectively below.
+
+106
+00:27:05,640 --> 00:27:09,640
+Here I will go from bottom to top.
 
 107
-00:27:39,760 --> 00:27:50,470
-Here, I have also zipped the database, so I will take its path.
+00:27:28,760 --> 00:27:38,470
+Here, we keep this part, next is config and BB number.
+
+107
+00:27:38,760 --> 00:27:45,470
+And be aware that, I will also zip the following database,
+
+107
+00:27:46,470 --> 00:27:50,470
+like this, then we will copy its path
 
 108
-00:27:50,470 --> 00:28:13,700
-I fill in the path here. The list of modules has also been filled in, so I will fill it in here. After entering all the required information, I select mcdctool.bat to run the tool.
+00:27:55,470 --> 00:28:22,700
+I fill in the path here. The list of modules has also been filled in, so I will fill it in here. After filling in all the required information, I select mcdctool.bat to run the tool.
 
 109
-00:28:13,700 --> 00:28:30,780
+00:28:24,700 --> 00:28:30,780
 After the tool finishes running, it will create this folder.
 
 110
@@ -451,60 +494,64 @@ After the tool finishes running, it will create this folder.
 The folder name will include the database name and the BB number that I just ran.
 
 111
-00:28:37,260 --> 00:28:59,030
+00:28:44,260 --> 00:28:59,030
 After the tool finishes running, it will create a TPA file. This file contains information that helps me check the result more easily after testing is complete.
 
 112
-00:28:59,030 --> 00:29:22,400
-I will take the necessary information from here and put it into the analysis file. Here, I named it tool print and placed it here. Then I go back to the TPA file from earlier.
+00:28:09,030 --> 00:29:22,400
+I will take the necessary information from here and put it into the analysis file. Here, I named it tool_run and placed it here. Then I go back to the TPA file from earlier.
 
 113
-00:29:22,400 --> 00:29:37,470
-I will find the ELOCK values for the modules that need to be tested here so I can check them again.
+00:29:26,400 --> 00:29:37,470
+I will find the ELOC values for the modules that need to be tested here so I can check them again.
 
 114
-00:29:37,470 --> 00:29:47,870
-Here, I use VLOOKUP based on Item Name and MATRIX.
+00:29:41,470 --> 00:29:47,870
+Here, I use VLOOKUP, Item Name and MATRIX.
 
 115
-00:29:47,870 --> 00:30:04,430
-The important information to retrieve is the ELOCK column, which is column C.
+00:29:57,870 --> 00:30:20,430
+The 3 most important information to retrieve is the Effect column, Function column and max CC column.
 
 116
-00:30:04,430 --> 00:30:21,360
-Next are the Function column and the MaxCc column. I will apply this to all modules here.
+00:30:23,430 --> 00:30:27,360
+I will apply this to all modules here.
 
 117
-00:30:22,190 --> 00:30:33,030
+00:30:31,360 --> 00:30:33,030
 First, I have a preliminary table like this.
 
 118
-00:30:37,660 --> 00:30:53,320
-After getting the ELOCK information, I will check again whether any C module has Function equal to 0.
+00:30:43,660 --> 00:30:53,320
+After getting the ELOC information, I will check again whether any C module has Function equal to 0.
 
 119
-00:30:53,320 --> 00:30:57,960
+00:30:53,320 --> 00:30:59,960
 If Function is equal to 0, it means there is no function, so I will map it as Valid. Here, there are none.
 
 120
-00:30:57,960 --> 00:31:20,840
-Therefore, I will proceed as usual. The tool has helped me collect information on whether the modules were tested before, and I will also check whether they have been tested in recent years.
+00:30:59,960 --> 00:31:20,840
+Therefore, I will analyze as usual. The tool has helped me collect information on whether the modules were tested before, and I will also check whether they have been tested in recent years.
 
 121
-00:31:25,280 --> 00:31:50,620
+00:31:41,280 --> 00:31:50,620
 I have also created a formula for this, so I will paste the formula here.
 
 122
 00:31:50,620 --> 00:32:03,330
-My formula will check against the tested database file and the test assignment file.
+My formula will check against the tested database file and the task assignment file.
 
 123
-00:32:03,330 --> 00:32:37,130
-Here, I will check whether the module has already been tested using Cantata or GTest.
+00:32:27,330 --> 00:32:39,130
+Here, I will check whether the module has already been tested using Cantata or GTest or Ascet.
 
 124
-00:32:37,130 --> 00:33:07,670
-If it has already been tested, the formula will return the latest test environment for that module. If it is a C module, it will be tested using Cantata or GTest. If it is an ASW or ESP module, it will be tested using ESP.
+00:32:45,130 --> 00:32:50,670
+If it has already been tested, the formula will return the latest test environment for that module. 
+
+124
+00:32:50,670 --> 00:32:57,670
+If it is a C module, it will be tested using Cantata or GTest. If it is an ASW or ESP module, it will be tested using Ascet.
 
 125
 00:33:09,540 --> 00:33:31,640
@@ -512,116 +559,132 @@ The MT_Needed column is used to show whether the module has already been tested.
 
 126
 00:33:31,640 --> 00:34:52,230
-I will apply the formula to all items here. I have highlighted it slightly, and now I have checked all the information completely.
+I will apply the formula to all items here.
+
+126
+00:34:48,640 --> 00:34:52,230
+And now I have checked all the information completely.
 
 127
-00:34:52,230 --> 00:35:15,260
+00:34:54,230 --> 00:35:15,260
 If a module has not been tested, it will be indicated in this MT_Needed column. However, this test has already been tested, so my tested database file has been updated accordingly.
 
 128
-00:35:15,260 --> 00:35:36,080
+00:35:09,260 --> 00:35:16,080
 Therefore, most modules in the MT_Needed column are Delta.
 
 129
-00:35:36,080 --> 00:35:50,300
-Next, I will calculate the effort based on ELOCK to calculate the total effort for each module according to ELOCK, Delta or New status, and test environment.
+00:35:17,080 --> 00:35:38,300
+Next, I will calculate the effort based on ELOC to calculate the total effort for each module according to ELOC, Delta or New status, and test environment.
 
 130
-00:35:50,300 --> 00:36:09,100
+00:35:38,300 --> 00:36:05,100
 To calculate this quickly, I have already written a formula and pasted it here. If I mark it as Valid, a C module will be counted as 0.1 and the test environment will be checked.
 
 131
-00:36:09,100 --> 00:36:20,360
-If that C module is tested using GTest, it will be calculated based on a different ELOCK rule. If it is tested using Cantata, it will be calculated based on another ELOCK rule.
+00:36:05,100 --> 00:36:13,360
+If that C module is tested using GTest, it will be calculated based on a different ELOC. If it is tested using Cantata, it will be calculated based on another different ELOC.
 
 132
-00:36:20,360 --> 00:36:36,510
-The same applies to ASW. If it is ESP, it will be calculated using the ESP formula.
+00:36:13,360 --> 00:36:25,510
+The same applies to Ascet. If it is ESP, it will be calculated using the Ascet formula.
 
 133
-00:36:36,510 --> 00:36:45,780
+00:36:25,510 --> 00:36:38,780
 Here, it is Delta, so the total effort will be this value multiplied by 0.4.
 
 134
-00:36:45,780 --> 00:36:52,840
+00:36:38,780 --> 00:36:49,840
 Because the minimum effort for one module is 0.6, my formula gives 0.6 here.
 
 135
-00:36:52,840 --> 00:37:14,360
+00:36:49,840 --> 00:37:01,360
 I will apply this formula to all items here.
 
 136
-00:37:14,360 --> 00:37:54,840
-Earlier, I had not calculated ELOCK for some modules, so I will check again and fill them in completely.
+00:37:01,360 --> 00:37:54,840
+Earlier, I had not calculated ELOC for some modules, so I will check again and fill them in completely.
+
+136
+00:37:49,360 --> 00:37:54,840
+Here, I havent't filled in the effort for it
 
 137
-00:37:54,840 --> 00:38:27,410
+00:37:28,840 --> 00:38:44,410
 To make the file cleaner, I will adjust the formatting so it is consistent.
 
 138
-00:38:27,410 --> 00:38:58,910
+00:38:44,410 --> 00:38:58,910
 After that, I will check all the information again, especially the Undefined modules, to see whether I have analyzed everything completely.
 
 139
-00:38:58,910 --> 00:39:09,340
+00:38:05,910 --> 00:39:12,340
 I will also check the MT_Needed column again. Now, I have finished checking.
 
 140
-00:39:09,340 --> 00:39:25,900
+00:39:18,340 --> 00:39:25,900
 For the C modules, I will filter them separately.
 
 141
-00:39:25,900 --> 00:39:36,380
-I will fill in the C0C1 and CFG columns so the tester can update them easily after finishing the work.
-
-142
-00:39:36,380 --> 00:39:53,790
-I will take the result from the MCDC tool from earlier.
+00:39:28,900 --> 00:39:36,380
+I will fill in the CE, CF and CG columns so the tester can update them easily after finishing the work.
 
 143
-00:39:53,790 --> 00:40:05,690
-Now, I will use VLOOKUP based on Item Name to get the corresponding result.
+00:39:45,790 --> 00:39:50,690
+Now, I will use VLOOKUP.
 
 144
-00:40:05,690 --> 00:40:47,260
-I will adjust it slightly so there are no issues.
+00:39:50,690 --> 00:40:47,260
+And item path, I will get the result from the MCDC tool earlier, which I had pasted it here.
 
 145
-00:40:47,260 --> 00:41:34,290
-I will select the tool again. That is correct, so I will apply it to all items here.
+00:40:47,260 --> 00:41:28,290
+I will use VLOOKUP again. 
+
+145
+00:40:28,260 --> 00:41:34,290
+That is correct, so I will apply it to all items here.
 
 146
-00:41:34,290 --> 00:41:49,540
-Now, I have finished analyzing one task. I will check it again.
+00:41:39,290 --> 00:41:52,540
+Now, I have finished analyzing the task. I will check it again.
 
 147
-00:41:49,540 --> 00:42:12,940
-I will summarize it. Here, there are 51 items that need to be tested and 12 items that need to be validated.
+00:41:52,540 --> 00:41:54,940
+I will summarize it.
+
+147
+00:42:01,540 --> 00:42:12,940
+Here, there are 51 items that need to be tested and 12 items that need to be validated.
+
+147
+00:42:14,940 --> 00:42:16,940
+This is the summary of them,
 
 148
-00:42:12,940 --> 00:42:26,980
+00:42:16,940 --> 00:42:30,980
 For BB 87328, there are 63 items that need to undergo UT. Among them, 12 items need to be validated and 51 items need to be tested.
 
 149
-00:42:26,980 --> 00:42:38,410
-For this file, I will create an additional Estimation file to send to SEA.
+00:42:35,980 --> 00:42:44,410
+For this file, I will create an additional Estimation file to send to Component Report.
 
 150
-00:42:38,410 --> 00:42:49,420
+00:42:44,410 --> 00:42:49,420
 Now, I will save it as an Estimation file.
 
 151
-00:42:49,420 --> 00:43:09,290
+00:43:03,420 --> 00:43:11,290
 In this file, I will convert everything into values and avoid leaving formulas.
 
 152
-00:43:09,290 --> 00:43:22,250
-I will keep the MT_Needed column so the recipient can know which modules need to be tested and which modules need to be validated.
+00:43:12,290 --> 00:43:22,250
+I will keep the ELOC, MT_Needed and Total_Effort columns for each Undefined module.
 
 153
-00:43:22,250 --> 00:43:36,900
+00:43:30,250 --> 00:43:36,900
 After that, I will filter the Undefined modules again to remove unnecessary items.
 
 154
-00:43:36,900 --> 00:43:48,920
-Basically, I have completed the analysis for one task.
+00:43:43,900 --> 00:43:48,920
+Basically, I have completed the analysis for this task.
