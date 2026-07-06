@@ -1,0 +1,723 @@
+1
+00:00:03,350 --> 00:00:04,350
+Hello.
+
+2
+00:00:35,870 --> 00:00:37,670
+Can everyone see my screen?
+
+3
+00:00:37,670 --> 00:00:43,337
+In the previous sharing sessions, Gioi and Huy showed how to perform a GTest UT task.
+
+4
+00:00:52,450 --> 00:00:54,184
+Those were manual methods.
+
+5
+00:00:57,440 --> 00:01:03,374
+The idea is to use a tool that automatically generates GTest test cases and saves effort.
+
+6
+00:01:14,640 --> 00:01:19,974
+The tool developed by our team is called UT AI Copilot, or AI Copilot for short.
+
+7
+00:01:24,910 --> 00:01:30,377
+Today, I will explain how to install the tool and what prerequisites are required.
+
+8
+00:01:34,000 --> 00:01:37,400
+I will also demonstrate how to use it on a UT task.
+
+9
+00:01:42,320 --> 00:01:44,387
+First, let us install the tool.
+
+10
+00:01:48,800 --> 00:01:51,134
+The tool is packaged as a ZIP file.
+
+11
+00:01:57,820 --> 00:02:00,954
+The installation steps are shown on this slide.
+
+12
+00:02:06,666 --> 00:02:08,600
+First, download the ZIP file.
+
+13
+00:02:08,600 --> 00:02:11,467
+Then create the required folder on drive C.
+
+14
+00:02:17,446 --> 00:02:20,380
+This path must be identical on all machines.
+
+15
+00:02:20,380 --> 00:02:24,647
+Create a folder named UTAI Code Workspace, extract the ZIP file.
+
+16
+00:02:37,003 --> 00:02:39,270
+Copy the UTAI Code folder into it.
+
+17
+00:02:39,270 --> 00:02:42,737
+The tool is implemented as an extension for VS Code.
+
+18
+00:02:58,900 --> 00:03:03,167
+The ZIP filename includes the tool name and its release version.
+
+19
+00:03:09,360 --> 00:03:11,360
+The current version is 1.2.11.
+
+20
+00:03:11,360 --> 00:03:14,160
+The archive contains the UTAI Code folder.
+
+21
+00:03:26,713 --> 00:03:29,380
+Place it in the required workspace path.
+
+22
+00:03:29,380 --> 00:03:30,380
+Open VS Code.
+
+23
+00:03:44,113 --> 00:03:49,580
+I will uninstall the version already installed on my machine and install it again.
+
+24
+00:03:49,580 --> 00:03:54,180
+Open Extensions, select the three-dot menu, choose Install from VSIX.
+
+25
+00:04:23,553 --> 00:04:26,220
+Select the VSIX file for version 1.2.11.
+
+26
+00:04:26,220 --> 00:04:31,687
+Click Install and reload the workspace after the Complete Install message appears.
+
+27
+00:04:56,040 --> 00:05:01,974
+After reloading, press Ctrl+Shift+P, search for UTAI Code, and run UTAI Code: Open Panel.
+
+28
+00:05:07,710 --> 00:05:13,444
+When this interface appears, the extension has been installed successfully in VS Code.
+
+29
+00:05:17,680 --> 00:05:20,680
+Do you have any questions about installation?
+
+30
+00:05:30,080 --> 00:05:32,680
+Is this tool only for internal Bot use?
+
+31
+00:05:47,516 --> 00:05:51,650
+Could installing an external extension violate a company rule?
+
+32
+00:05:51,650 --> 00:05:54,050
+The tool belongs to the Bot project.
+
+33
+00:06:15,730 --> 00:06:20,530
+Please contact Tien for more detailed guidance on deployment and policy.
+
+34
+00:06:20,530 --> 00:06:24,797
+We will discuss the AI, API, and security-related details later.
+
+35
+00:07:05,950 --> 00:07:10,550
+After installation, we will use the tool in a normal GTest workspace.
+
+36
+00:07:44,650 --> 00:07:48,650
+Drag the C file onto the batch file to create the workspace.
+
+37
+00:07:48,650 --> 00:07:51,250
+Any objects shown in red are undefined.
+
+38
+00:08:16,273 --> 00:08:19,940
+Define all of them before you start writing test cases.
+
+39
+00:08:19,940 --> 00:08:24,607
+The tool can search for these definitions and add them to the .h file.
+
+40
+00:08:31,970 --> 00:08:35,504
+To use this feature, you need the task database path.
+
+41
+00:09:06,673 --> 00:09:10,540
+The database contains related C, header, and source files.
+
+42
+00:09:10,540 --> 00:09:15,740
+Open the tool, enter the module path, and then enter the database folder path.
+
+43
+00:09:46,470 --> 00:09:50,337
+Before performing UT, configure the preprocessor switches.
+
+44
+00:10:34,040 --> 00:10:38,640
+They determine which code blocks are enabled or disabled for testing.
+
+45
+00:10:38,640 --> 00:10:42,440
+Next, build the project from Terminal > Run Task > Build.
+
+46
+00:10:48,640 --> 00:10:50,640
+The build log displays errors.
+
+47
+00:10:58,340 --> 00:11:03,140
+Use Read Undefined Object from Build Log to read the unresolved objects.
+
+48
+00:11:04,440 --> 00:11:07,507
+The tool lists the undefined objects it finds.
+
+49
+00:11:27,400 --> 00:11:32,334
+Use the auto-find feature to retrieve their definitions from the database.
+
+50
+00:11:52,226 --> 00:11:54,160
+Build and view the log again.
+
+51
+00:11:54,160 --> 00:11:59,627
+If an object is still missing, use auto-find for that object and then build again.
+
+52
+00:12:09,010 --> 00:12:14,210
+If no more undefined objects can be read, the project may still fail to build.
+
+53
+00:12:41,056 --> 00:12:44,590
+In that case, inspect and resolve the error manually.
+
+54
+00:12:44,590 --> 00:12:48,390
+For example, the error may show that a struct is missing.
+
+55
+00:13:21,050 --> 00:13:26,384
+Open the database in VS Code, search the header files for the struct definition.
+
+56
+00:14:21,750 --> 00:14:25,950
+Copy it into the .h file, run the undefined-object check again.
+
+57
+00:14:25,950 --> 00:14:29,884
+Objects not found in the database must be defined manually.
+
+58
+00:15:11,590 --> 00:15:15,190
+The same applies to objects not supported by the tool.
+
+59
+00:15:15,190 --> 00:15:17,990
+Define the remaining objects and run View.
+
+60
+00:15:52,956 --> 00:15:55,690
+All undefined objects have been resolved.
+
+61
+00:15:55,690 --> 00:15:59,090
+The next step is to define mock and stub functions.
+
+62
+00:16:08,255 --> 00:16:12,855
+The tool helps collect undefined objects and add them to the .h file.
+
+63
+00:16:22,020 --> 00:16:25,220
+Unsupported cases still require manual handling.
+
+64
+00:16:25,220 --> 00:16:29,220
+This saves considerable time searching through the database.
+
+65
+00:16:34,880 --> 00:16:38,747
+Do you have any questions about finding undefined objects?
+
+66
+00:16:45,040 --> 00:16:46,040
+Hello?
+
+67
+00:17:01,003 --> 00:17:02,070
+Can you hear me?
+
+68
+00:17:02,070 --> 00:17:05,004
+What form should the selected database take?
+
+69
+00:18:45,236 --> 00:18:48,570
+Where does the database in this example come from?
+
+70
+00:18:48,570 --> 00:18:50,704
+The demo uses a sample database.
+
+71
+00:19:05,012 --> 00:19:07,146
+Each task has a database folder.
+
+72
+00:19:21,454 --> 00:19:25,588
+Each task database folder contains related C and header files.
+
+73
+00:19:39,896 --> 00:19:43,830
+The tool reads these headers and adds matching definitions.
+
+74
+00:19:43,830 --> 00:19:49,764
+Do we need to choose the database folder ourselves, and is there a rule for selecting it?
+
+75
+00:20:26,430 --> 00:20:31,297
+Normally, the task coordinator provides the C file and a database folder.
+
+76
+00:20:55,466 --> 00:20:58,534
+Enter the location of that folder in the tool.
+
+77
+00:21:22,703 --> 00:21:25,770
+There is no required physical location for it.
+
+78
+00:21:25,770 --> 00:21:29,704
+You can provide a parent folder and let the tool search it.
+
+79
+00:21:49,477 --> 00:21:52,877
+However, search speed depends on the database size.
+
+80
+00:22:12,650 --> 00:22:16,450
+Choose the smallest folder that contains sufficient data.
+
+81
+00:22:16,450 --> 00:22:17,450
+Thank you.
+
+82
+00:22:24,170 --> 00:22:26,704
+The C file is no longer marked in red.
+
+83
+00:23:10,472 --> 00:23:15,072
+The tool can also create mock and stub declarations in the .cpp file.
+
+84
+00:23:58,840 --> 00:24:03,640
+This includes functions under test, global variables, and mock bindings.
+
+85
+00:24:03,640 --> 00:24:09,240
+One message-related object is a special case that cannot be generated automatically.
+
+86
+00:24:55,970 --> 00:25:00,770
+Check its definition in the database and add it manually to the .h file.
+
+87
+00:25:00,770 --> 00:25:05,237
+After cleaning and building again, one test case runs successfully.
+
+88
+00:25:37,103 --> 00:25:39,570
+This completes the preparation stage.
+
+89
+00:25:39,570 --> 00:25:41,437
+Delete the sample test case.
+
+90
+00:26:11,426 --> 00:26:14,960
+The preparation features work without GitHub Copilot.
+
+91
+00:26:14,960 --> 00:26:20,227
+Automatic test-case generation requires GitHub Copilot and GitHub Copilot Chat.
+
+92
+00:27:07,566 --> 00:27:12,500
+Install both extensions, log in, and verify that Copilot Chat can respond.
+
+93
+00:27:12,500 --> 00:27:17,100
+Select the function to test and start automatic test-case generation.
+
+94
+00:28:39,910 --> 00:28:44,310
+After selecting Auto Generate Test Case, wait for the tool to run.
+
+95
+00:29:01,766 --> 00:29:05,300
+Do not click anywhere else while the tool is running.
+
+96
+00:29:05,300 --> 00:29:08,500
+GitHub Copilot does not expose the required API.
+
+97
+00:29:20,203 --> 00:29:25,470
+The tool uses focused copy-and-paste actions to exchange prompts and responses.
+
+98
+00:29:25,470 --> 00:29:28,937
+You may use the scroll wheel to observe the process.
+
+99
+00:29:49,243 --> 00:29:51,910
+Do not move focus by clicking elsewhere.
+
+100
+00:29:51,910 --> 00:29:57,310
+The first prompt sends source code and definitions to Copilot for MCDC scenarios.
+
+101
+00:30:41,790 --> 00:30:46,724
+It instructs Copilot not to assign local variables directly in test cases.
+
+102
+00:31:00,470 --> 00:31:05,204
+The next prompt gives the .cpp format and requests matching test cases.
+
+103
+00:31:38,580 --> 00:31:44,314
+Copilot generated eight scenarios, but its first response created only two test cases.
+
+104
+00:32:27,970 --> 00:32:30,237
+The tool asks Copilot to continue.
+
+105
+00:32:50,718 --> 00:32:54,852
+When the response is complete, the tool updates the test file.
+
+106
+00:33:15,333 --> 00:33:19,600
+It inserts the test names and scenario descriptions as comments.
+
+107
+00:33:19,600 --> 00:33:24,467
+Run Cantata++ coverage and confirm that the selected function is covered.
+
+108
+00:34:18,690 --> 00:34:21,290
+Next, we will choose a longer function.
+
+109
+00:37:37,766 --> 00:37:42,700
+We will use a longer function to demonstrate the tool and its limitations.
+
+110
+00:37:42,700 --> 00:37:45,767
+The first generated test cases may be correct.
+
+111
+00:38:14,593 --> 00:38:19,260
+Copilot can still assign a local variable directly despite the prompt.
+
+112
+00:38:19,260 --> 00:38:25,194
+In that case, inspect the code flow, determine how the local variable receives its value.
+
+113
+00:40:24,106 --> 00:40:26,640
+Edit the generated test case manually.
+
+114
+00:40:26,640 --> 00:40:32,440
+A local static variable cannot be controlled directly in a test case or through a stub.
+
+115
+00:41:11,183 --> 00:41:13,450
+Remove invalid direct assignments.
+
+116
+00:41:13,450 --> 00:41:17,317
+After running coverage, any red areas are still uncovered.
+
+117
+00:42:00,060 --> 00:42:04,260
+Use Read Remaining Test Case to identify cases for those paths.
+
+118
+00:42:04,260 --> 00:42:09,460
+The tool lists the missing coverage, such as the true branch of condition 360.
+
+119
+00:42:36,693 --> 00:42:40,160
+The tool does the same for the remaining conditions.
+
+120
+00:42:40,160 --> 00:42:45,294
+If the table specifies a true or false branch, the result was read correctly.
+
+121
+00:43:07,443 --> 00:43:12,510
+Delete rows shown as Undefined because the tool cannot generate those cases.
+
+122
+00:43:12,510 --> 00:43:16,777
+Read Remaining Test Case uses the final test case as an example.
+
+123
+00:43:41,790 --> 00:43:46,390
+Add detailed guidance to that example to improve the next generation.
+
+124
+00:43:46,390 --> 00:43:49,924
+For example, use a value that avoids an early return.
+
+125
+00:44:23,936 --> 00:44:26,470
+Add a comment explaining that purpose.
+
+126
+00:44:26,470 --> 00:44:29,004
+Use the relevant value-setting fields.
+
+127
+00:44:49,190 --> 00:44:53,390
+Read the remaining cases again so the tool reloads the example.
+
+128
+00:44:53,390 --> 00:44:58,990
+Click Create More Test Case and wait for the tool to generate additional test cases.
+
+129
+00:46:22,520 --> 00:46:28,120
+The tool sends the table information as a prompt and inserts corresponding comments.
+
+130
+00:46:28,120 --> 00:46:31,720
+After the tool generates test cases, check the result.
+
+131
+00:47:55,066 --> 00:47:59,200
+Check whether each one meets the requested coverage objective.
+
+132
+00:47:59,200 --> 00:48:05,000
+Correct generated values when a case takes the wrong branch or does not avoid a return.
+
+133
+00:50:34,630 --> 00:50:40,297
+For a simple function, the tool may generate eight test cases in about three minutes.
+
+134
+00:51:13,160 --> 00:51:15,360
+This can save significant effort.
+
+135
+00:51:15,360 --> 00:51:20,894
+For functions with nested conditions and return statements, errors are more likely.
+
+136
+00:51:37,780 --> 00:51:43,580
+AI output may be inaccurate for functions with nested conditions and return statements.
+
+137
+00:51:43,580 --> 00:51:49,047
+Read Remaining Case identifies uncovered cases and the route needed to reach them.
+
+138
+00:52:19,880 --> 00:52:23,947
+For example, it can identify the required condition sequence.
+
+139
+00:53:11,533 --> 00:53:17,400
+It can identify the sequence of true and false conditions needed to cover a target line.
+
+140
+00:53:17,400 --> 00:53:20,267
+However, user validation is still required.
+
+141
+00:54:13,556 --> 00:54:19,290
+Validate the result in Cantata and correct any case that misses its intended coverage.
+
+142
+00:54:19,290 --> 00:54:22,357
+Can users obtain a Copilot account themselves?
+
+143
+00:54:42,420 --> 00:54:45,554
+Internal users may follow the internal process.
+
+144
+00:55:05,616 --> 00:55:09,150
+External users should contact the responsible person.
+
+145
+00:55:29,213 --> 00:55:31,880
+Account details will be explained later.
+
+146
+00:55:31,880 --> 00:55:35,080
+Clear Table only removes the data in this table.
+
+147
+00:56:00,990 --> 00:56:04,524
+The final feature is used after building the project.
+
+148
+00:56:53,095 --> 00:56:58,162
+To demonstrate it, we will intentionally create an incorrect expected value.
+
+149
+00:57:46,733 --> 00:57:51,800
+We will make an expected value incorrect and observe the failure in the log.
+
+150
+00:57:51,800 --> 00:57:55,334
+Use Fix Wrong Expected to correct the expected value.
+
+151
+00:58:14,233 --> 00:58:16,900
+After rebuilding, the test passes again.
+
+152
+00:58:20,750 --> 00:58:23,950
+This feature makes expected-value checks faster.
+
+153
+00:59:04,280 --> 00:59:07,680
+Always investigate a difference before changing it.
+
+154
+00:59:07,680 --> 00:59:12,480
+A different actual value may indicate a bug or an incorrect test design.
+
+155
+01:00:44,733 --> 01:00:47,400
+It is not merely a wrong expected value.
+
+156
+01:00:47,400 --> 01:00:53,200
+The feature can also restore missing expected calls or remove redundant expected calls.
+
+157
+01:03:02,936 --> 01:03:05,670
+This reduces related warnings in the log.
+
+158
+01:03:05,670 --> 01:03:07,537
+That concludes the training.
+
+159
+01:03:31,712 --> 01:03:34,312
+The documents and files will be shared.
+
+160
+01:03:58,486 --> 01:04:02,420
+You can contact me to report any issue when using the tool.
+
+161
+01:04:02,420 --> 01:04:04,754
+Now Tien will explain the accounts.
+
+162
+01:04:18,629 --> 01:04:22,363
+The move from Cantata to GTest created a heavy workload.
+
+163
+01:04:36,237 --> 01:04:40,971
+The team developed automation tools as AI and Copilot became available.
+
+164
+01:04:54,846 --> 01:05:00,780
+The tool is still new and needs updates, but it already automates many tester activities.
+
+165
+01:05:00,780 --> 01:05:05,914
+The documentation shows installation and GitHub-to-Bot account-linking steps.
+
+166
+01:05:37,284 --> 01:05:39,950
+Follow the four steps to request access.
+
+167
+01:06:11,320 --> 01:06:15,320
+Currently, only internal users have the approved login flow.
+
+168
+01:06:15,320 --> 01:06:20,454
+One account can be used on two machines, and a team machine can also be used.
+
+169
+01:07:00,200 --> 01:07:05,200
+Internet access is required and must be approved through the usual process.
+
+170
+01:07:05,200 --> 01:07:10,334
+Use is allowed only for projects up to the applicable level 2 classification.
+
+171
+01:08:14,070 --> 01:08:16,137
+Do not use it for SC3 projects.
+
+172
+01:09:19,873 --> 01:09:24,740
+Confirm your project classification with the software PCM or team leader.
+
+173
+01:09:24,740 --> 01:09:29,274
+A GitHub Copilot license costs roughly 40 euros per user each month.
+
+174
+01:10:10,992 --> 01:10:14,126
+It is not intended for unrestricted deployment.
+
+175
+01:10:55,843 --> 01:11:00,910
+Use approved individual or team-machine accounts through the proper process.
+
+176
+01:11:00,910 --> 01:11:02,977
+Copilot can write code quickly.
+
+177
+01:11:38,162 --> 01:11:43,228
+Users must understand the required behavior and review the output carefully.
+
+178
+01:12:18,413 --> 01:12:22,880
+Leaders and reviewers should verify generated code before using it.
+
+179
+01:12:22,880 --> 01:12:25,147
+Are there any remaining questions?
+
+180
+01:12:38,934 --> 01:12:40,534
+Thank you for attending.
+
+181
+01:12:54,320 --> 01:12:55,520
+Goodbye, everyone.

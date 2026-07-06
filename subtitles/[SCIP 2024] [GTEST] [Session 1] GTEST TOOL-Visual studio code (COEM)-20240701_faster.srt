@@ -1,0 +1,611 @@
+1
+00:01:06,160 --> 00:01:07,880
+I cannot hear the audio, everyone.
+
+2
+00:01:07,880 --> 00:01:19,840
+Sorry—hello?
+
+3
+00:01:19,840 --> 00:01:23,900
+Yes, I can hear you now. Giỏi, you can begin the training session.
+
+4
+00:01:23,900 --> 00:01:33,210
+First of all, thank you all for joining today's sharing session.
+
+5
+00:01:33,210 --> 00:01:41,310
+My name is Giỏi, and today I will share what I know about GTest.
+
+6
+00:01:41,310 --> 00:01:46,910
+Please share any comments that can help improve today's session.
+
+7
+00:01:46,910 --> 00:01:56,196
+This morning, I will cover four topics: an overview of GTest,
+
+8
+00:01:56,196 --> 00:02:04,416
+the GTest Automation Tool, software environment setup,
+
+9
+00:02:04,416 --> 00:02:07,460
+and a Q&A session.
+
+10
+00:02:07,460 --> 00:02:09,312
+Based on what I have learned,
+
+11
+00:02:09,312 --> 00:02:12,696
+GTest is an open-source framework released by Google,
+
+12
+00:02:12,696 --> 00:02:14,420
+hence the name Google Test.
+
+13
+00:02:14,420 --> 00:02:38,620
+It supports code testing and provides a framework for Unit Testing.
+
+14
+00:02:38,620 --> 00:02:42,589
+It is similar to Cantata,
+
+15
+00:02:42,589 --> 00:02:53,860
+but it is lightweight and supports several utilities defined by Google.
+
+16
+00:02:53,860 --> 00:03:10,630
+Its management capabilities and overall flexibility are very strong.
+
+17
+00:03:10,630 --> 00:03:12,470
+With a Cantata test,
+
+18
+00:03:12,470 --> 00:03:17,530
+we need to configure many prerequisites for it to work.
+
+19
+00:03:17,530 --> 00:03:24,550
+With GTest, the setup is not that complex; it is much simpler.
+
+20
+00:03:24,550 --> 00:03:29,152
+We will cover this in more detail in the next sessions.
+
+21
+00:03:29,152 --> 00:03:32,080
+The goal is to shorten testing time
+
+22
+00:03:32,080 --> 00:03:34,421
+and increase efficiency.
+
+23
+00:03:34,421 --> 00:03:40,370
+Does anyone have any questions or comments about Google Test?
+
+24
+00:03:40,370 --> 00:03:54,400
+Now, why should we use Google Test for Unit Testing?
+
+25
+00:03:54,400 --> 00:03:59,497
+It is highly reusable,
+
+26
+00:03:59,497 --> 00:04:05,793
+lets us test each test case independently,
+
+27
+00:04:05,793 --> 00:04:11,040
+and reduces the size of test files.
+
+28
+00:04:11,040 --> 00:04:13,146
+From using it,
+
+29
+00:04:13,146 --> 00:04:20,308
+I found that applying GTest to our project greatly shortens the time
+
+30
+00:04:20,308 --> 00:04:24,100
+required and increases productivity.
+
+31
+00:04:24,100 --> 00:04:35,940
+Previously, our team created many GTest test cases.
+
+32
+00:04:35,940 --> 00:04:41,512
+As the test suite grows,
+
+33
+00:04:41,512 --> 00:04:58,460
+we add new test cases only when new issues or code changes need coverage.
+
+34
+00:04:58,460 --> 00:05:06,060
+Next is an overview of the GTest Automation Tool.
+
+35
+00:05:06,060 --> 00:05:15,306
+You can search online for information about this tool,
+
+36
+00:05:15,306 --> 00:05:20,100
+or use the link copied here.
+
+37
+00:05:20,100 --> 00:05:29,837
+It is a prebuilt tool; we only need to download and use it.
+
+38
+00:05:29,837 --> 00:05:40,234
+It supports several features, including test cases and reports,
+
+39
+00:05:40,234 --> 00:05:45,680
+and retains relevant information.
+
+40
+00:05:45,680 --> 00:05:59,781
+Please read the documentation to understand it more fully.
+
+41
+00:05:59,781 --> 00:06:12,910
+We will move quickly to the next, more important part.
+
+42
+00:06:12,910 --> 00:06:27,100
+We will now set up the software environment so that we can run GTest.
+
+43
+00:06:27,100 --> 00:06:38,853
+On your computer, install Visual Studio Code and TCC.
+
+44
+00:06:38,853 --> 00:06:51,050
+TCC contains the compiler; we use MinGW to build GTest.
+
+45
+00:06:51,050 --> 00:06:59,240
+TCC can be installed from the IT server or the internal portal.
+
+46
+00:06:59,240 --> 00:07:10,444
+For the GTest Automation Tool, there are two ways to download it:
+
+47
+00:07:10,444 --> 00:07:18,718
+run Installer.bat with the required permissions,
+
+48
+00:07:18,718 --> 00:07:26,820
+or download the GTest Automation Tool ZIP file.
+
+49
+00:07:26,820 --> 00:07:38,250
+These are the steps for installing TCC and Visual Studio Code.
+
+50
+00:07:38,250 --> 00:07:44,887
+Please use the version at this link,
+
+51
+00:07:44,887 --> 00:07:52,630
+which matches the project I am working on.
+
+52
+00:07:52,630 --> 00:08:00,961
+Please download the version of the GTest Automation Tool at this link
+
+53
+00:08:00,961 --> 00:08:04,463
+because it has been modified.
+
+54
+00:08:04,463 --> 00:08:12,673
+One added feature copies the header files we need and lets us define
+
+55
+00:08:12,673 --> 00:08:16,899
+macros for the GTest configuration.
+
+56
+00:08:16,899 --> 00:08:21,970
+We will discuss why it was modified later.
+
+57
+00:08:21,970 --> 00:08:28,360
+For now, let us set up the environment so that it can run.
+
+58
+00:08:28,360 --> 00:08:31,828
+One important point:
+
+59
+00:08:31,828 --> 00:08:41,712
+all machines must use the same folder name for this tool.
+
+60
+00:08:41,712 --> 00:08:53,850
+Different names may work on one machine but cause problems on another.
+
+61
+00:08:53,850 --> 00:09:00,960
+Please use the team-standard folder name.
+
+62
+00:09:00,960 --> 00:09:06,740
+To install Installer.bat, download it,
+
+63
+00:09:06,740 --> 00:09:15,410
+run it with the appropriate permissions, and press Enter.
+
+64
+00:09:15,410 --> 00:09:24,840
+It will install Python and the components needed for the tool.
+
+65
+00:09:24,840 --> 00:09:32,984
+I will demonstrate this now.
+
+66
+00:09:32,984 --> 00:09:53,343
+You can follow along so that we can create a real project later today.
+
+67
+00:09:53,343 --> 00:10:02,650
+Please download these two files.
+
+68
+00:10:02,650 --> 00:10:09,000
+Can you hear me? Okay.
+
+69
+00:10:45,390 --> 00:10:55,320
+I will also paste the link into the chat to make it easier to find.
+
+70
+00:10:55,320 --> 00:11:01,105
+Can everyone access the link?
+
+71
+00:11:01,105 --> 00:11:11,877
+I also placed a document in the meeting-booking email,
+
+72
+00:11:11,877 --> 00:11:18,260
+which IS users can access.
+
+73
+00:11:18,260 --> 00:11:23,150
+If you cannot access it,
+
+74
+00:11:23,150 --> 00:11:36,596
+contact the trainer so it can be sent separately through MS Teams.
+
+75
+00:11:36,596 --> 00:11:45,968
+Some participants are from BG and other teams,
+
+76
+00:11:45,968 --> 00:11:53,710
+so we may need another sharing method.
+
+77
+00:11:53,710 --> 00:12:02,360
+Okay, thank you, Minh.
+
+78
+00:12:02,360 --> 00:12:09,004
+BAG received information about this training only recently,
+
+79
+00:12:09,004 --> 00:12:15,198
+after someone forwarded the message. After the meeting,
+
+80
+00:12:15,198 --> 00:12:22,744
+please contact Giỏi to receive the documents via email or MS Teams.
+
+81
+00:12:22,744 --> 00:12:28,712
+We do not have a shared folder accessible to EBS, IS,
+
+82
+00:12:28,712 --> 00:12:35,920
+and external users, so the files may need to be sent separately.
+
+83
+00:12:35,920 --> 00:12:38,469
+After the meeting,
+
+84
+00:12:38,469 --> 00:12:45,350
+I will upload the documents to a common shared folder.
+
+85
+00:12:45,350 --> 00:12:50,150
+Can everyone access the link I shared to get the tool files?
+
+86
+00:12:50,150 --> 00:13:07,200
+It may currently be accessible only to IS users.
+
+87
+00:13:07,200 --> 00:13:14,000
+Could someone help find a way to share the link externally?
+
+88
+00:13:51,750 --> 00:14:00,488
+At the moment, only IS users can access the link;
+
+89
+00:14:00,488 --> 00:14:11,010
+other users may need the documents to be shared separately.
+
+90
+00:14:11,010 --> 00:14:29,720
+Let us continue with the installation demo.
+
+91
+00:14:29,720 --> 00:14:35,314
+After downloading the two files,
+
+92
+00:14:35,314 --> 00:14:45,977
+run Installer.bat for the tool with the required permissions.
+
+93
+00:14:45,977 --> 00:14:53,318
+It installs the packages needed to run it,
+
+94
+00:14:53,318 --> 00:14:59,611
+such as Python 3.x and MinGW in TCC.
+
+95
+00:14:59,611 --> 00:15:09,051
+Keep the default version settings. When it reports OK,
+
+96
+00:15:09,051 --> 00:15:14,120
+the installation is complete.
+
+97
+00:15:14,120 --> 00:15:24,611
+As mentioned, the tool has been modified for our project.
+
+98
+00:15:24,611 --> 00:15:31,973
+It helps build the headers more quickly,
+
+99
+00:15:31,973 --> 00:15:43,752
+preserves standard file names, and prepares the required folder.
+
+100
+00:15:43,752 --> 00:15:54,795
+Put the file in the folder and rename it to the agreed GTest
+
+101
+00:15:54,795 --> 00:15:58,660
+Automation Tool name.
+
+102
+00:15:58,660 --> 00:16:00,726
+Once this step is complete,
+
+103
+00:16:00,726 --> 00:16:06,160
+verify that the environment has been installed successfully as follows.
+
+104
+00:16:06,160 --> 00:16:24,546
+Take any C file, drag it onto the .bat file, and run it.
+
+105
+00:16:24,546 --> 00:16:35,380
+A console will open; press Enter.
+
+106
+00:16:35,380 --> 00:16:43,456
+This process copies the header files and configures the environment.
+
+107
+00:16:43,456 --> 00:16:47,850
+After that, you can close the window.
+
+108
+00:16:47,850 --> 00:16:59,086
+For example, if the console shows an expected file-related error,
+
+109
+00:16:59,086 --> 00:17:04,963
+the environment setup is complete.
+
+110
+00:17:04,963 --> 00:17:12,050
+That means the installation has finished.
+
+111
+00:17:12,050 --> 00:17:39,420
+Does anyone have any questions?
+
+112
+00:17:59,010 --> 00:18:05,363
+Let me confirm: we copy the two files to a local folder,
+
+113
+00:18:05,363 --> 00:18:09,220
+then click Installer.bat, correct?
+
+114
+00:18:09,220 --> 00:18:12,880
+Yes, that is correct.
+
+115
+00:18:12,880 --> 00:18:17,240
+The console should then display the versions, right?
+
+116
+00:18:17,240 --> 00:18:19,420
+Yes.
+
+117
+00:18:19,420 --> 00:18:22,204
+However, my computer does not display those versions. It says,
+
+118
+00:18:22,204 --> 00:18:24,180
+“The system cannot find the path specified.”
+
+119
+00:18:24,180 --> 00:18:32,710
+I understand. Please check the TCC folder. Have you installed TCC?
+
+120
+00:18:32,710 --> 00:18:40,130
+Please go to Windows and check TCC.
+
+121
+00:18:40,130 --> 00:18:46,273
+We need to install TCC first. Okay, I will install it later;
+
+122
+00:18:46,273 --> 00:18:49,140
+I have not installed it yet.
+
+123
+00:18:49,140 --> 00:19:12,787
+Where can I get it? Go to the internal portal, search for TCC,
+
+124
+00:19:12,787 --> 00:19:21,940
+and click it to install.
+
+125
+00:19:21,940 --> 00:19:30,925
+May I ask: after running Installer.bat,
+
+126
+00:19:30,925 --> 00:19:45,900
+we verify success by dragging a C file onto the .bat file, right?
+
+127
+00:19:45,900 --> 00:19:55,924
+Yes. If the console displays an “undefined reference” message,
+
+128
+00:19:55,924 --> 00:20:03,200
+the environment has been set up successfully.
+
+129
+00:20:03,200 --> 00:20:07,995
+Can you show that again? Is TCC installed through ASM? Yes.
+
+130
+00:20:07,995 --> 00:20:10,840
+Search for TCC on ASM and click it.
+
+131
+00:20:10,840 --> 00:20:46,587
+This may take some time to install. Please continue.
+
+132
+00:20:46,587 --> 00:21:12,710
+The key step is running Installer.bat.
+
+133
+00:21:12,710 --> 00:21:16,723
+After the morning session,
+
+134
+00:21:16,723 --> 00:21:23,515
+we will use the working tool this afternoon.
+
+135
+00:21:23,515 --> 00:21:29,690
+We will work with GTest and test suites.
+
+136
+00:21:29,690 --> 00:21:35,900
+If installation is complete, what will be displayed?
+
+137
+00:21:35,900 --> 00:21:44,140
+How do we know it is done? The result will show the version, correct?
+
+138
+00:21:44,140 --> 00:21:53,445
+Yes. It will show a result indicating that everything is okay and
+
+139
+00:21:53,445 --> 00:21:59,600
+there are no failures. Then it is complete.
+
+140
+00:21:59,600 --> 00:22:08,845
+You can use this guideline to install the tool first,
+
+141
+00:22:08,845 --> 00:22:20,531
+so you can practice in parallel with Giỏi's training this afternoon
+
+142
+00:22:20,531 --> 00:22:24,020
+and tomorrow.
+
+143
+00:22:27,790 --> 00:22:32,657
+If you have any issues installing the tool,
+
+144
+00:22:32,657 --> 00:22:37,750
+ask during this afternoon's training session.
+
+145
+00:22:37,750 --> 00:22:51,930
+Does anyone have any more questions for Giỏi?
+
+146
+00:22:51,930 --> 00:22:58,570
+If your team needs the tool, contact Giỏi directly after this meeting.
+
+147
+00:22:58,570 --> 00:23:03,720
+There is also a link in the chat from Lê Hữu Truyền.
+
+148
+00:23:03,720 --> 00:23:09,860
+You can use it to get the relevant documents for this toolset.
+
+149
+00:23:11,540 --> 00:23:17,970
+Does anyone else have any questions?
+
+150
+00:23:17,970 --> 00:23:21,789
+If there are no other questions,
+
+151
+00:23:21,789 --> 00:23:26,681
+we will end this morning's meeting early.
+
+152
+00:23:26,681 --> 00:23:35,870
+Thank you for joining the overview of GTest and this morning's setup session.
+
+153
+00:23:35,870 --> 00:23:41,670
+Goodbye, everyone. Thank you.

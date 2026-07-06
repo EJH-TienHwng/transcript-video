@@ -1,0 +1,1459 @@
+1
+00:00:01,910 --> 00:00:12,748
+Hello everyone.
+
+2
+00:00:12,748 --> 00:00:58,270
+My name is Huy, and today I will share how to perform manual dSD testing using the Google Test framework.
+
+3
+00:00:58,270 --> 00:01:26,310
+The initial steps are similar to creating a normal GTest project, but we also add rules to check preprocessor directives and test comments that describe the code.
+
+4
+00:01:26,310 --> 00:01:41,974
+First, create a GTest project, open the source file, and check its preprocessor directives.
+
+5
+00:01:41,974 --> 00:01:55,400
+Then create corresponding test scripts to enable and disable those directives.
+
+6
+00:01:55,400 --> 00:02:28,190
+Next, design the test cases, build the module, add descriptions, generate a test specification, demonstrate an archive example, and explain what reviewers should check.
+
+7
+00:02:28,190 --> 00:02:57,460
+To create a project, create a folder named after the module, then drag the C file onto the batch file to generate the GTest project.
+
+8
+00:02:57,460 --> 00:03:03,890
+A console window will appear.
+
+9
+00:03:03,890 --> 00:03:15,450
+Next, define all variables and macros and initialize any missing data types in the C file.
+
+10
+00:03:15,450 --> 00:03:24,570
+This step was covered in the previous session, so I will not repeat it.
+
+11
+00:03:30,180 --> 00:03:35,414
+Second, check the preprocessor directives.
+
+12
+00:03:35,414 --> 00:03:49,370
+Open the .c file and scan the code from beginning to end to see whether it contains any preprocessor directives.
+
+13
+00:03:49,370 --> 00:04:01,513
+In this example, the function contains a preprocessor directive.
+
+14
+00:04:01,513 --> 00:04:17,450
+In the header file, we must cover both cases: enabling and disabling that directive.
+
+15
+00:04:19,250 --> 00:04:29,980
+In the header file, I define ON_TRIGGER as 1 and also create OFF_TRIGGER.
+
+16
+00:04:29,980 --> 00:04:38,800
+Then create configurations to enable or disable these cases.
+
+17
+00:04:45,360 --> 00:04:47,700
+Do you have any questions about this part?
+
+18
+00:04:48,040 --> 00:04:54,689
+Here is another example.
+
+19
+00:04:54,689 --> 00:05:22,350
+When the source has many preprocessor directives, do not create a separate configuration for every case.
+
+20
+00:05:22,350 --> 00:05:52,670
+If their suffix is _ON, create only two configurations: enable all preprocessor directives or disable all of them.
+
+21
+00:05:52,670 --> 00:06:13,498
+In another case, one identifier is compared with multiple suffixes.
+
+22
+00:06:13,498 --> 00:06:34,948
+Create scripts that generate coverage for each different suffix case.
+
+23
+00:06:34,948 --> 00:06:45,828
+Does everyone understand this part?
+
+24
+00:06:45,828 --> 00:06:53,600
+Are there any questions?
+
+25
+00:06:53,600 --> 00:07:02,240
+The third part is test case design.
+
+26
+00:07:02,240 --> 00:07:43,220
+To make dSD mapping easier, number test cases consecutively from 1 through the final test case, regardless of whether a macro is enabled or disabled in a test script.
+
+27
+00:07:43,220 --> 00:07:56,860
+The first test case for each function must be numbered first and should cover as much as possible.
+
+28
+00:07:56,860 --> 00:08:10,500
+In this example, the first test case covers both branches at line 93 and both branches at line 95.
+
+29
+00:08:10,500 --> 00:08:24,945
+Third, check the effective values using EXPECT_EQ in Google Test.
+
+30
+00:08:24,945 --> 00:08:56,723
+Check the function return value, global variables, expected values of global static variables, and variables that the function uses or updates.
+
+31
+00:08:56,723 --> 00:09:13,390
+For a Boolean function, create a return-value variable and check its value.
+
+32
+00:09:17,240 --> 00:09:32,790
+I will find the remaining examples and update this slide later.
+
+33
+00:09:32,790 --> 00:09:44,809
+After designing all test cases, build the module.
+
+34
+00:09:44,809 --> 00:10:13,753
+The build log shows the total number of designed and executed test cases, as well as the achieved coverage percentage.
+
+35
+00:10:13,753 --> 00:10:27,489
+Why does this log jump from test case 8 to test case 14?
+
+36
+00:10:27,489 --> 00:10:37,300
+Did I number the test cases incorrectly?
+
+37
+00:10:37,300 --> 00:10:52,343
+Could someone answer this question?
+
+38
+00:10:52,343 --> 00:11:19,420
+I have not run this part before, so I am not sure how it works.
+
+39
+00:11:19,420 --> 00:11:36,223
+As explained earlier, multiple test scripts are created to cover the function.
+
+40
+00:11:36,223 --> 00:12:08,320
+Test cases 9 through 13 are disabled by a macro in the .h file, so they are not covered by this test script; they are covered by another test script.
+
+41
+00:12:08,320 --> 00:12:18,660
+In that script, test case 14 onward is disabled.
+
+42
+00:12:18,660 --> 00:12:41,293
+Next, add test descriptions to the test cases.
+
+43
+00:12:41,293 --> 00:13:10,815
+Use the GenTestSpec tool to add comments for each test case.
+
+44
+00:13:10,815 --> 00:14:05,430
+Use the latest version, select the main stream channel, and provide the path to the project that needs testing.
+
+45
+00:14:05,430 --> 00:14:31,190
+The comment form shows the test case number, function name, test goal, precondition, and test steps.
+
+46
+00:14:31,190 --> 00:14:57,980
+When writing a test-case description, all variables and operators must be expressed in natural language.
+
+47
+00:14:57,980 --> 00:15:32,680
+For example, write comparison operators as “not equal to” or “equal to,” and write A[0] as “array A at index 0.”
+
+48
+00:15:32,680 --> 00:15:34,883
+The second rule is for MCDC coverage.
+
+49
+00:15:34,883 --> 00:15:39,468
+Do not write that the test case covers two folds or two folds of a condition.
+
+50
+00:15:39,468 --> 00:15:45,660
+Instead, write “Focus on below implementation” and list every case behavior that the test case performs.
+
+51
+00:15:45,660 --> 00:15:57,405
+For the positive case, the condition is true when A equals 1 and C is greater than or equal to 2.
+
+52
+00:15:57,405 --> 00:16:07,212
+For the second case, check the negative case of condition A: A is not equal to 1.
+
+53
+00:16:07,212 --> 00:16:15,324
+Because this is an AND condition, C does not need to be considered.
+
+54
+00:16:15,324 --> 00:16:21,620
+For the third case, A equals 1 and C is less than 2.
+
+55
+00:16:21,620 --> 00:16:41,586
+For the first test case, write: “Check for the positive case of condition A is equal to 1 and C is greater than or equal to 2.”
+
+56
+00:16:41,586 --> 00:16:54,320
+Then add “Focus on below implementation” and list the values assigned to A and C.
+
+57
+00:16:54,320 --> 00:17:10,281
+For test case 2, which covers the false case, write: “Check for the negative case of condition A is equal to 1.”
+
+58
+00:17:10,281 --> 00:17:15,411
+Add “Focus on below implementation.”
+
+59
+00:17:15,411 --> 00:17:31,800
+Because A does not satisfy the condition, the following condition is unnecessary and does not need to be mentioned.
+
+60
+00:17:31,800 --> 00:17:39,255
+Test case 3 covers the other false case.
+
+61
+00:17:39,255 --> 00:17:57,520
+Write it similarly to test case 2, but also describe the value assigned to the remaining variable.
+
+62
+00:17:57,520 --> 00:18:08,132
+Do you have any questions?
+
+63
+00:18:08,132 --> 00:18:46,499
+The descriptions of the behavior performed by the function are written in the Test Goal field.
+
+64
+00:18:46,499 --> 00:19:42,010
+The tool automatically transfers declarations and input values from the test case into the Precondition and Input fields of the comment.
+
+65
+00:19:42,010 --> 00:20:11,146
+There is also a tool that converts the information from the test file into an Excel test specification file.
+
+66
+00:20:11,146 --> 00:20:18,700
+I will demonstrate it later.
+
+67
+00:20:18,700 --> 00:20:32,256
+Next, I will demonstrate a module called CycleHandle.
+
+68
+00:20:32,256 --> 00:20:43,510
+The slide provides the .c file for practice.
+
+69
+00:20:43,510 --> 00:21:02,950
+I have prepared the initial steps already, including defining the variables.
+
+70
+00:21:02,950 --> 00:21:26,050
+The .cpp file should expose the necessary functions from the .c file, initialize static functions, expose global variables, mock methods, and define stub functions.
+
+71
+00:21:26,050 --> 00:21:36,122
+First, open the .c file and scan it.
+
+72
+00:21:36,122 --> 00:21:59,624
+It contains a preprocessor directive, so determine how many test scripts are needed.
+
+73
+00:21:59,624 --> 00:22:32,920
+Here, two scripts are sufficient: one to disable the directive and one to enable it for testing the corresponding code.
+
+74
+00:22:32,920 --> 00:22:39,834
+Confirm the test script.
+
+75
+00:22:39,834 --> 00:23:09,703
+The identifier is set to the OFF configuration, or the opposite configuration when the directive is enabled.
+
+76
+00:23:09,703 --> 00:23:21,595
+Then perform a clean build and build again.
+
+77
+00:23:21,595 --> 00:23:39,849
+Whenever you modify the .c or .h file, you must clean and rebuild.
+
+78
+00:23:39,849 --> 00:23:47,870
+This build log has no errors.
+
+79
+00:23:47,870 --> 00:24:00,018
+Move to the .cpp file and design a test case.
+
+80
+00:24:00,018 --> 00:24:12,976
+This is the first function, so call it directly.
+
+81
+00:24:12,976 --> 00:24:27,014
+It has no parameters, so leave the parameters empty.
+
+82
+00:24:27,014 --> 00:24:51,310
+Delete unused variables, and because it is a void function, remove the return-value check.
+
+83
+00:24:51,310 --> 00:25:11,054
+As mentioned on the slide, the first test case should cover as much as possible.
+
+84
+00:25:11,054 --> 00:25:24,875
+I will cover the true case for the condition at line 64.
+
+85
+00:25:24,875 --> 00:25:51,283
+This line compares the function return value with E_OK; it is true when they are equal and false otherwise.
+
+86
+00:25:51,283 --> 00:25:59,180
+The function has two parameters.
+
+87
+00:25:59,180 --> 00:26:21,263
+The mock uses WillRepeatedly to return E_OK, so the first condition is true.
+
+88
+00:26:21,263 --> 00:26:34,920
+We also need to cover the true case at line 66.
+
+89
+00:26:34,920 --> 00:26:53,226
+The CycleHandleQualifier is an input variable of this function.
+
+90
+00:26:53,226 --> 00:27:10,660
+For the second variable, use the Google Test SetBody syntax.
+
+91
+00:27:10,660 --> 00:27:59,768
+Set the value at the second parameter position to 1, then set the return value so that it is compared with false again.
+
+92
+00:27:59,768 --> 00:28:58,780
+The warning indicates that execution entered the true case and that an additional item still needs to be added with the correct type and value.
+
+93
+00:28:58,780 --> 00:29:57,220
+To confirm that the code path has been entered, open the module coverage result in Cantata and check the relevant report.
+
+94
+00:29:57,220 --> 00:30:26,175
+The coverage view shows what test case 1 has covered.
+
+95
+00:30:26,175 --> 00:31:48,670
+Add notes that record the behavior covered by the test case, so that when comments are added later, it is clear which behavior each test case performs.
+
+96
+00:31:48,670 --> 00:32:02,287
+When building, a redefinition error may occur.
+
+97
+00:32:02,287 --> 00:32:28,041
+This means test case 1 has already been generated and has been created again elsewhere.
+
+98
+00:32:28,041 --> 00:32:40,770
+Correct the duplicate test case definition.
+
+99
+00:32:40,770 --> 00:33:26,801
+After fixing the errors, a green check mark indicates that the test is successful.
+
+100
+00:33:26,801 --> 00:34:17,884
+Open the coverage view and double-click the relevant .cpp file to verify the covered paths.
+
+101
+00:34:17,884 --> 00:34:57,740
+Create additional test cases as needed to cover the remaining branches.
+
+102
+00:34:57,740 --> 00:35:10,582
+The current test script covers one preprocessor configuration.
+
+103
+00:35:10,582 --> 00:35:31,295
+To test the other case, disable the current configuration and enable the alternative in the .h file.
+
+104
+00:35:31,295 --> 00:35:46,830
+The associated test cases in the .cpp file are then disabled automatically.
+
+105
+00:35:46,830 --> 00:36:00,500
+This is how multiple test scripts can be created in one .cpp file.
+
+106
+00:36:00,500 --> 00:36:11,360
+Do you have any questions?
+
+107
+00:36:11,360 --> 00:36:27,667
+Could you show where the configuration is placed in the .cpp file?
+
+108
+00:36:27,667 --> 00:37:05,965
+It can be placed at the bottom, but when a function is not inside a configuration, keeping the configuration outside can make the test script more complex.
+
+109
+00:37:05,965 --> 00:37:38,580
+For each macro that must be covered, use the corresponding conditional block only for its test cases, keeping the test script clean.
+
+110
+00:37:38,580 --> 00:38:16,165
+After modifying the .h file, clean and build the project again.
+
+111
+00:38:16,165 --> 00:39:11,050
+The tool may lag, but when the OFF configuration is selected, the lower section is disabled.
+
+112
+00:39:11,050 --> 00:39:37,716
+Rename the test case so it is clear which function it covers.
+
+113
+00:39:37,716 --> 00:40:10,065
+Although any name is possible, it is recommended to use the function name.
+
+114
+00:40:10,065 --> 00:40:45,474
+There is an error here: test case numbers must start at 1 and remain consecutive.
+
+115
+00:40:45,474 --> 00:41:12,140
+The test case number 3 was used again, so it must be changed.
+
+116
+00:41:12,140 --> 00:41:27,915
+Should test case names be numbered by function or consecutively from top to bottom?
+
+117
+00:41:27,915 --> 00:41:53,193
+For example, if there are ten functions and each function needs four or five test cases, should numbering continue as 15, 16, and 17?
+
+118
+00:41:53,193 --> 00:42:08,018
+Yes, according to the guideline, the next test case is numbered consecutively.
+
+119
+00:42:08,018 --> 00:42:16,000
+The purpose is to make dSD mapping easier.
+
+120
+00:42:16,000 --> 00:42:35,912
+The numbering is not intended to show how many test cases belong to a function.
+
+121
+00:42:35,912 --> 00:43:02,126
+The rule is to number every test case consecutively from the first to the final test case in the C file.
+
+122
+00:43:02,126 --> 00:43:36,910
+For example, if the first function needs five test cases, they are numbered 1 through 5; the next function continues from the next number.
+
+123
+00:43:36,910 --> 00:43:55,236
+For example, suppose the Trigger function originally uses test cases 1 through 5, and SignalValid uses test case 6.
+
+124
+00:43:55,236 --> 00:44:13,403
+If a requirement later changes SetTrigger and an additional test case is needed, that new test case is numbered 7.
+
+125
+00:44:13,403 --> 00:44:29,180
+Although it concerns Trigger, its number remains 7 because numbering is continuous across the file.
+
+126
+00:44:29,180 --> 00:44:46,252
+The participant notes that the naming rule can be confusing.
+
+127
+00:44:46,252 --> 00:45:34,340
+For example, if a function originally has six test cases and a new test case is added with number 7, a reviewer might mistakenly think the function has seven test cases.
+
+128
+00:45:34,340 --> 00:45:54,103
+The response is that a test case name has two parts: the function name covered by the test case and the sequence number.
+
+129
+00:45:54,103 --> 00:46:04,149
+When adding a new test case, assign the next sequence number.
+
+130
+00:46:04,149 --> 00:46:14,690
+The sequence number is not limited by the function being tested.
+
+131
+00:46:14,690 --> 00:46:35,848
+In the build output, the function-name part identifies which function test case 1 covers.
+
+132
+00:46:35,848 --> 00:46:56,530
+The trailing number is simply a normal consecutive number, such as 1, 2, 4, 5, 6, or 7.
+
+133
+00:46:56,530 --> 00:47:34,509
+For example, if a test script already has test cases 1 through 10 to cover the implementation in the current version, and a new requirement is added for the Deactivated function, you may add a new test case named Deactivated_TC11.
+
+134
+00:47:34,509 --> 00:47:41,610
+The mapping section will make this clearer.
+
+135
+00:47:41,610 --> 00:48:03,116
+The participant is concerned that a report could show Deactivated test cases 1, 2, 3, and 5, followed by SignalValid test case 4.
+
+136
+00:48:03,116 --> 00:48:13,785
+This might make a reviewer ask where Deactivated test case 4 is.
+
+137
+00:48:13,785 --> 00:48:32,790
+They suggest numbering test cases separately within each function to make the quantity per function easier to see.
+
+138
+00:48:32,790 --> 00:48:51,284
+The build runs test cases from top to bottom; it does not group them by the function-name portion of the test case name.
+
+139
+00:48:51,284 --> 00:49:01,610
+That name is only displayed and does not determine the build order.
+
+140
+00:49:01,610 --> 00:49:24,594
+When a change point requires a new test case, it can be added below the related test case to make tracking easier.
+
+141
+00:49:24,594 --> 00:49:41,530
+Otherwise, inserting it in the middle requires renumbering all following test cases.
+
+142
+00:49:41,530 --> 00:50:00,729
+Does naming test cases by function and by the number of test cases in that function affect later processes?
+
+143
+00:50:00,729 --> 00:50:05,215
+No.
+
+144
+00:50:05,215 --> 00:50:31,590
+However, grouping related changes in one place may make later delta work more difficult because subsequent additions can still require renumbering.
+
+145
+00:50:31,590 --> 00:50:55,233
+The participant suggests restarting numbering for each function, such as SignalValid_TC1 and Deactivated_TC1 through TC3.
+
+146
+00:50:55,233 --> 00:51:09,106
+The response is that mapping must then carry the full naming structure.
+
+147
+00:51:09,106 --> 00:51:41,150
+The current convention is intended to make mapping easier, but it is a general guideline rather than an absolute rule; teams may adapt it to their project workflow.
+
+148
+00:51:41,150 --> 00:51:51,387
+Another participant argues that the process should be standardized across teams to avoid complications when projects are transferred.
+
+149
+00:51:51,387 --> 00:51:59,700
+The open issue is how mapping handles the naming convention, so it will be revisited in the mapping section.
+
+150
+00:51:59,700 --> 00:52:15,624
+What is the difference between TEST_F and TEST?
+
+151
+00:52:15,624 --> 00:52:35,953
+TEST_F is a Google Test syntax used in the generated format.
+
+152
+00:52:35,953 --> 00:52:58,993
+Earlier work often used TEST, which has a slightly different format.
+
+153
+00:52:58,993 --> 00:53:26,437
+In this case, all test cases are grouped in a Unit Test class, so TEST_F is used.
+
+154
+00:53:26,437 --> 00:53:45,750
+The speaker is not certain of every technical difference.
+
+155
+00:53:45,750 --> 00:53:59,293
+Could the mapping be shown first?
+
+156
+00:53:59,293 --> 00:54:53,056
+A participant again recommends starting test-case numbering at 1 for each function because it may be easier to maintain and review.
+
+157
+00:54:53,056 --> 00:55:57,080
+The response is that teams can choose a convention, but the mapping tool parses the test case name into the function name and the test case sequence number.
+
+158
+00:55:57,080 --> 00:56:26,096
+To make this clear, the presenter will show the mapping.
+
+159
+00:56:26,096 --> 00:57:09,620
+Huy has generated a test specification, and it can be used as the basis for mapping.
+
+160
+00:57:09,620 --> 00:57:19,495
+You can map from the generated Test Spec or from the test script that has just been covered.
+
+161
+00:57:19,495 --> 00:57:35,060
+This example Test Spec was generated with Cantata because GTest is not installed on this machine, but the mapping method is essentially the same.
+
+162
+00:57:35,060 --> 00:58:15,498
+In the Test Spec, the relevant column describes the flow or behavior executed by each test case.
+
+163
+00:58:15,498 --> 00:58:36,980
+The comments follow the test-case flow in the code.
+
+164
+00:58:36,980 --> 00:58:54,516
+The mapping interface is Enterprise Architect, also called dSD.
+
+165
+00:58:54,516 --> 00:59:07,320
+Access to the dSD project depends on the team.
+
+166
+00:59:07,320 --> 00:59:44,340
+In the main stream, use the CSWA application and contact the person who manages the EA repository or the PCM source to obtain access.
+
+167
+00:59:44,340 --> 01:00:02,871
+To find the file to map, search for the module name, for example SignalMonitoringLine, using Ctrl+F.
+
+168
+01:00:02,871 --> 01:00:32,520
+The search may limit the number of characters, so for long names, search using the distinctive suffix because the beginning of module names is often duplicated.
+
+169
+01:00:32,520 --> 01:00:50,680
+From the results, find the object with the package or folder icon and use Find in Project Browser.
+
+170
+01:00:50,680 --> 01:01:03,747
+The dSD database may contain several copies of the same module, such as SignalMonitoringLine.
+
+171
+01:01:03,747 --> 01:01:16,533
+This can occur when a project copies content from a platform without removing the original.
+
+172
+01:01:16,533 --> 01:01:35,360
+Carefully check that the package selected is the one currently under test, rather than an old platform copy that has not been updated.
+
+173
+01:01:35,360 --> 01:01:49,454
+Pay attention to the colored exclamation mark.
+
+174
+01:01:49,454 --> 01:02:07,531
+A package without a user lock can be viewed but not edited.
+
+175
+01:02:07,531 --> 01:02:36,945
+A green exclamation mark means the package and its children are locked by you and can be edited.
+
+176
+01:02:36,945 --> 01:03:07,890
+Use Apply User Lock to lock the package; after it is locked, the green exclamation mark is displayed.
+
+177
+01:03:07,890 --> 01:03:18,223
+On your machine, a green exclamation mark means you locked the module.
+
+178
+01:03:18,223 --> 01:03:24,275
+If it is red, another user has locked it.
+
+179
+01:03:24,275 --> 01:03:41,400
+To edit the module, contact that user and ask them to release the lock; then apply the lock yourself before editing.
+
+180
+01:03:41,400 --> 01:03:47,533
+This is a diagram.
+
+181
+01:03:47,533 --> 01:04:06,914
+First, make sure that everything in the code is represented in the dSD diagram.
+
+182
+01:04:06,914 --> 01:04:35,618
+Developers should include variable declarations, assigned values, true and false conditions, actions, and any macros.
+
+183
+01:04:35,618 --> 01:05:02,360
+Even when the current example has no macro, if the source code has one, it must also be drawn in the diagram.
+
+184
+01:05:02,360 --> 01:05:38,335
+Teams may depict a macro as a true/false condition using a diamond, often in a different color such as orange or green.
+
+185
+01:05:38,335 --> 01:05:50,125
+The macro condition must be documented.
+
+186
+01:05:50,125 --> 01:06:28,820
+Usually place it in the node heading so that readers can see it immediately; use the lower field only when the code is too long.
+
+187
+01:06:28,820 --> 01:06:42,464
+When the code is long, place the code in the lower field and use the node heading to describe the function of the node.
+
+188
+01:06:42,464 --> 01:06:45,560
+This makes auditing easier.
+
+189
+01:06:45,560 --> 01:06:52,439
+Auditors may ask how the Test Spec was derived from the dSD.
+
+190
+01:06:52,439 --> 01:07:05,969
+If the dSD lacks complete condition, statement, or decision information, the team cannot answer that question clearly.
+
+191
+01:07:05,969 --> 01:07:13,078
+Ensure the diagram accurately and fully reflects the function.
+
+192
+01:07:13,078 --> 01:07:22,480
+Arrays defined outside the function can be documented outside the overall diagram.
+
+193
+01:07:22,480 --> 01:07:27,483
+Now for mapping.
+
+194
+01:07:27,483 --> 01:07:44,094
+The test-case numbering convention is used to make mapping into the diagram easier.
+
+195
+01:07:44,094 --> 01:07:57,904
+Declarations that simply flow straight down do not need to be listed.
+
+196
+01:07:57,904 --> 01:08:20,320
+When test case 1 reaches the first condition and takes the true path, attach the TC1 mapping label to that path.
+
+197
+01:08:23,080 --> 01:08:31,577
+Cantata supports separate test scripts for different configurations.
+
+198
+01:08:31,577 --> 01:08:45,448
+GTest can also use two scripts, but the second script requires substantial configuration and is time-consuming.
+
+199
+01:08:45,448 --> 01:08:58,819
+Therefore, use one script and distinct test-case numbers so that each test case can be found by its number.
+
+200
+01:08:58,819 --> 01:09:10,440
+The concern about numbering is reasonable, but the convention supports this mapping workflow.
+
+201
+01:09:10,440 --> 01:09:21,320
+You could use a different number sequence in another part of the diagram, such as 1, 2, 4, and 5.
+
+202
+01:09:21,320 --> 01:09:38,480
+However, this makes searching and identifying the correct mapping more laborious because several diagram areas may contain similarly numbered test cases.
+
+203
+01:09:38,480 --> 01:09:54,435
+To create a mapping label, open the required element and add a label such as TS1_TC12, then click OK.
+
+204
+01:09:54,435 --> 01:10:00,754
+Place it on the corresponding true path.
+
+205
+01:10:00,754 --> 01:10:09,443
+Also label the connecting path itself as true or false.
+
+206
+01:10:09,443 --> 01:10:26,030
+Developers sometimes draw a path without specifying whether it is true or false, which must be corrected.
+
+207
+01:10:26,030 --> 01:10:43,884
+When a path direction is unclear, label it directly as false, or set its stereotype to Yes or No.
+
+208
+01:10:43,884 --> 01:10:54,560
+This displays the corresponding path label in the diagram.
+
+209
+01:10:54,560 --> 01:11:12,569
+After following the true path, use the Test Spec to determine what the next condition covers, then attach the same TC1 label to the appropriate path.
+
+210
+01:11:12,569 --> 01:11:21,030
+To copy a label, hold Ctrl and drag it, then paste the copied element.
+
+211
+01:11:21,030 --> 01:11:48,247
+If you know how many occurrences of a test-case label are needed, create several labels at once.
+
+212
+01:11:48,247 --> 01:12:23,686
+Open the User Interface, hold Ctrl, right-click, select Create Multiple Elements, choose Label, and enter the test case name.
+
+213
+01:12:23,686 --> 01:12:42,114
+Add the required number of rows, for example five, then click OK.
+
+214
+01:12:42,114 --> 01:12:57,140
+Drag each generated label to the correct mapped path.
+
+215
+01:12:57,140 --> 01:13:25,069
+Continue mapping test case 1 until its final path, then map test cases 2, 3, 4, and so on.
+
+216
+01:13:25,069 --> 01:13:42,137
+Follow the behavior described in the Test Spec comment.
+
+217
+01:13:42,137 --> 01:14:24,030
+Map only the paths that the comment says the test case covers; do not map unrelated paths merely because execution passed through them.
+
+218
+01:14:24,030 --> 01:14:29,326
+Map MCDC test cases as well.
+
+219
+01:14:29,326 --> 01:14:46,537
+When a later version adds test cases, such as TC99 and TC100, map the added MCDC cases too.
+
+220
+01:14:46,537 --> 01:15:05,640
+Otherwise, an auditor may ask why a test case was created but was not mapped in Enterprise Architect.
+
+221
+01:15:06,640 --> 01:15:25,556
+A participant asks how this works for Docizen, where the model is created from code syntax.
+
+222
+01:15:25,556 --> 01:15:48,213
+The presenter has not used that approach with SWEDM; current projects primarily use the main-stream workflow.
+
+223
+01:15:48,213 --> 01:16:13,780
+Treat this as a basic process for qualifying the workflow, then discuss with the team how to adapt it to the specific tool.
+
+224
+01:16:13,780 --> 01:16:46,580
+The main benefits of mapping are verifying that the covered flow is correct and confirming that the information in the dSD is complete and accurate.
+
+225
+01:16:46,580 --> 01:17:04,267
+After finishing the mapping, remember to release the user lock so that other people can edit the module.
+
+226
+01:17:04,267 --> 01:17:10,560
+Otherwise, the module remains locked.
+
+227
+01:17:10,560 --> 01:17:19,117
+To release the lock, right-click the package, choose Release User Lock, and click OK.
+
+228
+01:17:19,117 --> 01:17:22,640
+The lock is released automatically.
+
+229
+01:17:22,640 --> 01:17:47,425
+Some people export the file to work locally for better performance and then import it back into Enterprise Architect.
+
+230
+01:17:47,425 --> 01:18:11,998
+This is possible, but it has a serious limitation: links to headers or interface elements can be lost during export.
+
+231
+01:18:11,998 --> 01:18:28,945
+Importing the local package back into the project can remove those header links.
+
+232
+01:18:28,945 --> 01:18:46,740
+Work carefully; despite slower performance, editing directly in EA avoids this risk.
+
+233
+01:18:46,740 --> 01:18:49,335
+Please continue, Huy.
+
+234
+01:18:49,335 --> 01:18:51,930
+Thank you.
+
+235
+01:18:51,930 --> 01:19:07,607
+We have finished the test-case numbering and covered this function.
+
+236
+01:19:07,607 --> 01:19:28,900
+The next step is not to view the Test Spec but to add the comment format to the test cases.
+
+237
+01:19:28,900 --> 01:19:58,999
+Open the tool, select the main stream channel, and choose only the outer project folder path.
+
+238
+01:19:58,999 --> 01:20:18,094
+Do not select the test .cpp file or other internal folders.
+
+239
+01:20:18,094 --> 01:21:08,260
+The tool automatically generates the comment format in the .cpp file, but verify that every generated test-case number matches the corresponding test case.
+
+240
+01:21:08,260 --> 01:21:36,903
+To write the comment, first build an outline of the test-case flow.
+
+241
+01:21:36,903 --> 01:22:43,594
+Describe every relevant operation shown in the test case: declarations, assigned values, conditions, the paths that are covered, and the subsequent actions.
+
+242
+01:22:43,594 --> 01:23:01,550
+Leave spacing so the flow is easy to read.
+
+243
+01:23:01,550 --> 01:23:41,477
+Convert all symbols and operators into natural language.
+
+244
+01:23:41,477 --> 01:25:32,702
+For the condition comparing the return value of CycleQualifier with E_OK, write: “Check the true case: the return value of CycleQualifier is equal to E_OK.”
+
+245
+01:25:32,702 --> 01:26:03,360
+State that the return value is set to E_OK.
+
+246
+01:26:03,360 --> 01:26:43,275
+Write the same type of description for the following condition.
+
+247
+01:26:43,275 --> 01:27:30,793
+State the true case, the relevant return value, and the value it is set to.
+
+248
+01:27:30,793 --> 01:28:15,777
+Then describe that the true condition calls the corresponding function.
+
+249
+01:28:15,777 --> 01:29:02,661
+This completes the description for the true cases at conditions 64 and 66.
+
+250
+01:29:02,661 --> 01:29:18,500
+Delete any unused text.
+
+251
+01:29:18,500 --> 01:29:27,068
+Do you have any questions?
+
+252
+01:29:27,068 --> 01:30:06,610
+Once the generated comment format is in place, delete the temporary notes that were added while designing the test case.
+
+253
+01:30:06,610 --> 01:30:58,647
+For test case 2, do not repeat initialization steps that were already described in test case 1 and do not affect the condition.
+
+254
+01:30:58,647 --> 01:31:20,773
+Describe only what this test case covers and performs.
+
+255
+01:31:20,773 --> 01:31:44,948
+Here, it checks the false case of the condition at line 66.
+
+256
+01:31:44,948 --> 01:32:28,380
+Remove any redundant content generated by the tool, and describe the next false condition in the same way.
+
+257
+01:32:28,380 --> 01:33:06,200
+For test case 3, check the false case of the outer condition.
+
+258
+01:33:06,200 --> 01:34:12,540
+Copy the structure of the description, then verify what values are actually set, such as E_OK and not E_OK.
+
+259
+01:34:12,540 --> 01:35:30,040
+After completing the comments for the first function, review them and convert every remaining operator into natural language.
+
+260
+01:35:30,040 --> 01:36:43,278
+To work faster in VS Code, select a repeated token and press Ctrl+D to find the next matching occurrence and edit it.
+
+261
+01:36:43,278 --> 01:38:25,310
+A participant notes that Ctrl+D appears to select a whole line in their environment; no custom shortcut settings were used, so they will investigate it separately.
+
+262
+01:38:25,310 --> 01:38:39,361
+Do you have any questions about comments?
+
+263
+01:38:39,361 --> 01:39:33,510
+For the next function, remember that the tool transfers declarations into the Precondition section and transfers Set Value information into the Input section.
+
+264
+01:39:33,510 --> 01:40:57,191
+Please write the first test-case description for this function.
+
+265
+01:40:57,191 --> 01:42:16,888
+Post a Test Goal for test cases 4 and 5 in the meeting chat.
+
+266
+01:42:16,888 --> 01:43:24,630
+This test case follows the true branch to line 127.
+
+267
+01:43:24,630 --> 01:43:58,422
+For this example, declare the required old-value and new-value variables, then check the true case.
+
+268
+01:43:58,422 --> 01:44:30,166
+Note that the called function is an actual function, not a stubbed variable in the .cpp file.
+
+269
+01:44:30,166 --> 01:45:24,438
+It returns true or false based on its return value; when CycleInfo.qualifier is valid, it returns 1, and when it is invalid or another value, it returns false.
+
+270
+01:45:24,438 --> 01:46:08,470
+Therefore, writing “the return value of this function is true” is sufficient; the exact numeric value does not need to be stated.
+
+271
+01:46:08,470 --> 01:46:23,142
+After checking the true case, cover the MCDC condition.
+
+272
+01:46:23,142 --> 01:47:15,160
+Because the expression contains an AND operator, add “Focus on below implementation,” state that the relevant value is set to true and the old value is set to false, then set the trigger to true.
+
+273
+01:47:15,160 --> 01:47:53,928
+When the trigger is set to true, execution enters the condition, reaches line 134, assigns the new value to the old value, and returns the result.
+
+274
+01:47:53,928 --> 01:48:15,170
+Because this function returns a Boolean value, its return value must be checked.
+
+275
+01:48:17,150 --> 01:49:02,701
+The build shows that the EXPECT_EQ check expects 0, but the actual return value is 1, so the check fails.
+
+276
+01:49:02,701 --> 01:49:26,561
+Modify the expected value to 1 so that the test passes.
+
+277
+01:49:26,561 --> 01:49:49,120
+Apply the same correction to the related test cases.
+
+278
+01:49:49,120 --> 01:50:20,425
+For the next test case, do not repeat previous descriptions.
+
+279
+01:50:20,425 --> 01:51:20,425
+Cover the required MCDC false case and use “Focus on below implementation” to state the relevant new-value setting.
+
+280
+01:51:20,425 --> 01:52:30,860
+This test case is focused on this specific condition only, so do not repeat comments that were already included in the first test case.
+
+281
+01:52:49,860 --> 01:53:33,162
+The next test case covers the remaining true/false case for the condition at line 121.
+
+282
+01:53:33,162 --> 01:54:36,100
+Use a focused description that states the necessary input values and the expected false result of the condition and function.
+
+283
+01:54:36,100 --> 01:54:42,325
+Why is this better?
+
+284
+01:54:42,325 --> 01:55:04,985
+This is a real function, so its behavior is determined by its actual code and input values.
+
+285
+01:55:04,985 --> 01:55:33,871
+In GTest, real functions cannot be stubbed; you must inspect the code to see what return value drives the condition.
+
+286
+01:55:33,871 --> 01:55:59,520
+Cantata can use a replay wrapper to simulate a real function, but GTest does not support that approach.
+
+287
+01:55:59,520 --> 01:56:18,411
+Now move to the second test script.
+
+288
+01:56:18,411 --> 01:57:16,704
+The test cases covered by test script 1 are disabled, and the next script continues with its own test cases.
+
+289
+01:57:16,704 --> 01:58:05,282
+Values still need to be initialized correctly; otherwise the build log will show an error.
+
+290
+01:58:05,282 --> 01:59:15,450
+Even when a function is not related to the earlier test script, it must be covered again from the beginning in this configuration.
+
+291
+01:59:15,450 --> 01:59:45,305
+There is a gap when adding comments across scripts.
+
+292
+01:59:45,305 --> 02:00:25,698
+Re-running the comment tool can generate overlapping comment formats.
+
+293
+02:00:25,698 --> 02:01:41,800
+The tool places a generic final test-case comment on the last test case, but it contains no useful information and must be edited.
+
+294
+02:01:46,840 --> 02:02:21,900
+It is recommended to design and cover every test case in every test script first, then generate and write the comments.
+
+295
+02:02:21,900 --> 02:02:48,710
+The first test case of test script 2 must describe all behaviors it covers in the function.
+
+296
+02:02:48,710 --> 02:03:35,690
+For faster editing, place the cursor at the final position and drag down to create multiple cursors, then edit the repeated content together.
+
+297
+02:03:35,690 --> 02:04:36,699
+Use the multi-cursor editing shortcut to copy or modify repeated text more quickly.
+
+298
+02:04:36,699 --> 02:05:31,092
+Then verify the next condition and complete its corresponding description.
+
+299
+02:05:31,092 --> 02:06:18,870
+You can copy the completed description above as a starting point.
+
+300
+02:07:00,820 --> 02:07:17,562
+Continue with test cases 10 and 11.
+
+301
+02:07:17,562 --> 02:07:52,480
+The build log should show coverage from test case 4 through test case 11.
+
+302
+02:07:52,480 --> 02:08:32,660
+Because the preprocessor configuration is enabled, the remaining cases are disabled.
+
+303
+02:08:32,660 --> 02:08:57,533
+Do you have any questions about the comment section?
+
+304
+02:08:57,533 --> 02:09:12,840
+We will take a ten-minute break.
+
+305
+02:09:12,840 --> 02:20:01,430
+After the break, the next section covers how to generate a Test Spec.
+
+306
+02:20:01,430 --> 02:20:22,068
+Open the latest main-stream version of the tool.
+
+307
+02:20:22,068 --> 02:21:08,934
+I recommend copying each test script into a separate temporary file, such as Test Script 1 and Test Script 2.
+
+308
+02:21:08,934 --> 02:21:48,490
+Copy common functions that are covered by both scripts into the appropriate temporary files.
+
+309
+02:21:48,490 --> 02:22:45,961
+Provide the folder path, select the test sequence, and set the Test Name.
+
+310
+02:22:45,961 --> 02:24:03,900
+For Test Script 1, use a clear name such as Config1, then provide the corresponding test .cpp file.
+
+311
+02:24:03,900 --> 02:25:15,399
+In the Description field, describe the macro configuration as clearly as possible.
+
+312
+02:25:15,399 --> 02:27:13,110
+State whether the identifier equals the relevant trigger value and why that is true or false in the selected test script configuration.
+
+313
+02:27:13,110 --> 02:27:34,395
+Click Run and wait for the Test Spec to be generated.
+
+314
+02:27:34,395 --> 02:27:58,492
+Ctrl+Click a hyperlink to jump to the function in its sheet.
+
+315
+02:27:58,492 --> 02:28:31,022
+Update any Cantata references to GTest and verify the generated result carefully.
+
+316
+02:28:31,022 --> 02:29:20,420
+Deleting a required field in the comment format, such as Precondition, can cause the Test Spec to be generated incorrectly.
+
+317
+02:29:20,420 --> 02:30:25,817
+Check each generated test case, for example test case 10, and confirm that its Test Goal contains the intended description.
+
+318
+02:30:25,817 --> 02:31:31,214
+Save the generated file in the delivery location using the module name and the correct version; the default version is 1.0.
+
+319
+02:31:31,214 --> 02:32:07,900
+Also update author and reviewer information copied from the template.
+
+320
+02:32:07,900 --> 02:33:02,080
+For test cases that cover MCDC, the Test Description section of the Test Spec includes a “Modified Condition Decision Coverage” line.
+
+321
+02:33:02,080 --> 02:33:22,449
+This line does not appear for ordinary test cases.
+
+322
+02:33:22,449 --> 02:33:42,410
+Change all remaining Cantata references to GTest.
+
+323
+02:33:42,410 --> 02:34:33,063
+After you have a Test Spec and have checked the tests, create an archive using the same tool.
+
+324
+02:34:33,063 --> 02:35:41,690
+Select the GTest sheet, enter the module name, project path, and reviewer information, then click Archive for the main stream.
+
+325
+02:35:41,690 --> 02:36:15,153
+Open the generated archive folder, which is named with the date and the main-stream suffix.
+
+326
+02:36:15,153 --> 02:36:45,306
+Verify that the expected test cases and required files are present and error-free.
+
+327
+02:36:45,306 --> 02:37:36,420
+Update the archive support file with the Test Script and Test Spec paths, using the project folder path rather than unrelated parent paths.
+
+328
+02:37:36,420 --> 02:38:08,011
+For the archive, verify the checklist and confirm that the author, reviewer, module name, pipeline, and date are correct.
+
+329
+02:38:08,011 --> 02:38:16,888
+Add any required supporting files.
+
+330
+02:38:16,888 --> 02:38:37,775
+If coverage is below 100%, include the required reason or deviation information.
+
+331
+02:38:37,775 --> 02:38:54,484
+Save, close, zip the archive, and remove any redundant ZIP file.
+
+332
+02:38:54,484 --> 02:39:15,370
+For Test Design, copy the Test Spec path into the Channel Engine Utility folder.
+
+333
+02:39:17,960 --> 02:39:27,448
+Now for review.
+
+334
+02:39:27,448 --> 02:40:05,399
+A reviewer opens the delivered archive and verifies that the project path matches the expected path.
+
+335
+02:40:05,399 --> 02:40:20,200
+Test Design uses several review layers.
+
+336
+02:40:20,200 --> 02:40:39,935
+The first review checks the test cases and comments.
+
+337
+02:40:39,935 --> 02:41:46,350
+Although a simple module is usually accurate, complex modules require a careful and conscientious reviewer because the author may not fully control every code path or comment.
+
+338
+02:41:46,350 --> 02:41:57,264
+There are two main review approaches.
+
+339
+02:41:57,264 --> 02:42:39,740
+First, read the code and the comments, verify which preprocessor configuration is enabled, and confirm what each test case is intended to cover.
+
+340
+02:42:40,680 --> 02:43:31,229
+Then review by debugging: set a breakpoint, clean and rebuild the project, then run Debug or press F5.
+
+341
+02:43:31,229 --> 02:44:45,070
+If the archive path contains unsupported special characters, extract the archive into a suitable folder first; otherwise GTest may not run correctly.
+
+342
+02:44:45,070 --> 02:45:07,892
+Read the comment again, then use Step Into to enter the C file and Step Over to execute line by line.
+
+343
+02:45:07,892 --> 02:45:30,262
+If the condition is correct, execution enters the expected line; if it is false, it skips the line.
+
+344
+02:45:30,262 --> 02:45:58,055
+Confirm that test case 1 and its comment are correct, then set the next breakpoint and use Continue to move to test case 2.
+
+345
+02:45:58,055 --> 02:46:06,640
+Verify its false case in the same way.
+
+346
+02:46:06,640 --> 02:47:11,302
+A second, more time-consuming method is to comment out other test cases, build the project, and inspect the coverage result in Cantata for each remaining test case.
+
+347
+02:47:11,302 --> 02:47:31,410
+Repeat this for the relevant cases of the function.
+
+348
+02:47:31,410 --> 02:48:28,004
+A third method is to add print statements in the .c file at the conditions being reviewed, for example “condition 83” and “condition 86.”
+
+349
+02:48:28,004 --> 02:48:47,006
+After modifying the C file, clean and rebuild.
+
+350
+02:48:47,006 --> 02:49:33,685
+Read the build log for a specific test case to confirm that it reported the expected true cases and line numbers.
+
+351
+02:49:33,685 --> 02:50:00,123
+This verifies whether execution entered the intended conditions.
+
+352
+02:50:00,123 --> 02:50:17,060
+In practice, debugging is usually faster.
+
+353
+02:50:26,180 --> 02:50:53,613
+For highly complex modules, accurate review can take substantial time.
+
+354
+02:50:53,613 --> 02:52:07,683
+Real functions, local static variables, and variables whose values are updated inside conditions may make simple mock syntax unsuitable because later calls do not retain the required state.
+
+355
+02:52:07,683 --> 02:52:21,400
+Trace the actual code flow instead.
+
+356
+02:52:21,400 --> 02:52:39,820
+Such tests are normally assigned higher effort.
+
+357
+02:52:39,820 --> 02:52:55,033
+That concludes the presentation.
+
+358
+02:52:55,033 --> 02:53:15,000
+Are there any questions or unclear points?
+
+359
+02:53:15,000 --> 02:53:58,262
+You can ask during this session, or contact me later when you encounter an issue in a task.
+
+360
+02:53:58,262 --> 02:54:13,000
+I will support you where I can.
+
+361
+02:54:13,000 --> 02:54:25,203
+Could you ZIP the test file shown earlier so we can use it as a reference?
+
+362
+02:54:25,203 --> 02:54:30,975
+Yes, I will share it in the slides.
+
+363
+02:54:30,975 --> 02:54:41,364
+If there are no further questions, we will end today’s meeting.
+
+364
+02:54:41,364 --> 02:54:45,487
+Thank you for joining.
+
+365
+02:54:45,487 --> 02:54:49,610
+Bye, everyone.

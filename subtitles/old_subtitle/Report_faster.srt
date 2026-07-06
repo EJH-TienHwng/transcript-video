@@ -1,0 +1,708 @@
+1
+00:00:00,000 --> 00:00:10,000
+After delivering and validating, I will proceed to report the previous task.
+
+2
+00:00:10,000 --> 00:00:18,000
+I will also generate a TPA file to report.
+
+3
+00:00:18,000 --> 00:00:23,000
+And the way to generate is the same as the way to generate in the analysis process.
+
+4
+00:00:23,000 --> 00:00:28,000
+After generating, I will have a file like this.
+
+5
+00:00:28,000 --> 00:00:34,000
+I will hide unnecessary columns.
+
+6
+00:00:58,000 --> 00:01:10,000
+Because this task has the MCDC request, I will leave the MCDC column as it is.
+
+8
+00:01:13,000 --> 00:01:18,000
+Then, it will look like this.
+
+9
+00:01:18,000 --> 00:01:22,000
+And now I will concatenate them again.
+
+10
+00:01:22,000 --> 00:01:26,000
+I will fill in the necessary fields.
+
+11
+00:01:26,000 --> 00:01:38,000
+So that I can find it in the analysis file as well as the tested database.
+
+12
+00:01:38,000 --> 00:01:40,000
+OK.
+
+13
+00:01:40,000 --> 00:01:47,000
+Now I will also go to concat.
+
+14
+00:01:47,000 --> 00:01:51,000
+If it is module C, it will concat between item name and check-in date.
+
+15
+00:01:51,000 --> 00:01:56,000
+As for exp, it is item name and its version.
+
+16
+00:01:56,000 --> 00:02:02,000
+OK.
+
+17
+00:02:02,000 --> 00:02:13,000
+Then I will go to check which modules that I initially estimated.
+
+18
+00:02:13,000 --> 00:02:21,000
+I will fill in the Responsible column here.
+
+19
+00:02:21,000 --> 00:02:32,500
+I will also cut the VLOOKUP between these files, concat column and the analysis file
+
+21
+00:02:32,500 --> 00:02:40,000
+Here, this is the file analysis.
+
+22
+00:02:40,000 --> 00:02:49,000
+I will start over again.
+
+23
+00:02:49,000 --> 00:02:55,000
+OK.
+
+24
+00:03:25,000 --> 00:03:35,000
+I will apply for MT_Needed, Tester_Comments, CRP_Comments, and CRP_Review_Status
+
+25
+00:03:49,000 --> 00:03:54,000
+I will apply all
+
+26
+00:04:00,000 --> 00:04:10,000
+I will filter in the MT_Needed column
+
+27
+00:04:10,000 --> 00:04:17,000
+I will put the Responsible here
+
+28
+00:04:17,000 --> 00:04:24,000
+These are the modules that I have tested and validated in this task
+
+29
+00:04:24,000 --> 00:04:32,000
+In total, there are 63 items
+
+30
+00:04:33,000 --> 00:04:37,000
+However, there are still undefined modules
+
+31
+00:04:37,000 --> 00:04:48,000
+The tester also commented that these modules have been tested but item changed chekin date
+
+32
+00:04:48,000 --> 00:04:53,000
+I will check if there are any comments
+
+35
+00:04:53,000 --> 00:05:01,000
+For example, I have estimated and analyzed the module test
+
+36
+00:05:01,000 --> 00:05:07,000
+However, when testing, the tester checks that it is a valid module
+
+37
+00:05:07,000 --> 00:05:14,000
+I will also change the test to a valid one
+
+39
+00:05:17,000 --> 00:05:23,000
+I also have the corresponding CRP
+
+40
+00:05:21,000 --> 00:05:35,000
+ok, clear support line
+
+41
+00:05:35,000 --> 00:05:41,000
+and then view
+
+42
+00:05:41,000 --> 00:05:49,000
+and then re-select the value to validate
+
+43
+00:05:49,000 --> 00:05:53,000
+OK
+
+44
+00:05:53,000 --> 00:05:57,000
+Let's see if it's correct
+
+45
+00:05:57,000 --> 00:06:01,000
+I will delete it
+
+46
+00:06:09,000 --> 00:06:13,000
+OK
+
+47
+00:06:13,000 --> 00:06:19,000
+This song is also correct
+
+48
+00:06:33,000 --> 00:06:35,000
+OK
+
+49
+00:06:35,000 --> 00:06:37,000
+I will check it again
+
+50
+00:06:43,000 --> 00:06:45,000
+There is��
+
+51
+00:06:59,000 --> 00:07:01,000
+OK
+
+52
+00:07:01,000 --> 00:07:03,000
+It's correct
+
+53
+00:07:03,000 --> 00:07:05,000
+Yeah
+
+54
+00:07:05,000 --> 00:07:07,000
+All are ok
+
+55
+00:07:07,000 --> 00:07:09,000
+Here
+
+56
+00:07:09,000 --> 00:07:11,000
+OK
+
+57
+00:07:11,000 --> 00:07:13,000
+All are ok
+
+58
+00:07:13,000 --> 00:07:15,000
+mt-command
+
+59
+00:07:35,000 --> 00:07:39,000
+Next, I will
+
+60
+00:07:39,000 --> 00:07:57,000
+In addition to the modules that I have just tested or are valid, I will go to check the remaining modules and see if there is a reason or not.
+
+61
+00:07:57,000 --> 00:08:08,000
+Here, because it has been tested by Candata as the original and Analyze, I have already found it, I will use it.
+
+62
+00:08:09,000 --> 00:08:14,000
+OK.
+
+63
+00:08:14,000 --> 00:08:19,000
+I will go to Clear and check again.
+
+64
+00:08:19,000 --> 00:08:25,000
+Have the modified modules had a reason or not?
+
+65
+00:08:25,000 --> 00:08:33,000
+OK. With these test modules, I will also put in here.
+
+66
+00:08:33,000 --> 00:08:38,000
+I will also put the information in here.
+
+67
+00:08:38,000 --> 00:08:39,000
+It is...
+
+68
+00:08:39,000 --> 00:08:45,000
+I will put in here.
+
+69
+00:08:45,000 --> 00:08:47,000
+OK.
+
+70
+00:08:47,000 --> 00:08:49,000
+OK.
+
+71
+00:08:49,000 --> 00:08:51,000
+OK.
+
+72
+00:08:51,000 --> 00:08:53,000
+OK.
+
+73
+00:08:53,000 --> 00:08:55,000
+OK.
+
+74
+00:08:55,000 --> 00:08:57,000
+OK.
+
+75
+00:08:57,000 --> 00:08:59,000
+OK.
+
+76
+00:08:59,000 --> 00:09:01,000
+OK.
+
+77
+00:09:01,000 --> 00:09:03,000
+OK.
+
+78
+00:09:03,000 --> 00:09:05,000
+OK.
+
+79
+00:09:05,000 --> 00:09:07,000
+OK.
+
+80
+00:09:07,000 --> 00:09:09,000
+OK.
+
+81
+00:09:09,000 --> 00:09:10,000
+OK.
+
+82
+00:09:10,000 --> 00:09:11,000
+OK.
+
+83
+00:09:11,000 --> 00:09:12,000
+OK.
+
+84
+00:09:12,000 --> 00:09:13,000
+OK.
+
+85
+00:09:13,000 --> 00:09:14,000
+OK.
+
+86
+00:09:14,000 --> 00:09:15,000
+OK.
+
+87
+00:09:15,000 --> 00:09:16,000
+OK.
+
+88
+00:09:16,000 --> 00:09:17,000
+OK.
+
+89
+00:09:17,000 --> 00:09:18,000
+OK.
+
+90
+00:09:18,000 --> 00:09:19,000
+OK.
+
+91
+00:09:19,000 --> 00:09:20,000
+OK.
+
+92
+00:09:20,000 --> 00:09:21,000
+OK.
+
+93
+00:09:21,000 --> 00:09:22,000
+OK.
+
+94
+00:09:22,000 --> 00:09:23,000
+OK.
+
+95
+00:09:23,000 --> 00:09:24,000
+OK.
+
+96
+00:09:24,000 --> 00:09:25,000
+OK.
+
+97
+00:09:25,000 --> 00:09:26,000
+OK.
+
+98
+00:09:26,000 --> 00:09:27,000
+OK.
+
+99
+00:09:27,000 --> 00:09:28,000
+OK.
+
+100
+00:09:28,000 --> 00:09:29,000
+OK.
+
+101
+00:09:29,000 --> 00:09:30,000
+OK.
+
+102
+00:09:30,000 --> 00:09:31,000
+OK.
+
+103
+00:09:31,000 --> 00:09:32,000
+OK.
+
+104
+00:09:32,000 --> 00:09:33,000
+OK.
+
+105
+00:09:33,000 --> 00:09:34,000
+OK.
+
+106
+00:09:34,000 --> 00:09:35,000
+OK.
+
+107
+00:10:05,000 --> 00:10:10,000
+I have found it, so I will update it quickly
+
+108
+00:10:28,000 --> 00:10:31,000
+ok
+
+109
+00:10:31,000 --> 00:10:34,000
+I'll show you how it looks like
+
+110
+00:10:38,000 --> 00:10:40,000
+Here are all the information
+
+111
+00:10:40,000 --> 00:10:45,000
+How was the test and check-in day on the check-in day
+
+112
+00:10:45,000 --> 00:10:49,000
+And how was the bus with the result of UT
+
+113
+00:10:49,000 --> 00:10:51,000
+There is also a link
+
+114
+00:10:53,000 --> 00:10:55,000
+There is also a reason for the connection
+
+115
+00:10:55,000 --> 00:10:56,000
+The password is inside
+
+116
+00:10:56,000 --> 00:10:57,000
+OK
+
+117
+00:10:57,000 --> 00:11:00,000
+So let me check it again
+
+118
+00:11:01,000 --> 00:11:06,000
+Are all the reasons for the modules defined enough?
+
+119
+00:11:14,000 --> 00:11:16,000
+OK, it's all done
+
+120
+00:11:16,000 --> 00:11:19,000
+Next, I'll go to check
+
+121
+00:11:21,000 --> 00:11:24,000
+I'll go to find the reasons for the bus modules
+
+122
+00:11:24,000 --> 00:11:29,000
+that are covered under 100%
+
+123
+00:11:29,000 --> 00:11:31,000
+Find the reasons for it
+
+124
+00:11:31,000 --> 00:11:34,000
+Then here I will also use
+
+125
+00:11:34,000 --> 00:11:37,000
+VLOOKUP
+
+126
+00:11:37,000 --> 00:11:40,000
+To go to get reasons
+
+127
+00:11:40,000 --> 00:11:43,000
+VLOOKUP according to the card
+
+128
+00:11:43,000 --> 00:11:49,000
+And get reasons from the file tested database
+
+129
+00:11:53,000 --> 00:11:55,000
+Here
+
+130
+00:11:55,000 --> 00:11:57,000
+This one
+
+131
+00:11:57,000 --> 00:12:00,000
+Then I will check here first
+
+132
+00:12:00,000 --> 00:12:03,000
+Check for the modules that
+
+133
+00:12:03,000 --> 00:12:06,000
+I will
+
+134
+00:12:06,000 --> 00:12:08,000
+I will list the modules that have reasons
+
+135
+00:12:13,000 --> 00:12:15,000
+Here
+
+136
+00:12:15,000 --> 00:12:17,000
+It is equal to this
+
+137
+00:12:17,000 --> 00:12:24,000
+And the case has not
+
+138
+00:12:24,000 --> 00:12:26,000
+Reason
+
+139
+00:12:26,000 --> 00:12:29,000
+Here
+
+140
+00:12:30,000 --> 00:12:44,000
+Ok, we will go to the top, we will get more and more good reasons
+
+141
+00:12:44,000 --> 00:12:46,000
+OK.
+
+142
+00:12:49,000 --> 00:12:51,000
+I will stop recording now.
+
+143
+00:13:44,000 --> 00:14:03,000
+This room has been executed for quite a long time, and the origin and entity skills are outside, so I don't worry much when there is no origin.
+
+144
+00:14:03,000 --> 00:14:13,000
+I will go check it again.
+
+145
+00:14:13,000 --> 00:14:23,000
+The origin and entity skills are outside, so I don't worry much when there is no origin.
+
+146
+00:14:23,000 --> 00:14:33,000
+I will go check it again.
+
+147
+00:14:33,000 --> 00:14:40,000
+The origin and entity skills are outside, so I don't worry much when there is no origin.
+
+148
+00:14:40,000 --> 00:14:42,000
+I will go check it again.
+
+149
+00:14:42,000 --> 00:14:52,000
+The origin and entity skills are outside, so I don't worry much when there is no origin.
+
+150
+00:14:52,000 --> 00:15:02,000
+The origin and entity skills are outside, so I don't worry much when there is no origin.
+
+151
+00:15:02,000 --> 00:15:09,000
+I will go check it again.
+
+152
+00:15:09,000 --> 00:15:10,000
+Not applicable.
+
+153
+00:15:10,000 --> 00:15:11,000
+Not applicable.
+
+154
+00:15:11,000 --> 00:15:13,000
+We will see if there are any bugs.
+
+155
+00:15:13,000 --> 00:15:15,000
+No, there is not.
+
+156
+00:15:15,000 --> 00:15:17,000
+The object is modified.
+
+157
+00:15:17,000 --> 00:15:19,000
+It has all the reasons.
+
+158
+00:15:21,000 --> 00:15:23,000
+Next is the
+
+159
+00:15:23,000 --> 00:15:25,000
+100%
+
+160
+00:15:25,000 --> 00:15:27,000
+pass.
+
+161
+00:15:29,000 --> 00:15:31,000
+It is already enough.
+
+162
+00:15:37,000 --> 00:15:39,000
+OK.
+
+163
+00:15:39,000 --> 00:15:43,000
+Then, I will re-batch the value.
+
+164
+00:15:47,000 --> 00:15:51,000
+Then, I will delete unnecessary columns.
+
+165
+00:15:51,000 --> 00:15:53,000
+I will leave the column.
+
+166
+00:15:53,000 --> 00:15:57,000
+Tester command, crp command and crp-review-status.
+
+167
+00:15:57,000 --> 00:15:59,000
+Delete this column.
+
+168
+00:16:02,000 --> 00:16:04,000
+Delete this column.
+
+169
+00:16:09,000 --> 00:16:17,000
+Then, I will go back to the modules that I have just tested on this table.
+
+170
+00:16:17,000 --> 00:16:19,000
+Test or Valid on this table.
+
+171
+00:16:21,000 --> 00:16:22,000
+OK.
+
+172
+00:16:22,000 --> 00:16:25,000
+Then, I will summarize that...
+
+173
+00:16:26,000 --> 00:16:28,000
+In this table...
+
+174
+00:16:32,000 --> 00:16:34,000
+There is a total of...
+
+175
+00:16:35,000 --> 00:16:37,000
+DoubleVault will have a total of...
+
+176
+00:16:38,000 --> 00:16:39,000
+13.
+
+177
+00:16:39,000 --> 00:16:41,000
+Items to be Valid and...
+
+178
+00:16:41,000 --> 00:16:42,000
+50 Items...
+
+179
+00:16:42,000 --> 00:16:44,000
+to be tested.
+
+180
+00:16:44,000 --> 00:16:47,000
+Exactly with the number 63, the initial item...
+
+181
+00:16:47,000 --> 00:16:48,000
+of mine.
+
+182
+00:16:54,000 --> 00:16:55,000
+OK.
+

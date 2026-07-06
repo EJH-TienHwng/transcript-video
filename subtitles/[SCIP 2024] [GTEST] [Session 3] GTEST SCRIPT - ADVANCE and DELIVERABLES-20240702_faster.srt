@@ -1,0 +1,479 @@
+1
+00:00:07,960 --> 00:00:20,810
+Okay, everyone, we can begin.
+
+2
+00:00:20,810 --> 00:00:31,440
+Yesterday, we covered Day 1, Sections 1 and 2.
+
+3
+00:00:31,440 --> 00:00:59,520
+After two sessions, you can complete a basic GTest task and discuss questions later.
+
+4
+00:00:59,520 --> 00:01:16,310
+Today, we will cover four practical topics in GTest.
+
+5
+00:01:16,310 --> 00:01:31,250
+First, we will revisit test functions, static variables, and inline functions.
+
+6
+00:01:31,250 --> 00:01:49,410
+Then, we will discuss complex MCDC and delivery for GTest-tested modules.
+
+7
+00:01:49,410 --> 00:02:13,620
+For static variables, follow the syntax shown yesterday.
+
+8
+00:02:26,860 --> 00:02:42,040
+If there are no questions, I will assume this part is clear.
+
+9
+00:02:42,040 --> 00:03:03,600
+Next, let us discuss how to test inline functions.
+
+10
+00:03:03,600 --> 00:03:16,360
+Why do we need to test inline functions?
+
+11
+00:03:16,360 --> 00:03:28,090
+An inline function is used to make execution faster.
+
+12
+00:03:28,090 --> 00:03:48,340
+A test script may not recognize an inline function defined only in source code.
+
+13
+00:03:48,340 --> 00:04:05,840
+As a result, testing can produce an undefined-function error.
+
+14
+00:04:05,840 --> 00:05:05,760
+Declare the function in the header file, then test it normally from the test script.
+
+15
+00:05:05,760 --> 00:06:04,020
+Do you have questions or have you encountered a similar inline-function issue?
+
+16
+00:06:04,020 --> 00:06:37,850
+Another common issue occurs when an MCDC expression is too complex.
+
+17
+00:06:37,850 --> 00:06:59,450
+A workaround is to exclude MCDC and test C0 and C1 for that function.
+
+18
+00:06:59,450 --> 00:07:54,230
+Use the syntax shown here and replace the placeholder with the complex function name.
+
+19
+00:07:54,230 --> 00:08:05,800
+Open the indicated configuration file and copy the script into it.
+
+20
+00:08:05,800 --> 00:08:17,800
+Replace the placeholder with the function that contains the complex MCDC expression.
+
+21
+00:08:17,800 --> 00:08:37,290
+After saving, clean and rebuild the project so the tool recognizes the change.
+
+22
+00:08:37,290 --> 00:08:46,090
+You must rebuild from the beginning because the configuration is rebuilt internally.
+
+23
+00:08:46,090 --> 00:09:50,800
+Refer to the guideline for these issues and their solutions, or contact me with questions.
+
+24
+00:09:50,800 --> 00:10:15,780
+When you build the project, check that every console message is okay.
+
+25
+00:10:15,780 --> 00:10:44,160
+Do not ignore a mock warning, because it can affect your code logic.
+
+26
+00:10:44,160 --> 00:11:07,700
+Set every input strictly instead of leaving an uncontrolled return value.
+
+27
+00:11:07,700 --> 00:11:27,800
+A report may show 100% coverage even though some values have not been checked.
+
+28
+00:11:27,800 --> 00:11:51,660
+Please share any task issues so we can document their solutions.
+
+29
+00:11:51,660 --> 00:12:34,610
+Since there are no questions, let us move on to delivery.
+
+30
+00:12:34,610 --> 00:12:59,160
+For delivery, follow the structure shown on the slide.
+
+31
+00:12:59,160 --> 00:13:20,040
+First, identify the C file and the folder level where it is located.
+
+32
+00:13:20,040 --> 00:13:35,640
+Create a Unit Test folder with a TPA folder and a test folder inside it.
+
+33
+00:13:35,640 --> 00:13:47,010
+The test folder should contain the zipped GTest environment for the module under test.
+
+34
+00:13:47,010 --> 00:14:06,110
+Zip the environment before delivery to prevent Jenkins errors from project files or configuration.
+
+35
+00:14:06,110 --> 00:14:25,260
+A reviewer can open the ZIP file and identify the test environment for that C file.
+
+36
+00:14:25,260 --> 00:14:45,680
+Follow the naming and folder-level convention defined by your project for consistency.
+
+37
+00:14:45,680 --> 00:15:00,810
+Do you have any questions about this delivery structure?
+
+38
+00:15:00,810 --> 00:15:24,340
+How does GTest distinguish task IDs when several variants test the same C file?
+
+39
+00:15:24,340 --> 00:15:42,950
+You mean the same C file may have several variants, correct?
+
+40
+00:15:42,950 --> 00:16:26,730
+This depends on the organization; keep the appropriate BB or variant in a separate folder.
+
+41
+00:16:26,730 --> 00:16:46,570
+Reviewers then open the required environment, enable the relevant variant, and run the test.
+
+42
+00:16:46,570 --> 00:17:00,230
+For example, a C file with three variants can use three configurations in one test environment.
+
+43
+00:17:00,230 --> 00:17:34,980
+Okay, thank you. Let us continue.
+
+44
+00:17:34,980 --> 00:18:17,600
+We also need a way to distinguish special cases that use the same module name.
+
+45
+00:18:17,600 --> 00:18:50,940
+Our internal process uses separate folders to distinguish configurations and reduce checking time.
+
+46
+00:18:50,940 --> 00:19:38,810
+This differs from our process, where we rebuild tests after each development baseline change.
+
+47
+00:19:38,810 --> 00:20:25,720
+The goal of retesting is to build as many useful test cases as possible and cover more scenarios.
+
+48
+00:20:25,720 --> 00:20:44,270
+We reuse the previous tested cases and add new test cases to test the updated code.
+
+49
+00:20:44,270 --> 00:20:57,100
+Why do we recreate the tests after a code update instead of reviewing the old tests?
+
+50
+00:20:57,100 --> 00:21:12,290
+Our team often restarts because we do not receive the previous test cases or know how to review them.
+
+51
+00:21:12,290 --> 00:21:26,050
+That can require far more effort than the small code change itself.
+
+52
+00:21:26,050 --> 00:22:47,530
+We should standardize this delivery format so that previous results are easy to review.
+
+53
+00:22:47,530 --> 00:23:07,530
+However, repeatedly running the same test cases may not detect newly introduced defects.
+
+54
+00:23:07,530 --> 00:23:16,760
+If the code does not change, review it; if it changes, test only the changes.
+
+55
+00:23:16,760 --> 00:24:09,590
+Teams often do not receive or store older test cases, so later testers cannot reuse them.
+
+56
+00:24:09,590 --> 00:24:52,060
+Most earlier requests used Cantata, while current GTest requests are new and have no old test set.
+
+57
+00:24:52,060 --> 00:25:41,440
+Cantata retesting is also difficult when the previous report cannot be viewed.
+
+58
+00:25:41,440 --> 00:26:09,930
+Following this format makes the delivery process complete and lets others find the old test script.
+
+59
+00:26:09,930 --> 00:26:35,250
+The TPA file supports validation and records verdicts, coverage, C0, C1, MCDC, comments, and reasons.
+
+60
+00:26:35,250 --> 00:27:12,200
+I will send our TPA format after this session; keep comments and coverage data accurate.
+
+61
+00:27:12,200 --> 00:27:42,640
+Incorrect TPA data can cause errors when it is stored on the server.
+
+62
+00:27:42,640 --> 00:27:58,650
+Next, I will show how to validate and deliver a tested C module.
+
+63
+00:27:58,650 --> 00:28:35,680
+In SharCC, search for the module and select the component that contains its proxy.
+
+64
+00:28:36,980 --> 00:28:51,380
+Right-click the component and choose Open Validity Editor, then wait for the process to finish.
+
+65
+00:28:51,920 --> 00:28:54,780
+Do not click Search before the process finishes, or the tool will report an error.
+
+66
+00:28:57,180 --> 00:29:28,400
+When the editor is ready, enter the module name, choose the correct TPA folder, and validate it.
+
+67
+00:29:28,400 --> 00:29:39,260
+A green check mark confirms successful validation and the completion of testing.
+
+68
+00:29:39,260 --> 00:30:00,080
+That completes the delivery and validation process for the module.
+
+69
+00:30:00,080 --> 00:30:12,420
+Do you have any questions about this part of the session?
+
+70
+00:30:12,420 --> 00:30:27,030
+If a C file has several variants, how can we map it to several TPA files?
+
+71
+00:30:27,030 --> 00:30:45,060
+The system displays only the C file that you search for validation.
+
+72
+00:30:45,060 --> 00:31:14,010
+It treats validation as a one-to-one relationship between one C file and one TPA file.
+
+73
+00:31:14,010 --> 00:31:20,840
+So we choose one variant rather than mapping all variants at once.
+
+74
+00:31:20,840 --> 00:31:50,180
+Have you encountered any questions while practicing the example?
+
+75
+00:31:50,180 --> 00:32:18,490
+The test process is straightforward; practical work only becomes difficult when specific issues occur.
+
+76
+00:32:18,490 --> 00:33:30,990
+GTest is simply a framework that supports testing, with the same basic principles as before.
+
+77
+00:33:30,990 --> 00:33:39,090
+Would you like me to demonstrate the delivery process in SharCC again?
+
+78
+00:33:39,090 --> 00:34:00,490
+I can demonstrate the SharCC delivery process again, because this session is for everyone.
+
+79
+00:34:00,490 --> 00:34:17,130
+Let me show the steps for working with SharCC.
+
+80
+00:34:17,130 --> 00:34:40,880
+First, create a local folder for the repository.
+
+81
+00:34:40,880 --> 00:36:07,400
+Open the folder in SharCC and connect to the project; you need access permission.
+
+82
+00:36:07,400 --> 00:36:43,800
+For example, after connecting, the left panel shows all streams in the selected project.
+
+83
+00:36:43,800 --> 00:37:50,190
+To deliver, select the target stream and create a local repository from it.
+
+84
+00:37:50,190 --> 00:38:29,480
+Name the repository clearly for the task; it works like creating a child branch for delivery.
+
+85
+00:38:29,480 --> 00:38:53,820
+Select the component that you want to deliver, such as IP AppNet.
+
+86
+00:38:53,820 --> 00:39:18,360
+Always include the .project file because it contains the .logru configuration file.
+
+87
+00:39:18,360 --> 00:40:28,210
+Select the .logru file as well, because it adapts server settings for your local machine.
+
+88
+00:40:28,210 --> 00:42:20,820
+The local repository is created in the folder you chose and contains the files downloaded from the server.
+
+89
+00:42:20,820 --> 00:43:34,270
+Before delivery, always get the latest version to avoid overwriting someone else's new files.
+
+90
+00:43:34,690 --> 00:44:16,620
+Before you use Check In and Deliver, verify that every folder matches your latest version.
+
+91
+00:44:16,620 --> 00:44:27,300
+That is the SharCC process for delivering a task.
+
+92
+00:44:34,370 --> 00:45:17,540
+Have you encountered any issues with these steps in SharCC?
+
+93
+00:45:17,540 --> 00:45:31,460
+Please raise any questions from yesterday's session, and I will answer them if I can.
+
+94
+00:45:31,460 --> 00:45:42,620
+We have now completed the GTest Script Basic, Advanced, and Deliverable training.
+
+95
+00:45:42,620 --> 00:46:22,080
+Please ask any questions about GTest Script while we are still in this final training session.
+
+96
+00:46:22,080 --> 00:47:04,380
+I do not yet understand how to distinguish C0, C1, and MCDC when writing test cases.
+
+97
+00:47:06,100 --> 00:47:26,540
+The documentation calls them statement and decision coverage, but I am still confused.
+
+98
+00:47:26,540 --> 00:47:47,570
+Thank you for the question. I will explain C0, C1, and MCDC before test-case design.
+
+99
+00:47:47,930 --> 00:48:34,140
+C0 is line coverage: it shows whether a line of code has been executed.
+
+100
+00:48:34,140 --> 00:49:08,850
+C1 is branch coverage: it measures whether the logic branches have been executed.
+
+101
+00:49:08,850 --> 00:49:28,970
+Achieving 100% C1 also covers C0, while 100% MCDC covers both C1 and C0.
+
+102
+00:49:28,970 --> 00:49:47,890
+Does this explain the difference, or do you think 100% C0 and C1 guarantee 100% MCDC?
+
+103
+00:49:47,890 --> 00:51:51,510
+No. Think of C0 inside C1, and both inside MCDC; covering MCDC can cover the others.
+
+104
+00:51:51,510 --> 00:51:58,890
+You can read more on a wiki page, but this code example makes the difference easier to see.
+
+105
+00:51:58,890 --> 00:52:14,060
+After understanding coverage, we can discuss how to create a meaningful test case.
+
+106
+00:52:14,060 --> 00:52:44,300
+A test case has three main parts: preconditions, inputs, and the function call or output.
+
+107
+00:52:44,300 --> 00:53:15,620
+The third part is checking the result after the function executes.
+
+108
+00:53:15,620 --> 00:53:54,380
+Every test case must have a clear purpose, such as checking a condition at line 54.
+
+109
+00:53:54,380 --> 00:55:21,210
+Create tests to expose defects and verify whether the code behaves as intended.
+
+110
+00:55:21,210 --> 00:55:46,420
+When there are many tests, you should outline in advance which test cases you need.
+
+111
+00:55:46,420 --> 00:56:10,480
+Choose appropriate techniques based on project requirements, experience, and the type of logic.
+
+112
+00:56:10,480 --> 00:56:37,800
+Use your experience to create effective tests that can reveal a problem in the code.
+
+113
+00:56:37,800 --> 00:57:01,490
+A test is effective when it deliberately exposes behavior that differs from the developer's expectation.
+
+114
+00:57:01,490 --> 00:58:46,580
+Please post any remaining questions; we will wait about five minutes and end the training early if there are none.
+
+115
+00:58:46,580 --> 00:59:11,590
+During a GTest Unit Testing task, write your questions in the chat so we can discuss them together.
+
+116
+00:59:11,590 --> 00:59:27,790
+Could you share these materials in the external folder so we can use them for testing?
+
+117
+00:59:27,790 --> 00:59:56,940
+The materials are currently internal; please ask your project contact to coordinate access with me.
+
+118
+00:59:56,940 --> 01:00:28,940
+Does anyone have any other questions from the training sessions?
+
+119
+01:00:28,940 --> 01:02:38,120
+The training materials include our developed tool; contact me if you need help with it or with a new version.
+
+120
+01:02:38,120 --> 01:02:53,100
+Okay, thank you for joining today's session. Bye-bye, everyone.

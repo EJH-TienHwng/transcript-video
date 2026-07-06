@@ -1,0 +1,659 @@
+1
+00:00:24,020 --> 00:00:31,600
+Hello everyone.
+
+2
+00:00:31,600 --> 00:00:40,560
+This afternoon, I will cover Session 2.
+
+3
+00:00:40,560 --> 00:00:48,920
+The topic is how to create test cases with GTest framework.
+
+4
+00:00:48,920 --> 00:00:58,590
+Has everyone installed the environment, and do you have any questions?
+
+5
+00:00:58,590 --> 00:01:24,690
+If everything is ready, we will practice creating a basic test case for code coverage.
+
+6
+00:01:24,690 --> 00:01:30,330
+Today, I will cover four main parts.
+
+7
+00:01:30,330 --> 00:01:39,140
+First, we will generate and build a GTest project.
+
+8
+00:01:39,140 --> 00:01:51,830
+Then, we will generate the TPA report, check code coverage, and perform a Delta review.
+
+9
+00:01:51,830 --> 00:01:59,090
+Second, I will explain the test fixture used in my current project.
+
+10
+00:01:59,090 --> 00:02:19,190
+Third, we will apply the fixture to create test cases and discuss test data and techniques.
+
+11
+00:02:19,190 --> 00:02:39,020
+Finally, I will demonstrate a sample GTest test case.
+
+12
+00:02:39,020 --> 00:02:48,150
+This morning, I showed you how to set up the environment.
+
+13
+00:02:48,150 --> 00:02:54,630
+To test a C file, first make sure that the environment is working correctly.
+
+14
+00:02:54,630 --> 00:03:11,080
+Drag the C file that you want to test onto the tool's .bat file.
+
+15
+00:03:11,080 --> 00:03:35,700
+A console will open, and the tool will analyze the file and copy the standard headers.
+
+16
+00:03:35,700 --> 00:03:41,520
+The generated project needs three main folders to work correctly.
+
+17
+00:03:41,520 --> 00:04:17,720
+These folders contain the configuration, the module files, and the generated test project.
+
+18
+00:04:17,720 --> 00:04:48,320
+Before reviewing a project, delete the old Output folder to ensure that the result is clean.
+
+19
+00:04:48,320 --> 00:05:08,990
+After generation, the console will display messages similar to those shown on the screen.
+
+20
+00:05:08,990 --> 00:05:49,070
+The console can be hard to read, so pay close attention to the red and green messages.
+
+21
+00:05:49,070 --> 00:06:13,560
+The tool also generates the files required to validate the module in the Cantata folder.
+
+22
+00:06:13,560 --> 00:06:44,210
+The validation package contains a validation file and a test report, so check the TPA file carefully.
+
+23
+00:06:44,210 --> 00:07:25,800
+Next, use Cantata to check code coverage because the GTest tool cannot show it directly.
+
+24
+00:07:25,800 --> 00:07:35,300
+The Delta step is especially important.
+
+25
+00:07:35,300 --> 00:07:44,730
+In Session 1, I mentioned that GTest is useful for managing changes.
+
+26
+00:07:44,730 --> 00:07:55,430
+Managing changes is simple when you review an existing test case or retest a module.
+
+27
+00:07:55,430 --> 00:08:06,000
+For example, take the files that were already tested after a code update.
+
+28
+00:08:06,000 --> 00:08:15,820
+Put the .h and .cpp files into the new environment, then build the project again to obtain coverage.
+
+29
+00:08:15,820 --> 00:08:25,690
+That completes the procedure for building a project with Cantata.
+
+30
+00:08:25,690 --> 00:08:34,850
+Do you have any questions, or would a demonstration make this clearer?
+
+31
+00:08:34,850 --> 00:09:04,090
+When I drag the C file onto Setup.bat, do I need to add the root-folder path?
+
+32
+00:09:05,860 --> 00:09:10,420
+There are two ways to do this.
+
+33
+00:09:10,420 --> 00:09:21,340
+For the current project, we do not need to build with the developer configuration, so we bypass that step.
+
+34
+00:09:21,340 --> 00:09:37,480
+You can add the repository path so that the tool collects all configurations from the source into the project.
+
+35
+00:09:37,480 --> 00:09:51,510
+However, that approach takes too long, so we use standard headers and copy them into our project.
+
+36
+00:09:51,510 --> 00:10:26,800
+The Input folder contains the standard headers, and you can add the required parameters or variables there.
+
+37
+00:10:26,800 --> 00:10:51,250
+Can you demonstrate the entire process from the beginning?
+
+38
+00:10:51,250 --> 00:10:53,667
+Yes.
+
+39
+00:10:53,667 --> 00:11:32,950
+We need a C file and an environment that has already been set up.
+
+40
+00:11:32,950 --> 00:11:58,370
+Drag the C file onto Setup.bat, and the tool will copy the headers into the Input folder before generating the project.
+
+41
+00:11:58,370 --> 00:12:31,550
+If you include the repository, the tool can find missing definitions automatically; otherwise, you must define them yourself.
+
+42
+00:12:31,550 --> 00:12:48,280
+Once the common definitions are already in place, later users usually have much less work to do.
+
+43
+00:12:48,280 --> 00:13:02,460
+At that point, you only need to stub the remaining functions to test the module independently.
+
+44
+00:13:02,460 --> 00:13:07,550
+Okay.
+
+45
+00:13:07,550 --> 00:13:27,750
+Do you have any remaining questions about the procedure for building a Cantata project?
+
+46
+00:13:27,750 --> 00:13:35,200
+After opening the project in VS Code, it is already built, so we just need to press Run, correct?
+
+47
+00:13:35,200 --> 00:13:45,080
+Yes.
+
+48
+00:13:45,080 --> 00:14:28,490
+For C++ files, test cases still need to be written manually, but a later session covers test-case automation.
+
+49
+00:14:28,490 --> 00:15:30,180
+Next, I will explain what a test fixture is.
+
+50
+00:15:30,180 --> 00:15:55,190
+A test fixture helps us create multiple test cases in the same test file.
+
+51
+00:15:55,190 --> 00:16:47,790
+It lets related test cases reuse common properties, which saves effort when a test file is large.
+
+52
+00:16:47,790 --> 00:17:10,040
+I will demonstrate this fixture in tomorrow's session.
+
+53
+00:17:10,040 --> 00:17:21,080
+Using a fixture also makes it much easier to review test cases written by someone else.
+
+54
+00:17:21,080 --> 00:17:39,580
+Please refer to the documentation for TEST_F and TEST_P to understand these test forms more clearly.
+
+55
+00:17:39,580 --> 00:18:00,540
+TEST_P is useful when you need to run the same test structure with many values of a parameter.
+
+56
+00:18:00,960 --> 00:18:42,850
+This may be difficult to understand at first, but the fixture creates multiple test cases from one template.
+
+57
+00:18:42,850 --> 00:19:35,610
+When creating a fixture, choose a test name and define the input, output, and expected-result structure.
+
+58
+00:19:35,610 --> 00:20:17,710
+Do you have any questions about the test fixture before we move on?
+
+59
+00:20:17,710 --> 00:21:06,820
+I divide test-case creation into four main parts, beginning with the purpose of the test.
+
+60
+00:21:06,820 --> 00:21:20,370
+In the test-case definition, first declare the variables that you need for testing.
+
+61
+00:21:20,370 --> 00:21:28,660
+Next, set the required values for the variables you have defined.
+
+62
+00:21:28,660 --> 00:21:45,900
+Then, call the function under test.
+
+63
+00:21:45,900 --> 00:22:02,920
+The values that you set are the inputs passed to that function.
+
+64
+00:22:02,920 --> 00:22:22,460
+After the function runs through its logic, check whether the expected values have changed as intended.
+
+65
+00:22:22,460 --> 00:22:57,510
+This is only a template adapted from Cantata, so define the structure in the way that best fits your project.
+
+66
+00:23:04,320 --> 00:23:07,300
+Is this part clear to everyone?
+
+67
+00:23:15,610 --> 00:23:25,370
+What is a stub function, and how is it different from the function under test?
+
+68
+00:23:27,800 --> 00:23:34,700
+Thank you for the question.
+
+69
+00:23:34,700 --> 00:24:28,220
+Unit testing isolates the source code that you want to test from the rest of the repository.
+
+70
+00:24:28,220 --> 00:24:51,530
+When code is isolated, definitions from other files can be missing.
+
+71
+00:24:51,530 --> 00:25:01,320
+A stub defines those missing dependent functions, while the function under test is the function we actually want to verify.
+
+72
+00:25:01,320 --> 00:25:25,300
+Call the function under test so that the input values are passed to it and its behavior can be checked.
+
+73
+00:25:25,300 --> 00:26:06,020
+If there are no more questions, we will move on to the next topic.
+
+74
+00:26:06,020 --> 00:26:50,140
+Here is an example of a normal test.
+
+75
+00:26:50,140 --> 00:27:48,110
+I will introduce syntax for accessing static-function and local-static variables during testing.
+
+76
+00:27:48,110 --> 00:28:12,820
+These variables are declared inside the source file and cannot be controlled directly in the normal way.
+
+77
+00:28:12,820 --> 00:28:32,080
+The provided syntax lets us access the variable's memory location and change its value for testing.
+
+78
+00:28:32,080 --> 00:29:15,160
+For a global static variable, write the module name and then the name of the global variable.
+
+79
+00:29:15,160 --> 00:29:34,900
+Yes, this syntax is used in the C++ test file, and it must follow the exact format.
+
+80
+00:29:34,900 --> 00:29:58,110
+Please save this syntax and use it exactly when you need it.
+
+81
+00:29:58,110 --> 00:30:09,080
+Can you explain the scope class name in the static-variable syntax?
+
+82
+00:30:09,080 --> 00:30:21,480
+The previous form supports local static variables, while the other form supports global static variables in C files.
+
+83
+00:30:21,480 --> 00:30:31,190
+A local static variable is a static variable declared inside a function.
+
+84
+00:30:31,190 --> 00:30:52,800
+I will demonstrate this syntax later so that it is easier to understand.
+
+85
+00:30:52,800 --> 00:31:20,730
+Next, I will explain how to create a stub function.
+
+86
+00:31:20,730 --> 00:32:29,950
+Suppose a source file uses a variable or function that is not defined in the generated project.
+
+87
+00:32:29,950 --> 00:32:36,080
+To use it in the C++ test file, follow three steps.
+
+88
+00:32:36,080 --> 00:32:58,120
+First, use a GMock method and then define the behavior of the function.
+
+89
+00:32:58,120 --> 00:33:31,850
+Copy the function signature so that the test file knows the function name, return type, and parameters.
+
+90
+00:33:31,850 --> 00:33:55,390
+Next, create the GMock method by defining the function name, type, and arguments.
+
+91
+00:33:55,390 --> 00:34:41,820
+Then, specify what the mock function should do when it receives particular inputs.
+
+92
+00:34:41,820 --> 00:35:04,190
+For example, you can return the same value that was passed in, or return a value that you specify.
+
+93
+00:35:04,190 --> 00:35:14,820
+Do you have any questions about defining a stub in the test script?
+
+94
+00:35:14,820 --> 00:35:52,930
+How can we change the output value of a stub function when different values are required?
+
+95
+00:35:52,930 --> 00:35:56,640
+Thank you for the question.
+
+96
+00:35:56,640 --> 00:36:06,860
+The setup has three parts: the function name, the mock method, and the defined behavior.
+
+97
+00:36:06,860 --> 00:37:04,300
+In the test case, configure the return value that the stub function should provide for the required call.
+
+98
+00:37:04,300 --> 00:37:16,150
+Use WillOnce when the function is called only once.
+
+99
+00:37:16,150 --> 00:37:49,380
+Use WillRepeatedly when the same function is called many times and should return the required value repeatedly.
+
+100
+00:37:49,380 --> 00:38:44,980
+This is the basic method for handling function behavior in the test script.
+
+101
+00:38:44,980 --> 00:39:08,730
+You can also set a value for an argument when the argument holds an address.
+
+102
+00:39:08,730 --> 00:39:24,520
+Because the argument is a pointer, you can write the required value directly to the memory location.
+
+103
+00:39:24,520 --> 00:40:05,790
+Specify the argument index, starting from zero, and then set the value that you want to pass.
+
+104
+00:40:05,790 --> 00:41:32,820
+The Return action specifies the value returned by the function.
+
+105
+00:41:32,820 --> 00:43:14,100
+You can also pass a matching variable through the pointer, including a global variable when appropriate.
+
+106
+00:43:14,100 --> 00:43:50,010
+That completes the concepts for this section, so we can move on to the example.
+
+107
+00:43:50,010 --> 00:44:36,660
+The example shows how to set a local static variable.
+
+108
+00:44:36,660 --> 00:45:14,010
+There are two possible methods, but the second method is generally recommended.
+
+109
+00:45:14,010 --> 00:45:40,920
+Avoid overlapping values, because the tool may report the value as undefined when values conflict in the same memory location.
+
+110
+00:45:40,920 --> 00:45:57,790
+Following the code flow can avoid this issue, although it may not give you complete control of the value.
+
+111
+00:45:57,790 --> 00:47:06,330
+Let us check the syntax for accessing a local static variable.
+
+112
+00:47:06,330 --> 00:47:18,040
+Use the file name, function name, and local static-variable name in the required syntax.
+
+113
+00:47:18,040 --> 00:47:39,220
+A local static variable can be used only after the program reaches it and allocates its memory during the test run.
+
+114
+00:47:39,220 --> 00:47:46,748
+Okay.
+
+115
+00:47:46,748 --> 00:49:09,560
+Let us move to a sample so that the process is clearer.
+
+116
+00:49:09,560 --> 00:49:19,570
+Using the concepts we have discussed, we will now create a basic test and check code coverage.
+
+117
+00:49:19,570 --> 00:49:31,400
+Drag the C file onto the tool's .bat file, wait for the console, and press Enter.
+
+118
+00:49:31,400 --> 00:50:09,980
+Open the generated project in VS Code; it includes standard headers, although some macros and definitions may still be missing.
+
+119
+00:50:09,980 --> 00:50:51,130
+The generated template has two main files: a header file for missing definitions and a C++ test script.
+
+120
+00:50:51,130 --> 00:51:34,940
+Use the header file to declare missing functions or variables from other files.
+
+121
+00:51:34,940 --> 00:52:11,460
+Use the C++ file to define stubs and write the test script.
+
+122
+00:52:11,460 --> 00:52:39,450
+The test fixture contains test suites, and each test suite can contain multiple test cases.
+
+123
+00:52:39,450 --> 00:53:47,140
+Every test case must have a unique name, and you can name them after the function and a test number.
+
+124
+00:53:47,140 --> 00:55:08,690
+Build the project from the Terminal and use the console output to find errors, such as undefined references.
+
+125
+00:55:11,160 --> 00:55:39,480
+When an item is undefined, add the required definition to the test-suite file.
+
+126
+00:55:48,330 --> 00:56:30,800
+For a function with multiple parameters, declare each parameter according to the type and behavior that you need.
+
+127
+00:56:30,800 --> 00:56:39,100
+After resolving all errors, the console will display a result like this.
+
+128
+00:56:39,100 --> 00:56:49,300
+This means that the configuration step is complete and you can begin test-case design.
+
+129
+00:56:49,300 --> 00:57:03,000
+To design a test case, start by declaring the function from the C file in the test script.
+
+130
+00:57:03,000 --> 00:57:21,060
+This tells the test script that the C file contains the function that you want to test.
+
+131
+00:57:21,060 --> 00:58:17,400
+Now, write the test case in the same basic structure used by Cantata and other tools.
+
+132
+00:58:17,400 --> 01:00:20,870
+Declare the input variables, call the function, and check the expected return value.
+
+133
+01:00:20,870 --> 01:00:59,850
+After the test passes, run the Cantata script to generate the reports required for delivery.
+
+134
+01:00:59,850 --> 01:01:35,280
+These include the test report and the TPA file.
+
+135
+01:01:35,280 --> 01:03:17,360
+For a long source file, use Cantata++ coverage measurement to see which code has been covered.
+
+136
+01:03:17,360 --> 01:04:25,240
+Create a Cantata C project, add the relevant C/C++ file, and open CodeCoveredViewer to see coverage in green and red.
+
+137
+01:04:25,240 --> 01:04:32,680
+Do you have any questions about creating the Cantata project for the coverage viewer?
+
+138
+01:04:32,680 --> 01:05:23,780
+Can the viewer filter the test cases when a source file has many functions?
+
+139
+01:05:23,780 --> 01:05:37,470
+The viewer does not provide an automatic filter, but you can use a manual filter in the C++ test script.
+
+140
+01:05:37,470 --> 01:06:03,290
+In the documentation, you can filter a single test case to show its corresponding coverage colors.
+
+141
+01:06:03,290 --> 01:06:19,520
+What if the C file is very large and running every test case takes too long?
+
+142
+01:06:19,520 --> 01:06:36,860
+Use the manual filter to include the test case that you need or exclude a test case you do not want to run.
+
+143
+01:06:36,860 --> 01:08:12,460
+That completes the basic test demonstration.
+
+144
+01:08:12,460 --> 01:10:09,880
+Next, we will look at examples involving local static and global static variables.
+
+145
+01:10:09,880 --> 01:11:05,030
+For a global static variable, write its type and variable name in the specified syntax, then set the required value.
+
+146
+01:11:05,030 --> 01:11:29,710
+VS Code debugging is useful here because you can set a breakpoint and press F5.
+
+147
+01:11:29,710 --> 01:12:51,650
+The values defined in the test case are passed into the function, and you can inspect them as the code runs.
+
+148
+01:12:51,650 --> 01:14:26,000
+For a local static variable, follow the exact convention: module name, function name, and local variable name.
+
+149
+01:14:26,000 --> 01:14:56,620
+Do not access a local static variable in the first test case before the program has created its memory location.
+
+150
+01:14:56,620 --> 01:16:33,440
+Before debugging, run the test first so that the debug run is based on the latest execution.
+
+151
+01:16:33,440 --> 01:16:43,570
+In this example, the local static variable is set to 10 and passed to the function under test.
+
+152
+01:16:43,570 --> 01:16:59,050
+When the value overlaps with another assignment, the variable can be reset during code execution.
+
+153
+01:16:59,050 --> 01:17:11,310
+The tool may then report the local static variable as undefined because the required value was not retained.
+
+154
+01:17:11,310 --> 01:17:51,290
+This is an important limitation when testing code that relies on local static variables.
+
+155
+01:17:51,290 --> 01:18:27,020
+Should the coverage report describe this as a tool limitation when the corresponding code cannot be covered?
+
+156
+01:18:27,020 --> 01:18:27,508
+No.
+
+157
+01:18:27,508 --> 01:18:41,980
+Coverage cannot be claimed simply because a local static variable is difficult to access.
+
+158
+01:18:41,980 --> 01:18:56,920
+If the code logic never produces the required value, the relevant branch cannot be covered.
+
+159
+01:18:56,920 --> 01:19:15,440
+In that case, the issue comes from the code logic, not from a limitation of the tool.
+
+160
+01:19:15,440 --> 01:19:16,133
+Okay.
+
+161
+01:19:16,133 --> 01:19:25,420
+Please contact me afterward if you need to discuss a specific case.
+
+162
+01:19:26,640 --> 01:21:24,850
+You need to practice this workflow to identify real issues and understand how to apply it.
+
+163
+01:21:24,850 --> 01:22:24,320
+After today's training, I will send a task in the module; follow the example and email me if you have questions.
+
+164
+01:22:24,320 --> 01:22:41,730
+If there are no more questions, we will end today's training.
+
+165
+01:22:41,730 --> 01:22:48,580
+Thank you for attending.
