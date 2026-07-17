@@ -11,24 +11,24 @@ First, I have a list of C files and items that need to be tested using GTest.
 Here, I will select the first item to demonstrate how to perform UT.
 
 4
-00:00:30,440 --> 00:00:35,910
-To be able to write GTest test cases,
+00:00:25,440 --> 00:00:33,910
+To be able to write GTest test cases, we first need to create a test environment for this item.
 
 5
-00:00:35,910 --> 00:00:45,830
-we first need to create a test environment for this item. Currently, there are two ways to do this.
+00:00:33,910 --> 00:00:38,830
+Currently, there are two ways to do this.
 
 6
-00:00:45,830 --> 00:00:52,680
-The first way is the manual method. We need to prepare a folder with the same name as the item to be tested,
+00:00:38,830 --> 00:00:42,680
+The first way is the manual method.
 
 7
-00:00:52,680 --> 00:01:01,500
-and this folder must contain the corresponding C file.
+00:00:42,680 --> 00:00:52,500
+We need to prepare a folder with the same name as the item to be tested, and this folder must contain the corresponding C file.
 
 8
-00:01:01,500 --> 00:01:10,500
-Then we drag and drop that C file into the script.
+00:00:52,500 --> 00:01:10,500
+Then we drag and drop that C file into the script of cook-san (the .bat file).
 
 9
 00:01:10,500 --> 00:01:20,470
@@ -39,7 +39,7 @@ After that, the tool will automatically analyze it and generate a test environme
 including the header files and the C++ file containing our test script.
 
 11
-00:01:30,470 --> 00:01:46,230
+00:01:33,470 --> 00:01:46,230
 The second way is to use the tool.
 
 12
@@ -47,19 +47,19 @@ The second way is to use the tool.
 We use the tool by filling in the required fields, such as the database path, workspace path, and the items that need to be tested.
 
 13
-00:01:58,420 --> 00:02:18,700
+00:01:58,420 --> 00:02:21,700
 After that, a complete message will appear, and a test environment similar to the manual method will be generated.
 
 14
-00:02:18,700 --> 00:02:35,700
+00:02:22,700 --> 00:02:30,700
 It will also contains all the required files.
 
 15
-00:02:35,700 --> 00:02:45,360
+00:02:33,700 --> 00:02:42,360
 After the environment has been created successfully, using either of the two methods above,
 
 16
-00:02:45,360 --> 00:02:59,620
+00:02:42,360 --> 00:02:59,620
 we will have all the input headers, the main header file, and the C++ file containing the stub functions, mock functions, and test case design.
 
 17
@@ -87,7 +87,7 @@ which is the UT AI Copilot tool.
 We need to provide the paths of the item in need of testing, the database path with definition.
 
 23
-00:04:04,000 --> 00:04:55,360
+00:04:01,000 --> 00:04:11,360
 Then we click Auto Define Object.
 
 24
@@ -95,11 +95,11 @@ Then we click Auto Define Object.
 The tool has notified SUCCESS,
 
 25
-00:05:01,500 --> 00:05:16,040
+00:05:01,500 --> 00:05:20,040
 so instead of manually searching for each header file inside the database, we only need to provide some required information.
 
 26
-00:05:25,920 --> 00:05:38,660
+00:05:20,920 --> 00:05:38,660
 Then the UT AI Copilot tool will automatically search through the database, find the correct definitions,
 
 27
@@ -115,28 +115,16 @@ After solving the data-related issues, we will build it again to check whether t
 We can do this by selecting Terminal, choose Run Task and Build
 
 30
-00:06:08,710 --> 00:06:11,050
-As you can see,
-
-31
-00:06:11,050 --> 00:06:14,610
-the missing declaration errors are no longer shown.
+00:06:08,710 --> 00:06:14,610
+As you can see, the missing declaration errors are no longer shown.
 
 32
-00:06:14,610 --> 00:06:16,870
-Instead, we now have
-
-33
-00:06:16,870 --> 00:06:20,390
-undefined references for some external functions.
+00:06:14,610 --> 00:06:23,390
+Instead, we now have undefined references for some external functions.
 
 34
-00:06:20,390 --> 00:06:26,090
-This is a sign that these external functions need to be stubbed or mocked
-
-35
-00:06:26,090 --> 00:06:35,170
-to isolate the scope of the module we are testing.
+00:06:23,390 --> 00:06:35,170
+This is a sign that these external functions need to be stubbed or mocked to isolate the scope of the module we are testing.
 
 36
 00:06:35,170 --> 00:06:50,060
@@ -147,12 +135,8 @@ To handle the stub and mock generation of these functions, we can use the Prepai
 The tool has finished running. It has added two functions and mocked them.
 
 38
-00:07:18,440 --> 00:07:21,110
-Now we will build it again to check
-
-39
-00:07:21,110 --> 00:07:31,290
-whether the previous undefined reference errors still exist.
+00:07:18,440 --> 00:07:35,290
+Now we will build it again to check whether the previous undefined reference errors still exist.
 
 40
 00:07:39,610 --> 00:07:42,770
@@ -163,7 +147,7 @@ Now there are no more undefined reference errors.
 Instead, the sample test case shown below has been executed successfully.
 
 42
-00:07:54,190 --> 00:07:58,960
+00:07:54,190 --> 00:07:59,960
 Next, we will design a test case.
 
 43
@@ -183,36 +167,44 @@ The next step is to design a test case.
 Here, I have a sample test case.
 
 47
-00:08:24,350 --> 00:08:34,900
-A standard test case usually consists of six parts. The first part is the macro test.
+00:08:24,350 --> 00:08:31,900
+A standard test case usually consists of six parts.
+
+47
+00:08:31,900 --> 00:08:35,900
+The first part is the macro test.
 
 48
-00:08:34,900 --> 00:08:42,530
+00:08:35,900 --> 00:08:42,530
 Inside it, there will be the test fixture and the test case name.
 
 49
-00:08:42,530 --> 00:08:56,740
+00:08:42,530 --> 00:08:55,000
 The purpose of the test fixture is to group related test cases together, while the test case name is used to identify each test case.
 
 50
-00:08:56,740 --> 00:09:04,650
-The second part is the description. Here, we describe the testing purpose,
+00:08:55,000 --> 00:08:59,740
+The second part is the description.
+
+50
+00:08:59,740 --> 00:09:04,650
+Here, we describe the testing purpose, such as which logic is being checked,
 
 51
 00:09:04,650 --> 00:09:23,480
-such as which logic is being checked, what special input is used, or whether it covers the true or false branch of a certain condition.
+what special input is used, or whether it covers the true or false branch of a certain condition.
 
 52
-00:09:23,480 --> 00:09:32,070
-The third part is the input section. This is the preparation step,
+00:09:23,480 --> 00:09:29,500
+The third part is the input initialize section.
 
 53
-00:09:32,070 --> 00:09:46,900
-where we declare variables and assign the required input values into the tested function.
+00:09:29,500 --> 00:09:46,900
+This is the preparation step, where we declare variables and assign the required input values into the tested function.
 
 54
 00:09:46,900 --> 00:09:53,300
-The fourth part is the stub function section.
+The fourth part is the call stub function section.
 
 55
 00:09:53,300 --> 00:10:04,850
@@ -231,39 +223,43 @@ The fifth part is the call SUTs, where we call the function that we need to test
 Finally, we use EXPECT_EQ or other check functions to compare the actual result with the expected value.
 
 59
-00:10:51,300 --> 00:11:11,590
-If they match, the result will be Pass. If the check result does not match, the result will be Fail.
+00:10:51,300 --> 00:11:00,000
+If they match, the result will be Pass.
+
+59
+00:11:00,000 --> 00:11:11,590
+If the check result does not match, the result will be Fail.
 
 60
-00:11:11,590 --> 00:11:28,070
-Now we will try building it,
+00:11:11,590 --> 00:11:33,070
+Now we will try building it, and there are a few errors here. 
 
 61
-00:11:30,070 --> 00:11:48,440
-and there are a few errors here. The function I am calling, which is security level, is currently declared as a void type,
+00:11:35,070 --> 00:11:46,440
+The function I am calling here, which is "Security Level", is currently declared as a void type.
 
 62
-00:11:48,440 --> 00:12:13,530
-but it has a return statement. So I will remove this return value.
+00:11:46,440 --> 00:12:00,000
+But it has a return statement, so I will remove this return value.
 
 63
 00:12:16,530 --> 00:12:33,760
-The first test case has passed, and my variables are correct.
+The first test case has passed, and my check expected variables are correct.
 
 64
-00:12:40,760 --> 00:12:50,540
+00:12:38,760 --> 00:12:50,540
 However, we need to know how much percentage of the function logic this test case has covered.
 
 65
-00:12:50,540 --> 00:12:56,500
-To answer this question, we will move to the next step,
+00:12:50,540 --> 00:13:05,500
+To answer this question, we will move to the next step, which is building the Cantata coverage
 
 66
-00:13:00,500 --> 00:13:22,540
-which is building the Cantata coverage and using a third tool, the Cantata IDE.
+00:13:15,500 --> 00:13:25,540
+And we will use a third tool called "Cantata IDE".
 
 67
-00:13:22,540 --> 00:13:47,330
+00:13:27,540 --> 00:13:47,330
 We will add the Cantata folder that we had just built in order to view the coverage percentage.
 
 68
@@ -271,45 +267,57 @@ We will add the Cantata folder that we had just built in order to view the cover
 As you can see, this test case is currently designed to cover the true case of this condition which has been covered correctly.
 
 69
-00:14:41,260 --> 00:14:44,030
+00:14:39,260 --> 00:14:44,750
 I will add one more test case.
 
 70
-00:14:44,030 --> 00:15:42,360
+00:14:44,750 --> 00:15:42,360
 This test case will cover the false case of this condition at line 59 and check the coverage.
 
 71
-00:15:47,360 --> 00:16:06,140
-The second test case has also passed. We will check the coverage once again, and the false condition has been covered.
+00:15:45,360 --> 00:15:52,140
+The second test case has also passed. 
+
+71
+00:15:52,140 --> 00:16:06,000
+We will check the coverage once again, and the false condition has been covered.
 
 72
-00:16:12,140 --> 00:16:16,070
+00:16:12,140 --> 00:16:17,070
 Similarly, for the remaining conditions,
 
 73
-00:16:16,070 --> 00:17:03,300
+00:16:17,070 --> 00:17:03,300
 we need to add more test cases to cover each condition to achieve 100% coverage.
 
 74
-00:17:10,300 --> 00:17:22,880
-I have just added the prepared test cases, and all test cases have passed. All 14 test cases passed successfully and achieved 100% coverage.
+00:17:10,300 --> 00:17:20,880
+I have just added the prepared test cases, and all test cases have passed. 
+
+74
+00:17:20,880 --> 00:17:30,000
+All 14 test cases passed successfully and achieved 100% coverage.
 
 75
-00:17:29,880 --> 00:17:40,240
-Now we will check the Cantata coverage again. All conditions have been fully covered.
+00:17:30,000 --> 00:17:36,000
+Now we will check the Cantata coverage again. 
+
+75
+00:17:36,000 --> 00:17:42,000
+All conditions have been fully covered.
 
 76
-00:17:46,240 --> 00:17:50,290
+00:17:46,000 --> 00:17:54,000
 After the test cases have achieved 100% coverage,
 
 77
-00:17:55,290 --> 00:17:57,520
+00:17:54,000 --> 00:18:10,000
 we will submit them for review and continue with the next UT steps, such as Review, Deliver and PDC.
 
 78
-00:18:10,800 --> 00:18:15,000
+00:18:10,000 --> 00:18:17,000
 I will end this video of how to perform UT using GTest here.
 
 79
-00:18:17,280 --> 00:18:20,200
+00:18:17,000 --> 00:18:21,000
 Thank you for listening.

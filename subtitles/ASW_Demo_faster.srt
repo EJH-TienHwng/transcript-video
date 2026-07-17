@@ -1,5 +1,5 @@
 1
-00:00:00,180 --> 00:00:15,360
+00:00:00,180 --> 00:00:10,360
 This is a video demonstrating how to work on ASW. 
 
 2
@@ -15,16 +15,16 @@ After that, open the Ascet tool,
 then import the databases that were loaded from TCM.
 
 3
-00:01:41,670 --> 00:01:50,960
-These are the databases loaded from TCM. We will take the item name and search for it.
+00:01:41,670 --> 00:01:46,960
+These are the databases loaded from TCM.
+
+3
+00:01:51,670 --> 00:01:58,960
+We will take the item name and search for it in the component name section. 
 
 4
-00:01:55,960 --> 00:02:20,700
-in the component name section. 
-
-4
-00:02:20,700 --> 00:02:25,700
-After finding the item, check whether the version is correct.
+00:02:19,700 --> 00:02:25,700
+After having found the item, check whether the version is correct.
 
 5
 00:02:25,700 --> 00:02:40,350
@@ -39,12 +39,12 @@ This step creates the necessary files.
 These files are used for the Alinoe tool. 
 
 6
-00:03:25,660 --> 00:04:09,660
-Create the ATT folder for the item and find the missing parameter variables.
+00:03:25,660 --> 00:03:30,660
+Create the ATT folder for the item,
 
 6
 00:04:09,660 --> 00:04:20,660
-Find the missing parameter variables.
+Then find the missing parameter variables.
 
 7
 00:05:25,660 --> 00:05:30,890
@@ -104,11 +104,11 @@ and the necessary information of the variables in the class,
 
 21
 00:10:38,740 --> 00:10:42,360
-we will search for the missing information.
+we will search for the missing information
 
 22
 00:10:42,360 --> 00:10:49,460
-Then add it to the Local Parameter variables.
+in order to add the Local Parameter variables into Alinoe tool.
 
 23
 00:11:07,460 --> 00:11:15,480
@@ -116,7 +116,7 @@ Proceed to check the Min, Max, Tolerance values of the input variables.
 
 25
 00:13:24,880 --> 00:13:32,040
-Find the missing Min, Max, Mid, and tolerance values for the Imported Parameter variables.
+Proceed to find the missing Min, Max, Mid, and tolerance values for the Imported Parameter variables.
 
 26
 00:14:47,140 --> 00:14:51,960
@@ -140,7 +140,7 @@ The test design has been created successfully.
 
 31
 00:17:36,880 --> 00:17:47,420
-After creating the test design, we will create the test cases to cover C0, C1 and MCDC.
+After having created the test design, we will create the test cases to cover C0, C1 and MCDC.
 
 32
 00:17:52,420 --> 00:18:05,740
@@ -203,8 +203,8 @@ As this item does not require MCDC, so for the conditions required for MCDC cove
 After that, we will send the result to TCM.
 
 47
-00:41:50,820 --> 00:42:34,400
-After sending is complete, we will create a walkthrough for the item and enter the required fields in the MCDC tool.
+00:41:50,820 --> 00:42:00,400
+After sending is complete, we will create a walkthrough for the item.
 
 47
 00:43:30,820 --> 00:43:34,400
@@ -223,7 +223,7 @@ Next is the step of getting the link on TCM.
 Currently, after the result has been sent, the status is shown as Complete.
 
 50
-00:45:36,090 --> 00:49:08,780
+00:45:36,090 --> 00:45:46,780
 However, UT result has not been uploaded to TCM yet, we can reload the database to check again.
 
 51

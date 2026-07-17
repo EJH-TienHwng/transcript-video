@@ -1,25 +1,25 @@
 1
-00:00:24,020 --> 00:00:31,600
+00:00:24,020 --> 00:00:28,600
 Hello everyone.
 
 2
-00:00:31,600 --> 00:00:40,560
+00:00:28,600 --> 00:00:38,560
 This afternoon, I will cover Session 2.
 
 3
-00:00:40,560 --> 00:00:48,920
-The topic is how to create test cases with GTest framework.
+00:00:38,560 --> 00:00:48,920
+The expected after this sharing section is to create test cases using GTest framework.
 
 4
-00:00:48,920 --> 00:00:58,590
+00:00:48,920 --> 00:00:56,590
 Has everyone installed the environment, and do you have any questions?
 
 5
-00:00:58,590 --> 00:01:24,690
+00:00:56,590 --> 00:01:13,690
 If everything is ready, we will practice creating a basic test case for code coverage.
 
 6
-00:01:24,690 --> 00:01:30,330
+00:01:20,690 --> 00:01:25,330
 Today, I will cover four main parts.
 
 7

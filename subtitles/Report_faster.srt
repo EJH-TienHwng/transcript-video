@@ -55,11 +55,11 @@ After that, I will check which modules were estimated at the beginning.
 I will fill them in this Responsible column here.
 
 15
-00:02:20,280 --> 00:02:29,600
+00:02:20,280 --> 00:02:33,600
 Then I will use VLOOKUP between this file, the concat column, and the analysis file
 
 16
-00:02:29,600 --> 00:02:40,750
+00:02:33,600 --> 00:02:40,750
 Here is the analysis file.
 
 17
@@ -71,15 +71,15 @@ Okay.
 I will apply for MT_Needed, Tester_Comments, CRP_Comments, and CRP_Review_Status.
 
 19
-00:03:43,420 --> 00:03:51,080
+00:03:48,000 --> 00:03:58,000
 I will apply it to all rows.
 
 20
-00:03:58,080 --> 00:04:10,630
+00:04:00,000 --> 00:04:10,000
 I will filter the MT_Needed column.
 
 21
-00:04:10,630 --> 00:04:18,220
+00:04:10,000 --> 00:04:18,220
 Then I will put Responsible here.
 
 22
@@ -87,43 +87,71 @@ Then I will put Responsible here.
 These are the modules that have been tested and validated in this task, with a total of 63 items.
 
 23
-00:04:35,580 --> 00:04:45,450
-However, there are still some undefined modules here, and the tester has commented that these modules were
+00:04:35,580 --> 00:04:42,450
+However, there are still some undefined modules here, and the tester has commented that
 
 24
-00:04:45,450 --> 00:04:55,570
-already tested but item changed the check-in date. I will check whether there are any comments here.
+00:04:42,450 --> 00:04:50,000
+these modules were already tested but item changed the check-in date. 
+
+24
+00:04:50,000 --> 00:04:55,570
+I'll check if there are any unusual comments here.
 
 25
-00:04:55,570 --> 00:05:04,810
+00:04:55,570 --> 00:05:02,810
 For example, this module was initially estimated and analyzed as a test module.
 
 26
-00:05:04,810 --> 00:05:31,300
-However, when testing, the tester checked it again and confirmed that it is a valid module. So I will change this to Valid.
+00:05:02,810 --> 00:05:12,810
+However, when testing, the tester checked it again and confirmed that it is a valid module. 
+
+26
+00:05:12,810 --> 00:05:18,300
+So I will change this to Valid.
 
 27
-00:05:31,300 --> 00:05:54,750
-I will also update the corresponding CRP links. Then I will clear the formula and paste it back as values so it matches the validated status.
+00:05:18,300 --> 00:05:25,750
+I will also update the corresponding CRP links. 
+
+27
+00:05:30,750 --> 00:05:42,750
+Then I will clear the formula and paste it back as values.
+
+27
+00:05:42,750 --> 00:05:52,750
+Then, I'll update some statuses, changing them from "valid" to "validated".
 
 28
-00:05:54,750 --> 00:07:03,740
-Okay. I will double-check the modules and remove the unnecessary columns. I also need to make sure that the related comments are still correct.
+00:05:52,750 --> 00:05:54,750
+Okay.
+
+28
+00:05:54,750 --> 00:06:35,000
+I will double-check the modules and remove the unnecessary values of those columns. 
+
+28
+00:06:35,000 --> 00:07:00,000
+I also need to make sure that the related comments are still correct.
 
 29
-00:07:03,740 --> 00:07:12,460
-For modules with CRP comments like this, they are usually modules whose coverage is below 100%.
+00:07:03,000 --> 00:07:12,460
+For modules with CRP link like this, they are usually modules whose coverage is below 100%.
 
 30
-00:07:12,460 --> 00:07:45,690
-I will find the reason for them and add the comment accordingly. Next, I will check the modules that were just tested or validated.
+00:07:12,460 --> 00:07:35,000
+I will fill in the reason for them using the comments from the MTComment column.
+
+30
+00:07:35,000 --> 00:07:45,690
+Next, I will test the remaining modules, excluding those that were just tested or have already been validated.
 
 31
-00:07:45,690 --> 00:07:57,120
-For the remaining modules, I will check whether their files have any reason or comment.
+00:07:45,690 --> 00:07:57,000
+For the remaining modules, I will check whether they are marked as "undefined" and have no reason or comment.
 
 32
-00:07:57,120 --> 00:08:10,000
+00:07:57,000 --> 00:08:10,000
 Since they were already tested by Cantata from the beginning, and I already searched for them during the analysis phase, I will just map them here.
 
 33
@@ -131,7 +159,7 @@ Since they were already tested by Cantata from the beginning, and I already sear
 Okay, I will clear it and check one more time to see whether all undefined modules already had their reasons?
 
 34
-00:08:21,470 --> 00:08:29,760
+00:08:26,470 --> 00:08:29,760
 Okay, for these test modules, I will also put them here.
 
 35
@@ -139,35 +167,31 @@ Okay, for these test modules, I will also put them here.
 I will put the information here as Undefined.
 
 36
-00:08:44,880 --> 00:09:24,240
-Okay. I will put all of the coverage information into the comment cell.
+00:09:15,880 --> 00:09:24,240
+Okay. I will put all of the coverage information into the comment cell. 
 
 37
-00:09:24,240 --> 00:09:26,740
+00:09:24,240 --> 00:09:29,740
 For the modules that were changed check-in date.
 
 38
-00:09:26,740 --> 00:09:31,790
+00:09:29,740 --> 00:09:35,790
 It doesn't have the validation, so the results are not shown here.
 
-39
-00:09:31,790 --> 00:09:33,790
-They were tested here.
-
 40
-00:09:33,790 --> 00:09:41,090
+00:09:35,790 --> 00:09:44,090
 So I will add the comment and search for the information.
 
 41
-00:09:41,090 --> 00:10:09,280
+00:09:55,090 --> 00:10:09,280
 I already searched for it in another file, so I will use VLOOKUP to do it faster.
 
 42
-00:10:09,280 --> 00:10:33,850
+00:10:20,280 --> 00:10:34,850
 Okay. Please check whether the information is complete.
 
 43
-00:10:33,850 --> 00:10:48,070
+00:10:38,850 --> 00:10:48,070
 All the tested information is included, including the check-in date,
 
 44
@@ -183,35 +207,31 @@ Okay, I will check one more time to make sure all modules have their reasons.
 Okay, everything is complete. Next, I will check the passed modules whose coverage is below 100% and find the reason for them.
 
 47
-00:11:30,200 --> 00:11:48,220
+00:11:30,200 --> 00:11:50,220
 Here, I will also use VLOOKUP to get the reason, based on the concat key, from the tested database file.
 
 48
-00:11:48,220 --> 00:11:58,660
+00:11:52,220 --> 00:12:00,000
 I will check it here first.
-
-49
-00:11:58,660 --> 00:12:01,960
-I will check these modules.
 
 50
 00:12:01,960 --> 00:12:04,750
 Then I will
 
 51
-00:12:04,750 --> 00:12:07,750
+00:12:04,750 --> 00:12:12,750
 filter the modules that already have a reason
 
 52
-00:12:07,750 --> 00:12:17,440
+00:12:12,750 --> 00:12:20,440
 and make them equal to this column.
 
 53
-00:12:17,440 --> 00:12:25,110
+00:12:20,440 --> 00:12:29,110
 For the cases that do not have a reason yet.
 
 54
-00:12:25,110 --> 00:12:45,320
+00:12:35,110 --> 00:12:45,320
 Okay, I will try to VLOOKUP to to find as many reasons as possible.
 
 55
@@ -227,24 +247,16 @@ This is MT Executed, and it is quite old.
 Also, the origin and entity are from another team, so we don't need to care about it when there is no reason.
 
 58
-00:14:07,790 --> 00:14:11,440
+00:14:07,790 --> 00:14:14,440
 I will check it again one more time.
 
 59
-00:14:14,440 --> 00:14:21,570
-For the remaining reasons,
-
-60
-00:14:21,570 --> 00:14:27,110
-we can see that some reasons look unusual.
+00:14:20,440 --> 00:14:27,110
+For the remaining reasons, we can see that some reasons look unusual.
 
 61
-00:14:27,110 --> 00:14:29,460
-For those cases,
-
-62
-00:14:29,460 --> 00:14:36,930
-we will remove them from the comment.
+00:14:27,110 --> 00:14:36,930
+For those cases, we will remove them from the comment.
 
 63
 00:14:36,930 --> 00:14:47,040
@@ -255,23 +267,23 @@ There are only a few Vietnamese owners here.
 But it is quite old, so we can skip it.
 
 65
-00:14:57,940 --> 00:15:03,180
+00:14:57,940 --> 00:15:06,180
 I will check it again.
 
 66
-00:15:09,270 --> 00:15:14,170
+00:15:06,270 --> 00:15:14,170
 I will check whether there are any comments for Not Applicable. No, there are none.
 
 67
-00:15:14,170 --> 00:15:20,740
+00:15:17,170 --> 00:15:22,740
 For the Undefined column, all reasons are already complete.
 
 68
-00:15:20,740 --> 00:15:26,510
+00:15:22,740 --> 00:15:28,510
 Next is the Pass below 100% column.
 
 69
-00:15:26,510 --> 00:15:37,070
+00:15:28,510 --> 00:15:37,070
 It seems to be complete as well.
 
 70
@@ -287,11 +299,11 @@ Then I will delete the unnecessary columns.
 I will keep only the columns
 
 73
-00:15:53,460 --> 00:15:57,710
+00:15:53,460 --> 00:16:05,710
 Tester Comment, CRP Comment, and CRP Review Status.
 
 74
-00:15:57,710 --> 00:16:21,020
+00:16:07,710 --> 00:16:21,020
 These 63 items are the modules that were either tested or validated in this task.
 
 75
