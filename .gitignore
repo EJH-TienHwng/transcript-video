@@ -1,9 +1,15 @@
 .venv/
 
 .git backup/
-temp/
 
-*.dll
+data/input/
+data/output/
+data/audio/
+data/temp/
+
+/models/
+/lib/
+
 *.mp4
 *.wav
 temp_audio_extract.wav

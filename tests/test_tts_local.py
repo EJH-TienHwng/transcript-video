@@ -8,7 +8,7 @@ import soundfile as sf
 from qwen_tts import Qwen3TTSModel
 
 
-DEFAULT_TTS_MODEL_PATH = r"C:/Users/AHG5HC/Documents/Code/transcript_video_eng/model/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+DEFAULT_TTS_MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "Qwen3-TTS-12Hz-1.7B-CustomVoice"
 
 DEFAULT_TEST_TEXT = (
     "Today, we will learn how to create and manage a test workspace in Visual Studio Code. "

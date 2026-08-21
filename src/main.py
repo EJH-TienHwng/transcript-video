@@ -5,27 +5,27 @@ Boundary-tail fixed version: chunk buffers keep their tail even after sample_rat
 
 Folder structure:
 	project/
-	├── input/       # put original videos here
-	├── subtitles/   # generated .srt files
-	├── audio/       # generated .wav TTS audio files and 5-minute review chunks
-	├── output/      # final videos
-	└── temp/        # temporary extracted audio
+	├── data/input/       # put original videos here
+	├── data/subtitles/   # generated .srt files
+	├── data/audio/       # generated .wav TTS audio files and 5-minute review chunks
+	├── data/output/      # final videos
+	└── data/temp/        # temporary extracted audio
 
 Basic usage:
-	python transcript_video_tts_complete.py
-	python transcript_video_tts_complete.py --video my_video.mp4
+	python -m src.main
+	python -m src.main --video my_video.mp4
 
 Generate clean Vietnamese subtitles first, then send the SRT to an LLM for translation:
-	python transcript_video_tts_complete.py --video my_video.mp4 --task transcribe --language vi --skip-burn
+	python -m src.main --video my_video.mp4 --task transcribe --language vi --skip-burn
 
 Generate subtitles + Qwen TTS audio + final video with TTS audio:
-	python transcript_video_tts_complete.py --video my_video.mp4 --task translate --language vi --enable-tts
+	python -m src.main --video my_video.mp4 --task translate --language vi --enable-tts
 
 By default, when TTS is enabled, the generated TTS WAV is also split into 5-minute chunks:
-	audio/<video_name>_tts_chunks/<video_name>_tts_part_000.wav
+	data/audio/<video_name>_tts_chunks/<video_name>_tts_part_000.wav
 
 Use a local Whisper model folder:
-	python transcript_video_tts_complete.py --model "C:/Users/<USERNAME>/.faster-whisper-large-v3"
+	python -m src.main --model "C:/Users/<USERNAME>/.faster-whisper-large-v3"
 
 Install needed packages:
 	pip install imageio-ffmpeg faster-whisper
@@ -43,328 +43,23 @@ import logging
 import os
 import re
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Tuple
 
 import imageio_ffmpeg
 
-
-# =========================
-# Configuration
-# =========================
-
-VIDEO_EXTENSIONS = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v"}
-DEFAULT_MODEL_PATH = r"C:\Users\AHG5HC\.faster-whisper-large-v3"
-
-MODEL_FILENAME_SUFFIXES = {
-	"faster-whisper": "faster",
-	"huggingface": "huggingface",
-}
-
-TRANSLATION_MODEL_FILENAME_SUFFIXES = {
-	"vinai-translate": "vinai",
-}
-
-DEFAULT_TTS_MODEL = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
-
-
-@dataclass
-class SubtitleSegment:
-	"""A normalized subtitle segment used by all transcription engines."""
-
-	start: float
-	end: float
-	text: str
-
-
-@dataclass
-class ProjectPaths:
-	"""All important folders in the project."""
-
-	root: Path
-	input_dir: Path
-	subtitle_dir: Path
-	audio_dir: Path
-	output_dir: Path
-	temp_dir: Path
-
-	@classmethod
-	def from_root(cls, root: Path) -> "ProjectPaths":
-		return cls(
-			root=root,
-			input_dir=root / "input",
-			subtitle_dir=root / "subtitles",
-			audio_dir=root / "audio",
-			output_dir=root / "output",
-			temp_dir=root / "temp",
-		)
-
-	def create_dirs(self) -> None:
-		for folder in [
-			self.input_dir,
-			self.subtitle_dir,
-			self.audio_dir,
-			self.output_dir,
-			self.temp_dir,
-		]:
-			folder.mkdir(parents=True, exist_ok=True)
-
-
-# =========================
-# Utility functions
-# =========================
-
-
-def setup_logging() -> None:
-	logging.basicConfig(
-		level=logging.INFO,
-		format="[%(levelname)s] %(message)s",
-	)
-
-
-def format_timestamp(seconds: Optional[float]) -> str:
-	"""Convert seconds to SRT timestamp format: HH:MM:SS,mmm."""
-	if seconds is None or seconds < 0:
-		seconds = 0.0
-
-	hours = int(seconds // 3600)
-	minutes = int((seconds % 3600) // 60)
-	secs = int(seconds % 60)
-	millis = int(round((seconds - int(seconds)) * 1000))
-
-	# Handle rare rounding case: 59.9996 -> 60.000
-	if millis == 1000:
-		millis = 0
-		secs += 1
-	if secs == 60:
-		secs = 0
-		minutes += 1
-	if minutes == 60:
-		minutes = 0
-		hours += 1
-
-	return f"{hours:02}:{minutes:02}:{secs:02},{millis:03}"
-
-
-def parse_srt_timestamp(timestamp: str) -> float:
-	"""Convert SRT timestamp HH:MM:SS,mmm to seconds."""
-	timestamp = timestamp.strip().replace(".", ",")
-	match = re.match(r"^(\d+):(\d{2}):(\d{2}),(\d{1,3})$", timestamp)
-	if not match:
-		raise ValueError(f"Invalid SRT timestamp: {timestamp}")
-
-	hours, minutes, seconds, millis = match.groups()
-	return (
-		int(hours) * 3600
-		+ int(minutes) * 60
-		+ int(seconds)
-		+ int(millis.ljust(3, "0")[:3]) / 1000.0
-	)
-
-
-# =========================
-# Hallucination filtering
-# =========================
-
-BAD_PHRASES = [
-	# Common Whisper hallucinations / subtitle credits / outros
-	"subtitles by the amara.org community",
-	"subtitle by the amara.org community",
-	"subtitles by amara.org community",
-	"amara.org community",
-
-	"subscribe to la la school",
-	"please subscribe to la la school",
-	"la la school channel",
-
-	"thanks for watching",
-	"thank you for watching",
-	"see you next time",
-
-	# Vietnamese-style outro hallucinations
-	"cảm ơn các bạn đã theo dõi",
-	"cảm ơn bạn đã theo dõi",
-	"hẹn gặp lại",
-	"đừng quên đăng ký kênh",
-	"nhớ đăng ký kênh",
-]
-
-
-def normalize_text_for_filter(text: str) -> str:
-	"""Normalize text for hallucination filtering."""
-	text = text.strip().lower()
-	text = re.sub(r"\s+", " ", text)
-	text = re.sub(r"[^\w\sÀ-ỹ]", "", text)
-	return text
-
-
-def is_bad_hallucination_text(text: str) -> bool:
-	"""Remove known hallucinated outro/subtitle-credit phrases."""
-	normalized = normalize_text_for_filter(text)
-
-	if not normalized:
-		return True
-
-	for phrase in BAD_PHRASES:
-		phrase_norm = normalize_text_for_filter(phrase)
-		if phrase_norm and phrase_norm in normalized:
-			return True
-
-	return False
-
-
-def remove_repeated_hallucination_segments(
-	segments: Iterable[SubtitleSegment],
-	max_same_text_count: int = 3,
-	short_segment_seconds: float = 4.0,
-) -> List[SubtitleSegment]:
-	"""Remove suspicious repeated short subtitle segments."""
-	cleaned: List[SubtitleSegment] = []
-	repeat_count_by_text = {}
-
-	for segment in segments:
-		text = (segment.text or "").strip()
-		normalized = normalize_text_for_filter(text)
-		duration = max(0.0, segment.end - segment.start)
-
-		if not normalized:
-			continue
-
-		repeat_count_by_text[normalized] = repeat_count_by_text.get(normalized, 0) + 1
-
-		is_short = duration <= short_segment_seconds
-		repeated_too_many = repeat_count_by_text[normalized] > max_same_text_count
-
-		if is_short and repeated_too_many:
-			logging.warning(
-				"Removed repeated hallucination: %.2f --> %.2f | %s",
-				segment.start,
-				segment.end,
-				text,
-			)
-			continue
-
-		cleaned.append(segment)
-
-	return cleaned
-
-
-def fix_too_short_or_invalid_timing(segments: Iterable[SubtitleSegment]) -> List[SubtitleSegment]:
-	"""Drop invalid timestamp segments and keep SRT timing safe."""
-	cleaned: List[SubtitleSegment] = []
-	last_end = 0.0
-
-	for segment in sorted(segments, key=lambda item: item.start):
-		if segment.end <= segment.start:
-			logging.warning(
-				"Removed invalid timing: %.2f --> %.2f | %s",
-				segment.start,
-				segment.end,
-				segment.text,
-			)
-			continue
-
-		# Avoid backward/overlapping timestamps caused by bad decoding.
-		start = max(segment.start, last_end)
-		end = max(segment.end, start + 0.2)
-		last_end = end
-
-		cleaned.append(SubtitleSegment(start=start, end=end, text=segment.text))
-
-	return cleaned
-
-
-def post_process_segments(segments: Iterable[SubtitleSegment]) -> List[SubtitleSegment]:
-	"""Main subtitle post-processing pipeline."""
-	filtered: List[SubtitleSegment] = []
-
-	for segment in segments:
-		text = (segment.text or "").strip()
-
-		if not text:
-			continue
-
-		if is_bad_hallucination_text(text):
-			logging.warning(
-				"Removed known hallucination: %.2f --> %.2f | %s",
-				segment.start,
-				segment.end,
-				text,
-			)
-			continue
-
-		filtered.append(
-			SubtitleSegment(
-				start=segment.start,
-				end=segment.end,
-				text=text,
-			)
-		)
-
-	filtered = remove_repeated_hallucination_segments(filtered)
-	filtered = fix_too_short_or_invalid_timing(filtered)
-
-	return filtered
-
-
-def write_srt(segments: Iterable[SubtitleSegment], srt_path: Path) -> None:
-	"""Write subtitle segments to an .srt file after hallucination filtering."""
-	srt_path.parent.mkdir(parents=True, exist_ok=True)
-	segments = post_process_segments(segments)
-
-	with srt_path.open("w", encoding="utf-8") as file:
-		index = 1
-		for segment in segments:
-			text = (segment.text or "").strip()
-			if not text:
-				continue
-
-			start = format_timestamp(segment.start)
-			end = format_timestamp(segment.end)
-			file.write(f"{index}\n{start} --> {end}\n{text}\n\n")
-			index += 1
-
-
-def read_srt(srt_path: Path) -> List[SubtitleSegment]:
-	"""Read an existing SRT file back into SubtitleSegment objects."""
-	if not srt_path.exists():
-		raise FileNotFoundError(f"Không tìm thấy SRT: {srt_path}")
-
-	content = srt_path.read_text(encoding="utf-8-sig")
-	blocks = re.split(r"\n\s*\n", content.strip())
-	segments: List[SubtitleSegment] = []
-
-	for block in blocks:
-		lines = [line.strip() for line in block.splitlines() if line.strip()]
-		if not lines:
-			continue
-
-		timing_line_index = None
-		for i, line in enumerate(lines):
-			if "-->" in line:
-				timing_line_index = i
-				break
-
-		if timing_line_index is None:
-			continue
-
-		timing_line = lines[timing_line_index]
-		start_text, end_text = [part.strip() for part in timing_line.split("-->", 1)]
-		text = " ".join(lines[timing_line_index + 1 :]).strip()
-
-		if not text:
-			continue
-
-		segments.append(
-			SubtitleSegment(
-				start=parse_srt_timestamp(start_text),
-				end=parse_srt_timestamp(end_text),
-				text=text,
-			)
-		)
-
-	return segments
+from .project_config import (
+	DEFAULT_MODEL_PATH,
+	DEFAULT_TTS_MODEL,
+	MODEL_FILENAME_SUFFIXES,
+	ProjectPaths,
+	SubtitleSegment,
+	TRANSLATION_MODEL_FILENAME_SUFFIXES,
+	VIDEO_EXTENSIONS,
+	configure_binary_path,
+	setup_logging,
+)
+from .subtitles import read_srt, write_srt
 
 
 def escape_subtitle_path_for_ffmpeg(path: Path) -> str:
@@ -1918,7 +1613,8 @@ def main() -> None:
 	args = parse_args()
 
 	root = Path(args.root).resolve()
-	model_path = Path(args.model).expanduser().resolve()
+	configure_binary_path(root)
+	model_path = (root / args.model if not Path(args.model).expanduser().is_absolute() else Path(args.model)).expanduser().resolve()
 	translation_model_path = (
 		Path(args.translation_model).expanduser().resolve()
 		if args.translation_model
