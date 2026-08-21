@@ -60,7 +60,7 @@ The Snapshot Name has already been provided.
 
 16
 00:01:32,000 --> 00:01:43,430
-Next are the fields for ASCET, ASW, database, and CR, which provide the complete information.
+Next are the fields for ASCET, ASW, database. CR provided the complete information.
 
 17
 00:01:43,430 --> 00:01:48,000
@@ -80,7 +80,7 @@ I will use SharCC.
 
 21
 00:02:17,160 --> 00:02:22,060
-I click Work Item.
+I click Work Items.
 
 22
 00:02:22,060 --> 00:02:30,200
@@ -116,7 +116,7 @@ Then, I save it.
 
 30
 00:04:08,000 --> 00:04:25,170
-Next, I go to My Source Control and then My Workspace.
+Next, I go to My Source Control and then My Workspaces.
 
 31
 00:04:25,170 --> 00:04:46,270
@@ -136,7 +136,7 @@ The load rule file is located in the component ending with .project.
 
 35
 00:05:13,470 --> 00:05:30,470
-Here, the file is Daihatsu ESP10CP.loadrule.
+Here, the file is Daihatsu_ESP10CB.loadrule.
 
 36
 00:05:30,470 --> 00:05:37,210
@@ -144,7 +144,7 @@ This process takes quite a long time, so I have prepared a database in advance.
 
 37
 00:05:37,210 --> 00:05:46,210
-After loading is complete, the components will appear in green on the screen.
+After loading is complete, the components will appear in blue on the screen.
 
 38
 00:05:46,210 --> 00:05:51,000
@@ -204,7 +204,7 @@ Select Build_ and then Make.
 
 52
 00:07:30,700 --> 00:07:35,180
-The two files we need are _GenMake.csv and the ASCET component file.
+The two files we need are _GenMake.csv and the _AscetCodeGeneration_ file.
 
 53
 00:07:35,930 --> 00:07:39,000
@@ -296,7 +296,7 @@ The next important field is this section.
 
 75
 00:10:45,480 --> 00:10:51,480
-I will not analyze the rpa.CUBAS component.
+I will not analyze the rba.CUBAS component.
 
 76
 00:10:51,480 --> 00:10:57,480
@@ -572,11 +572,11 @@ Going back, I still have some C modules that have not been analyzed yet.
 
 142
 00:23:16,900 --> 00:23:32,270
-I will use the Cmetrix tool to get the ELOC values of the modules in the database.
+I will use the C-Metrics tool to get the ELOC values of the modules in the database.
 
 143
 00:23:32,270 --> 00:23:43,050
-After opening Cmetrix, I click the plus icon, paste the database path,
+After opening C-Metrics, I click the plus icon, paste the database path,
 
 143
 00:23:55,050 --> 00:23:57,050 
@@ -728,11 +728,11 @@ Then I can check them again.
 
 180
 00:29:41,470 --> 00:29:49,870
-Here, I use VLOOKUP with Item Name and MATRIX.
+Here, I use VLOOKUP with Item Name and FileMtrc.
 
 181
 00:29:57,870 --> 00:30:18,150
-The three most important fields to retrieve are ELOC, Function, and MaxCC.
+The three most important fields to retrieve are Effect, Function, and MaxCC.
 
 182
 00:30:23,430 --> 00:30:27,360
@@ -812,7 +812,7 @@ Now I have checked all the information completely.
 
 201
 00:34:54,230 --> 00:35:01,745
-If a module has not been tested, it will be indicated in this MT_Needed column.
+If a module has not been tested, it will be new in this MT_Needed column.
 
 202
 00:35:01,745 --> 00:35:04,002
@@ -864,7 +864,7 @@ The same applies to ASCET.
 
 214
 00:36:15,510 --> 00:36:21,145
-If it is ESP, it will be calculated using the ASCET formula.
+If it is EXP, it will be calculated using the ASCET formula.
 
 215
 00:36:26,145 --> 00:36:38,780
@@ -935,12 +935,12 @@ For item path, I will use the result from the MCDC tool earlier, which I pasted 
 Then, I will type in VLOOKUP, item name.
 
 232
-00:40:47,290 --> 00:41:52,540
+00:40:47,290 --> 00:41:32,290
 I will change the formula a little bit as there are few problems.
 
 232
 00:41:32,290 --> 00:41:38,540
-Apply to all right here.
+Apply to all items right here.
  
 232
 00:41:39,290 --> 00:41:52,540
@@ -960,7 +960,7 @@ This is the summary.
 
 236
 00:42:17,940 --> 00:42:24,960
-For BB 87328, there are 63 items that need to undergo UT.
+For BB 87328, there are 63 items that need to perform UT.
 
 237
 00:42:24,960 --> 00:42:32,980
@@ -968,7 +968,7 @@ Among them, 12 items need to be validated and 51 items need to be tested.
 
 238
 00:42:35,980 --> 00:42:44,410
-For this file, I will create an additional Estimation file to send to CR (Component Report).
+For this file, I will create an additional Estimation file to send to CR (Component Responsible).
 
 239
 00:42:44,410 --> 00:42:49,420
@@ -980,7 +980,7 @@ In this file, I will convert everything into values and avoid leaving formulas.
 
 241
 00:43:12,290 --> 00:43:22,250
-I will keep the ELOC, MT_Command, MT_Needed, and Total_Effort columns for each Undefined module.
+I will keep the ELOC, MT_Comment, MT_Needed, and Total_Effort columns for each Undefined module.
 
 242
 00:43:30,250 --> 00:43:36,900
