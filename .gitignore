@@ -13,3 +13,6 @@ data/temp/
 *.mp4
 *.wav
 temp_audio_extract.wav
+
+__pycache__/
+*.py[cod]
