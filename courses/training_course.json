@@ -1,0 +1,35 @@
+{
+  "title": "Training Course",
+  "output": "data/compilation/training_course.mp4",
+  "work_dir": "data/compilation",
+  "theme_image": "assets/bosch_theme.png",
+  "card_duration": 5.0,
+  "add_chapters": true,
+  "toc": {
+    "enabled": true,
+    "heading": "TABLE OF CONTENTS",
+    "items_per_page": 8,
+    "page_duration": 5.0
+  },
+  "render": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "video_bitrate": "8M",
+    "audio_bitrate": "192k",
+    "audio_sample_rate": 48000,
+    "font_path": null
+  },
+  "sessions": [
+    {
+      "number": 1,
+      "title": "[SCIP 2024] [GTEST] [Session 1] GTEST TOOL Visual studio code (COEM) 20240701",
+      "video": "data/output/[SCIP 2024] [GTEST] [Session 1] GTEST TOOL-Visual studio code (COEM)-20240701_en-dub_en-sub.mp4"
+    },
+    {
+      "number": 2,
+      "title": "[SCIP 2024] [GTEST] [Session 2] GTEST SCRIPT BASIC 20240701",
+      "video": "data/output/[SCIP 2024] [GTEST] [Session 2] GTEST SCRIPT - BASIC-20240701_en-dub_en-sub.mp4"
+    }
+  ]
+}
