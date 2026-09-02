@@ -3,12 +3,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import torch
-import soundfile as sf
-from qwen_tts import Qwen3TTSModel
-
-
-DEFAULT_TTS_MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "Qwen3-TTS-12Hz-1.7B-CustomVoice"
+DEFAULT_TTS_MODEL_PATH = (
+    Path(__file__).resolve().parents[1] / "models" / "Qwen3-TTS-12Hz-1.7B-CustomVoice"
+)
 
 DEFAULT_TEST_TEXT = (
     "Today, we will learn how to create and manage a test workspace in Visual Studio Code. "
@@ -85,6 +82,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def resolve_dtype(dtype_name: str):
+    import torch
+
     if dtype_name == "float16":
         return torch.float16
     if dtype_name == "bfloat16":
@@ -93,6 +92,10 @@ def resolve_dtype(dtype_name: str):
 
 
 def main() -> None:
+    import soundfile as sf
+    import torch
+    from qwen_tts import Qwen3TTSModel
+
     args = parse_args()
 
     model_path = Path(args.model).expanduser().resolve()

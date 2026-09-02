@@ -10,6 +10,10 @@ env/
 # Python cache / compiled files
 __pycache__/
 *.py[cod]
+.ruff_cache/
+build/
+dist/
+*.egg-info/
 
 
 # ============================================================

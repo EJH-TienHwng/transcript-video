@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import argparse
-import logging
 from pathlib import Path
 
-from ..project_config import setup_logging
-from .builder import build_course
+from ..config import setup_logging
 from .config import load_course_config
 
 
@@ -19,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         required=True,
-        help="Path to course JSON config. Example: courses/apb_training.json",
+        help="Path to course JSON config. Example: configs/courses/training_course.json",
     )
     return parser.parse_args()
 
@@ -27,6 +25,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     setup_logging()
     args = parse_args()
+    from .builder import build_course
 
     config_path = Path(args.config)
     config = load_course_config(config_path)

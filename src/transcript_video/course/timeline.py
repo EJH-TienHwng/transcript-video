@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from math import ceil
-from typing import Iterable, List
 
 from .config import CourseConfig, SessionConfig
 
@@ -24,7 +24,7 @@ class SessionTimeline:
 
 def format_video_timestamp(seconds: float) -> str:
     """Format a video timestamp as MM:SS or HH:MM:SS."""
-    total_seconds = max(0, int(round(seconds)))
+    total_seconds = max(0, round(seconds))
     hours, remainder = divmod(total_seconds, 3600)
     minutes, secs = divmod(remainder, 60)
 
@@ -46,18 +46,18 @@ def calculate_toc_duration(config: CourseConfig) -> float:
 def build_timeline(
     config: CourseConfig,
     durations: Iterable[float],
-) -> List[SessionTimeline]:
+) -> list[SessionTimeline]:
     """Calculate the absolute final-video position of every session."""
     duration_list = list(durations)
     if len(duration_list) != len(config.sessions):
-        raise ValueError("Số duration không khớp với số session.")
+        raise ValueError("The number of durations does not match the number of sessions.")
 
     current_time = calculate_toc_duration(config)
-    timeline: List[SessionTimeline] = []
+    timeline: list[SessionTimeline] = []
 
-    for session, duration in zip(config.sessions, duration_list):
+    for session, duration in zip(config.sessions, duration_list, strict=True):
         if duration <= 0:
-            raise ValueError(f"Duration không hợp lệ cho session: {session.title}")
+            raise ValueError(f"Invalid duration for session: {session.title}")
 
         card_start = current_time
         content_start = card_start + config.card_duration

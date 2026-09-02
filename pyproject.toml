@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "transcript-video"
+version = "0.2.0"
+description = "Local video transcription, subtitle, TTS, and course-building tools"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "accelerate==1.12.0",
+    "faster-whisper==1.2.1",
+    "imageio-ffmpeg==0.6.0",
+    "numpy==2.4.6",
+    "pillow==12.2.0",
+    "questionary==2.1.1",
+    "qwen-tts==0.1.1",
+    "safetensors==0.7.0",
+    "soundfile==0.13.1",
+    "torch==2.6.0+cu124",
+    "torchaudio==2.6.0+cu124",
+    "transformers==4.57.3",
+]
+
+[project.scripts]
+transcript-video = "transcript_video.cli:main"
+transcript-course = "transcript_video.course.cli:main"
+transcript-course-config = "transcript_video.course.tui_cli:main"
+
+[dependency-groups]
+dev = ["ruff>=0.12,<1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/transcript_video"]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu124" }
+torchaudio = { index = "pytorch-cu124" }

@@ -1,0 +1,28 @@
+[project]
+root = "."
+model = "models/faster-whisper-large-v3"
+
+[transcription]
+task = "transcribe"
+language = "vi"
+device = "cuda"
+compute_type = "int8"
+translation_batch_size = 8
+overwrite_srt = false
+skip_burn = false
+
+[tts]
+enabled = false
+overwrite = false
+mode = "timed"
+generation_mode = "chunked"
+model = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+language = "English"
+speaker = "Aiden"
+instruct = "Speak clearly and professionally in a calm teaching voice. Use a steady medium pace and neutral tone. Do not laugh, act, dramatize, or add emotions. Read the text exactly."
+attn_implementation = "auto"
+audio_mode = "replace"
+split_audio = true
+chunk_minutes = 5
+max_speedup = 1.15
+chunk_tail_seconds = 10.0

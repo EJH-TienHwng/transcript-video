@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 import re
 import subprocess
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence
 
 import imageio_ffmpeg
 
@@ -12,22 +12,31 @@ from .config import CourseConfig
 
 
 def run_command(command: Sequence[str], *, hide_output: bool = False) -> None:
-    kwargs = {"check": True}
     if hide_output:
-        kwargs.update({"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL})
-    subprocess.run(list(command), **kwargs)
+        process = subprocess.run(
+            list(command),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if process.returncode != 0:
+            logging.error("Command failed:\n%s", (process.stderr or process.stdout or "").strip())
+            process.check_returncode()
+        return
+
+    subprocess.run(list(command), check=True)
 
 
 def get_media_duration_seconds(media_path: Path) -> float:
     """Read duration by parsing FFmpeg's input probe output."""
-    if not media_path.exists():
-        raise FileNotFoundError(f"Không tìm thấy media: {media_path}")
+    if not media_path.is_file():
+        raise FileNotFoundError(f"Media file not found: {media_path}")
 
     ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
     process = subprocess.run(
         [ffmpeg_path, "-i", str(media_path)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         encoding="utf-8",
         errors="ignore",
@@ -35,7 +44,7 @@ def get_media_duration_seconds(media_path: Path) -> float:
     output = process.stderr or process.stdout or ""
     match = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", output)
     if not match:
-        raise ValueError(f"Không đọc được duration của: {media_path}")
+        raise ValueError(f"Could not read media duration: {media_path}")
 
     hours, minutes, seconds = match.groups()
     return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
@@ -45,8 +54,7 @@ def media_has_audio(media_path: Path) -> bool:
     ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
     process = subprocess.run(
         [ffmpeg_path, "-i", str(media_path)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         encoding="utf-8",
         errors="ignore",
@@ -68,26 +76,41 @@ def still_image_to_video(
     command = [
         ffmpeg_path,
         "-y",
-        "-loop", "1",
-        "-framerate", str(config.render.fps),
-        "-i", str(image_path),
-        "-f", "lavfi",
-        "-i", f"anullsrc=r={config.render.audio_sample_rate}:cl=stereo",
-        "-t", f"{duration:.3f}",
-        "-vf", (
+        "-loop",
+        "1",
+        "-framerate",
+        str(config.render.fps),
+        "-i",
+        str(image_path),
+        "-f",
+        "lavfi",
+        "-i",
+        f"anullsrc=r={config.render.audio_sample_rate}:cl=stereo",
+        "-t",
+        f"{duration:.3f}",
+        "-vf",
+        (
             f"scale={config.render.width}:{config.render.height}:force_original_aspect_ratio=decrease,"
             f"pad={config.render.width}:{config.render.height}:(ow-iw)/2:(oh-ih)/2,"
             f"fps={config.render.fps},format=yuv420p"
         ),
-        "-c:v", "libx264",
-        "-preset", "medium",
-        "-b:v", config.render.video_bitrate,
-        "-c:a", "aac",
-        "-b:a", config.render.audio_bitrate,
-        "-ar", str(config.render.audio_sample_rate),
-        "-ac", "2",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "medium",
+        "-b:v",
+        config.render.video_bitrate,
+        "-c:a",
+        "aac",
+        "-b:a",
+        config.render.audio_bitrate,
+        "-ar",
+        str(config.render.audio_sample_rate),
+        "-ac",
+        "2",
         "-shortest",
-        "-movflags", "+faststart",
+        "-movflags",
+        "+faststart",
         str(video_out),
     ]
     run_command(command, hide_output=True)
@@ -99,11 +122,14 @@ def normalize_session_video(
     config: CourseConfig,
 ) -> None:
     """Normalize every session so FFmpeg concat can safely stream-copy them later."""
-    if not video_in.exists():
-        raise FileNotFoundError(f"Không tìm thấy session video: {video_in}")
+    if not video_in.is_file():
+        raise FileNotFoundError(f"Session video not found: {video_in}")
+    if video_in.resolve() == video_out.resolve():
+        raise ValueError("Normalization input and output paths must be different.")
 
     ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
     video_out.parent.mkdir(parents=True, exist_ok=True)
+    duration = get_media_duration_seconds(video_in)
 
     video_filter = (
         f"scale={config.render.width}:{config.render.height}:force_original_aspect_ratio=decrease,"
@@ -115,41 +141,69 @@ def normalize_session_video(
         command = [
             ffmpeg_path,
             "-y",
-            "-i", str(video_in),
-            "-map", "0:v:0",
-            "-map", "0:a:0",
-            "-vf", video_filter,
-            "-c:v", "libx264",
-            "-preset", "medium",
-            "-b:v", config.render.video_bitrate,
-            "-c:a", "aac",
-            "-b:a", config.render.audio_bitrate,
-            "-ar", str(config.render.audio_sample_rate),
-            "-ac", "2",
-            "-movflags", "+faststart",
+            "-i",
+            str(video_in),
+            "-map",
+            "0:v:0",
+            "-map",
+            "0:a:0",
+            "-vf",
+            video_filter,
+            "-c:v",
+            "libx264",
+            "-preset",
+            "medium",
+            "-b:v",
+            config.render.video_bitrate,
+            "-c:a",
+            "aac",
+            "-b:a",
+            config.render.audio_bitrate,
+            "-ar",
+            str(config.render.audio_sample_rate),
+            "-ac",
+            "2",
+            "-t",
+            f"{duration:.3f}",
+            "-movflags",
+            "+faststart",
             str(video_out),
         ]
     else:
-        duration = get_media_duration_seconds(video_in)
         command = [
             ffmpeg_path,
             "-y",
-            "-i", str(video_in),
-            "-f", "lavfi",
-            "-i", f"anullsrc=r={config.render.audio_sample_rate}:cl=stereo",
-            "-map", "0:v:0",
-            "-map", "1:a:0",
-            "-vf", video_filter,
-            "-t", f"{duration:.3f}",
-            "-c:v", "libx264",
-            "-preset", "medium",
-            "-b:v", config.render.video_bitrate,
-            "-c:a", "aac",
-            "-b:a", config.render.audio_bitrate,
-            "-ar", str(config.render.audio_sample_rate),
-            "-ac", "2",
+            "-i",
+            str(video_in),
+            "-f",
+            "lavfi",
+            "-i",
+            f"anullsrc=r={config.render.audio_sample_rate}:cl=stereo",
+            "-map",
+            "0:v:0",
+            "-map",
+            "1:a:0",
+            "-vf",
+            video_filter,
+            "-t",
+            f"{duration:.3f}",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "medium",
+            "-b:v",
+            config.render.video_bitrate,
+            "-c:a",
+            "aac",
+            "-b:a",
+            config.render.audio_bitrate,
+            "-ar",
+            str(config.render.audio_sample_rate),
+            "-ac",
+            "2",
             "-shortest",
-            "-movflags", "+faststart",
+            "-movflags",
+            "+faststart",
             str(video_out),
         ]
 
@@ -168,11 +222,13 @@ def concatenate_videos(
 ) -> None:
     paths = list(video_paths)
     if not paths:
-        raise ValueError("Không có video segment nào để concat.")
+        raise ValueError("No video segments were provided for concatenation.")
 
     for path in paths:
         if not path.exists():
-            raise FileNotFoundError(f"Thiếu concat segment: {path}")
+            raise FileNotFoundError(f"Missing concatenation segment: {path}")
+    if output_path.resolve() in {path.resolve() for path in paths}:
+        raise ValueError("Concatenation output must not overwrite an input segment.")
 
     list_path.parent.mkdir(parents=True, exist_ok=True)
     list_path.write_text(
@@ -186,11 +242,16 @@ def concatenate_videos(
     command = [
         ffmpeg_path,
         "-y",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", str(list_path),
-        "-c", "copy",
-        "-movflags", "+faststart",
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        str(list_path),
+        "-c",
+        "copy",
+        "-movflags",
+        "+faststart",
         str(output_path),
     ]
     run_command(command)
@@ -204,19 +265,21 @@ def add_chapter_metadata(
     chapter_titles: Sequence[str],
 ) -> None:
     """Copy the compiled MP4 while attaching FFmpeg chapter metadata."""
+    if video_in.resolve() == video_out.resolve():
+        raise ValueError("Chapter output must not overwrite the input video in place.")
     if len(chapter_starts) != len(chapter_titles):
-        raise ValueError("chapter_starts và chapter_titles không cùng số lượng.")
+        raise ValueError("chapter_starts and chapter_titles must have the same length.")
     if not chapter_starts:
         shutil_copy(video_in, video_out)
         return
 
     total_duration = get_media_duration_seconds(video_in)
-    lines: List[str] = [";FFMETADATA1"]
+    lines: list[str] = [";FFMETADATA1"]
 
-    for index, (start, title) in enumerate(zip(chapter_starts, chapter_titles)):
+    for index, (start, title) in enumerate(zip(chapter_starts, chapter_titles, strict=True)):
         end = chapter_starts[index + 1] if index + 1 < len(chapter_starts) else total_duration
-        start_ms = max(0, int(round(start * 1000)))
-        end_ms = max(start_ms + 1, int(round(end * 1000)))
+        start_ms = max(0, round(start * 1000))
+        end_ms = max(start_ms + 1, round(end * 1000))
 
         safe_title = (
             title.replace("\\", "\\\\")
@@ -244,13 +307,20 @@ def add_chapter_metadata(
     command = [
         ffmpeg_path,
         "-y",
-        "-i", str(video_in),
-        "-i", str(chapter_file),
-        "-map", "0:v:0",
-        "-map", "0:a:0?",
-        "-map_metadata", "1",
-        "-c", "copy",
-        "-movflags", "+faststart",
+        "-i",
+        str(video_in),
+        "-i",
+        str(chapter_file),
+        "-map",
+        "0:v:0",
+        "-map",
+        "0:a:0?",
+        "-map_metadata",
+        "1",
+        "-c",
+        "copy",
+        "-movflags",
+        "+faststart",
         str(video_out),
     ]
     run_command(command)

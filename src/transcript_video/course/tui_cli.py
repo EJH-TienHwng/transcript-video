@@ -3,8 +3,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .tui import create_course_config_interactive
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -13,7 +11,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--root",
         default=None,
-        help="Project root. Default: auto-detect from src/course/tui.py.",
+        help="Project root. Default: auto-detect from pyproject.toml.",
     )
     parser.add_argument(
         "--video-dir",
@@ -25,6 +23,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    from .tui import create_course_config_interactive
 
     root = Path(args.root).expanduser().resolve() if args.root else None
 
@@ -42,7 +41,7 @@ def main() -> None:
             output_dir=video_dir,
         )
     except KeyboardInterrupt:
-        print("\nĐã hủy Course Config TUI.")
+        print("\nCourse Config TUI cancelled.")
 
 
 if __name__ == "__main__":

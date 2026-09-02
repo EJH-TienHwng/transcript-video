@@ -3,23 +3,21 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
 
 try:
     import questionary
     from questionary import Choice
 except ImportError as exc:
     raise RuntimeError(
-        "Course Config TUI cần package 'questionary'. "
-        "Cài bằng: python -m pip install questionary"
+        "Course Config TUI requires 'questionary'. Install dependencies with: uv sync"
     ) from exc
 
-from ..project_config import VIDEO_EXTENSIONS
+from ..config import VIDEO_EXTENSIONS, find_project_root
 
 
 def _project_root() -> Path:
-    """Assume this module lives at <root>/src/course/tui.py."""
-    return Path(__file__).resolve().parents[2]
+    """Find the repository root from the current working directory."""
+    return find_project_root()
 
 
 def _relative_or_absolute(path: Path, root: Path) -> str:
@@ -59,7 +57,7 @@ def _default_title_from_video(path: Path) -> str:
     return title
 
 
-def _scan_videos(directory: Path) -> List[Path]:
+def _scan_videos(directory: Path) -> list[Path]:
     if not directory.exists():
         return []
 
@@ -70,7 +68,7 @@ def _scan_videos(directory: Path) -> List[Path]:
     )
 
 
-def _ask_text(message: str, default: Optional[str] = None) -> str:
+def _ask_text(message: str, default: str | None = None) -> str:
     answer = questionary.text(message, default=default or "").ask()
     if answer is None:
         raise KeyboardInterrupt
@@ -83,11 +81,11 @@ def _ask_int(message: str, default: int, minimum: int = 1) -> int:
         try:
             value = int(answer)
         except ValueError:
-            print("Giá trị phải là số nguyên.")
+            print("The value must be an integer.")
             continue
 
         if value < minimum:
-            print(f"Giá trị phải >= {minimum}.")
+            print(f"The value must be at least {minimum}.")
             continue
         return value
 
@@ -98,20 +96,20 @@ def _ask_float(message: str, default: float, minimum: float = 0.0) -> float:
         try:
             value = float(answer)
         except ValueError:
-            print("Giá trị phải là số.")
+            print("The value must be a number.")
             continue
 
         if value < minimum:
-            print(f"Giá trị phải >= {minimum}.")
+            print(f"The value must be at least {minimum}.")
             continue
         return value
 
 
 def _pick_video(
     root: Path,
-    available_videos: List[Path],
-    already_selected: List[Path],
-) -> Optional[Path]:
+    available_videos: list[Path],
+    already_selected: list[Path],
+) -> Path | None:
     remaining = [path for path in available_videos if path not in already_selected]
 
     choices = [
@@ -124,13 +122,13 @@ def _pick_video(
 
     choices.extend(
         [
-            Choice(title="Nhập đường dẫn video thủ công...", value="__manual__"),
-            Choice(title="Hoàn tất danh sách session", value="__done__"),
+            Choice(title="Enter a video path manually...", value="__manual__"),
+            Choice(title="Finish the session list", value="__done__"),
         ]
     )
 
     answer = questionary.select(
-        "Chọn video tiếp theo theo đúng thứ tự bạn muốn nối:",
+        "Select the next video in the desired final order:",
         choices=choices,
         use_shortcuts=True,
         use_arrow_keys=True,
@@ -144,34 +142,34 @@ def _pick_video(
 
     if answer == "__manual__":
         while True:
-            raw = _ask_text("Đường dẫn video:")
+            raw = _ask_text("Video path:")
             path = Path(raw).expanduser()
             if not path.is_absolute():
                 path = root / path
             path = path.resolve()
 
-            if not path.exists():
-                print(f"Không tìm thấy file: {path}")
+            if not path.is_file():
+                print(f"File not found: {path}")
                 continue
             if path.suffix.lower() not in VIDEO_EXTENSIONS:
-                print(f"Định dạng video không hỗ trợ: {path.suffix}")
+                print(f"Unsupported video format: {path.suffix}")
                 continue
             if path in already_selected:
-                print("Video này đã có trong danh sách.")
+                print("This video is already in the session list.")
                 continue
             return path
 
     return answer
 
 
-def _collect_sessions(root: Path, output_dir: Path) -> List[Dict]:
+def _collect_sessions(root: Path, output_dir: Path) -> list[dict]:
     scanned = _scan_videos(output_dir)
-    selected_paths: List[Path] = []
-    sessions: List[Dict] = []
+    selected_paths: list[Path] = []
+    sessions: list[dict] = []
 
     print()
-    print(f"Tìm thấy {len(scanned)} video trong: {output_dir}")
-    print("Mỗi lần chọn một video. Thứ tự chọn chính là thứ tự video cuối.")
+    print(f"Found {len(scanned)} video(s) in: {output_dir}")
+    print("Select one video at a time; selection order becomes the final order.")
     print()
 
     while True:
@@ -182,24 +180,29 @@ def _collect_sessions(root: Path, output_dir: Path) -> List[Dict]:
                 break
 
             retry = questionary.confirm(
-                "Chưa có session nào. Bạn có muốn tiếp tục thêm video?",
+                "No sessions have been added. Continue adding videos?",
                 default=True,
             ).ask()
             if retry is None:
                 raise KeyboardInterrupt
             if not retry:
-                raise ValueError("Course phải có ít nhất 1 session.")
+                raise ValueError("A course must contain at least one session.")
             continue
 
         selected_paths.append(video)
         position = len(sessions) + 1
         default_title = _default_title_from_video(video)
 
-        number = _ask_int(
-            f"Session number cho '{video.name}':",
-            default=position,
-            minimum=1,
-        )
+        while True:
+            number = _ask_int(
+                f"Session number cho '{video.name}':",
+                default=position,
+                minimum=1,
+            )
+            if any(item["number"] == number for item in sessions):
+                print(f"Session number {number} is already in use.")
+                continue
+            break
         title = _ask_text(
             f"Session title cho '{video.name}':",
             default=default_title,
@@ -216,7 +219,7 @@ def _collect_sessions(root: Path, output_dir: Path) -> List[Dict]:
         )
 
         print()
-        print("Danh sách hiện tại:")
+        print("Current session list:")
         for idx, item in enumerate(sessions, start=1):
             print(
                 f"  {idx:02d}. Session {item['number']:02d} | "
@@ -227,27 +230,27 @@ def _collect_sessions(root: Path, output_dir: Path) -> List[Dict]:
     return sessions
 
 
-def _choose_theme(root: Path) -> Optional[str]:
+def _choose_theme(root: Path) -> str | None:
     default_theme = root / "assets" / "bosch_theme.png"
 
     choices = []
     if default_theme.exists():
         choices.append(
             Choice(
-                title=f"Dùng {default_theme.relative_to(root).as_posix()}",
+                title=f"Use {default_theme.relative_to(root).as_posix()}",
                 value=default_theme,
             )
         )
 
     choices.extend(
         [
-            Choice(title="Nhập đường dẫn theme image...", value="__manual__"),
-            Choice(title="Không dùng theme image", value=None),
+            Choice(title="Enter a theme image path...", value="__manual__"),
+            Choice(title="Do not use a theme image", value=None),
         ]
     )
 
     answer = questionary.select(
-        "Theme cho TOC và session cards:",
+        "Theme for the table of contents and session cards:",
         choices=choices,
     ).ask()
 
@@ -256,14 +259,14 @@ def _choose_theme(root: Path) -> Optional[str]:
 
     if answer == "__manual__":
         while True:
-            raw = _ask_text("Đường dẫn theme image:")
+            raw = _ask_text("Theme image path:")
             path = Path(raw).expanduser()
             if not path.is_absolute():
                 path = root / path
             path = path.resolve()
 
-            if not path.exists():
-                print(f"Không tìm thấy image: {path}")
+            if not path.is_file():
+                print(f"Image not found: {path}")
                 continue
             return _relative_or_absolute(path, root)
 
@@ -273,7 +276,7 @@ def _choose_theme(root: Path) -> Optional[str]:
     return _relative_or_absolute(answer, root)
 
 
-def _review_sessions(sessions: List[Dict]) -> None:
+def _review_sessions(sessions: list[dict]) -> None:
     print()
     print("=" * 72)
     print("SESSION ORDER")
@@ -290,8 +293,8 @@ def _review_sessions(sessions: List[Dict]) -> None:
 
 
 def create_course_config_interactive(
-    root: Optional[Path] = None,
-    output_dir: Optional[Path] = None,
+    root: Path | None = None,
+    output_dir: Path | None = None,
 ) -> Path:
     root = (root or _project_root()).expanduser().resolve()
     output_dir = (output_dir or root / "data" / "output").expanduser().resolve()
@@ -304,20 +307,20 @@ def create_course_config_interactive(
     print(f"Video folder : {output_dir}")
     print()
 
-    course_title = _ask_text("Tên course:", "Training Course")
+    course_title = _ask_text("Course title:", "Training Course")
     sessions = _collect_sessions(root, output_dir)
     _review_sessions(sessions)
 
     confirmed = questionary.confirm(
-        "Giữ thứ tự session như trên?",
+        "Keep the session order shown above?",
         default=True,
     ).ask()
     if confirmed is None:
         raise KeyboardInterrupt
     if not confirmed:
         print(
-            "Hãy chạy lại TUI và chọn video theo thứ tự mong muốn. "
-            "TUI cố ý dùng thứ tự chọn để tránh nhập index phức tạp."
+            "Run the TUI again and select videos in the desired order. "
+            "Selection order is used directly to keep ordering simple."
         )
         raise SystemExit(0)
 
@@ -325,27 +328,29 @@ def create_course_config_interactive(
 
     default_slug = _slugify_filename(course_title)
     config_name = _ask_text(
-        "Tên file config JSON:",
+        "JSON config filename:",
         f"{default_slug}.json",
     )
+    config_name = Path(config_name).name
     if not config_name.lower().endswith(".json"):
         config_name += ".json"
 
     output_name = _ask_text(
-        "Tên video tổng hợp cuối:",
+        "Final compiled video filename:",
         f"{default_slug}.mp4",
     )
+    output_name = Path(output_name).name
     if not output_name.lower().endswith(".mp4"):
         output_name += ".mp4"
 
     card_duration = _ask_float(
-        "Thời lượng intro card mỗi session (giây):",
+        "Session intro-card duration in seconds:",
         default=5.0,
         minimum=0.1,
     )
 
     toc_enabled = questionary.confirm(
-        "Tạo Table of Contents ở đầu video?",
+        "Add a table of contents at the beginning?",
         default=True,
     ).ask()
     if toc_enabled is None:
@@ -356,27 +361,27 @@ def create_course_config_interactive(
     toc_heading = "TABLE OF CONTENTS"
 
     if toc_enabled:
-        toc_heading = _ask_text("Tiêu đề mục lục:", "TABLE OF CONTENTS")
+        toc_heading = _ask_text("Table-of-contents heading:", "TABLE OF CONTENTS")
         toc_items_per_page = _ask_int(
-            "Số session tối đa trên mỗi trang TOC:",
+            "Maximum sessions per table-of-contents page:",
             default=8,
             minimum=1,
         )
         toc_page_duration = _ask_float(
-            "Thời lượng mỗi trang TOC (giây):",
+            "Table-of-contents page duration in seconds:",
             default=5.0,
             minimum=0.1,
         )
 
     add_chapters = questionary.confirm(
-        "Thêm MP4 chapter metadata để có thể jump tới session?",
+        "Add MP4 chapter metadata for session navigation?",
         default=True,
     ).ask()
     if add_chapters is None:
         raise KeyboardInterrupt
 
     advanced = questionary.confirm(
-        "Bạn có muốn chỉnh thông số render nâng cao?",
+        "Configure advanced rendering settings?",
         default=False,
     ).ask()
     if advanced is None:
@@ -405,7 +410,7 @@ def create_course_config_interactive(
         )
 
         custom_font = questionary.confirm(
-            "Dùng font .ttf/.otf riêng?",
+            "Use a custom .ttf/.otf font?",
             default=False,
         ).ask()
         if custom_font is None:
@@ -419,8 +424,8 @@ def create_course_config_interactive(
                     font_path = root / font_path
                 font_path = font_path.resolve()
 
-                if not font_path.exists():
-                    print(f"Không tìm thấy font: {font_path}")
+                if not font_path.is_file():
+                    print(f"Font not found: {font_path}")
                     continue
                 render["font_path"] = _relative_or_absolute(font_path, root)
                 break
@@ -442,19 +447,19 @@ def create_course_config_interactive(
         "sessions": sessions,
     }
 
-    config_dir = root / "courses"
+    config_dir = root / "configs" / "courses"
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path = config_dir / config_name
 
     if config_path.exists():
         overwrite = questionary.confirm(
-            f"{config_path.name} đã tồn tại. Ghi đè?",
+            f"{config_path.name} already exists. Overwrite it?",
             default=False,
         ).ask()
         if overwrite is None:
             raise KeyboardInterrupt
         if not overwrite:
-            print("Đã hủy ghi file.")
+            print("Config file creation cancelled.")
             raise SystemExit(0)
 
     config_path.write_text(
@@ -464,15 +469,12 @@ def create_course_config_interactive(
 
     print()
     print("=" * 72)
-    print("ĐÃ TẠO COURSE CONFIG")
+    print("COURSE CONFIG CREATED")
     print("=" * 72)
     print(config_path)
     print()
-    print("Build video bằng:")
-    print(
-        f'python -m src.course_builder --config '
-        f'"{_relative_or_absolute(config_path, root)}"'
-    )
+    print("Build the course video with:")
+    print(f'uv run transcript-course --config "{_relative_or_absolute(config_path, root)}"')
     print()
 
     return config_path

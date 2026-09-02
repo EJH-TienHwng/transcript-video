@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 import shutil
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Sequence
 
 from .cards import render_session_card, render_toc_pages
 from .config import CourseConfig
@@ -39,14 +39,12 @@ def _prepare_directories(config: CourseConfig) -> dict:
     return directories
 
 
-def _read_durations(config: CourseConfig) -> List[float]:
+def _read_durations(config: CourseConfig) -> list[float]:
     durations = []
 
     for position, session in enumerate(config.sessions, start=1):
         if not session.video.exists():
-            raise FileNotFoundError(
-                f"Session {position} không tìm thấy video: {session.video}"
-            )
+            raise FileNotFoundError(f"Session {position} video not found: {session.video}")
 
         duration = get_media_duration_seconds(session.video)
         durations.append(duration)
@@ -64,8 +62,8 @@ def _normalize_sessions(
     config: CourseConfig,
     timeline: Sequence[SessionTimeline],
     output_dir: Path,
-) -> List[Path]:
-    normalized_paths: List[Path] = []
+) -> list[Path]:
+    normalized_paths: list[Path] = []
 
     for position, item in enumerate(timeline, start=1):
         number = session_number(item.session, position)
@@ -91,9 +89,9 @@ def _build_toc_videos(
     config: CourseConfig,
     timeline: Sequence[SessionTimeline],
     dirs: dict,
-) -> List[Path]:
+) -> list[Path]:
     toc_images = render_toc_pages(config, timeline, dirs["images"])
-    toc_videos: List[Path] = []
+    toc_videos: list[Path] = []
 
     for index, image_path in enumerate(toc_images, start=1):
         video_path = dirs["toc"] / f"toc_{index:03d}.mp4"
@@ -113,8 +111,8 @@ def _build_session_cards(
     config: CourseConfig,
     timeline: Sequence[SessionTimeline],
     dirs: dict,
-) -> List[Path]:
-    card_videos: List[Path] = []
+) -> list[Path]:
+    card_videos: list[Path] = []
 
     for position, item in enumerate(timeline, start=1):
         number = session_number(item.session, position)
@@ -162,23 +160,28 @@ def build_course(config: CourseConfig) -> Path:
     logging.info("Course: %s", config.title)
     logging.info("Sessions: %d", len(config.sessions))
 
-    # 1. Read original session durations.
+    # 1. Validate source videos and build a preliminary timeline for normalization.
     durations = _read_durations(config)
+    preliminary_timeline = build_timeline(config, durations)
 
-    # 2. Calculate the absolute final-video timeline before rendering the TOC.
-    timeline = build_timeline(config, durations)
+    # 2. Normalize first, then use the real normalized durations for visible
+    # timestamps and MP4 chapters. Frame-rate conversion can shift durations.
+    normalized_sessions = _normalize_sessions(
+        config,
+        preliminary_timeline,
+        dirs["normalized"],
+    )
+    normalized_durations = [get_media_duration_seconds(path) for path in normalized_sessions]
+    timeline = build_timeline(config, normalized_durations)
     _print_timeline(timeline)
 
-    # 3. Render visual intro material using the calculated timestamps.
+    # 3. Render visual intro material using the final timestamps.
     toc_videos = _build_toc_videos(config, timeline, dirs)
     card_videos = _build_session_cards(config, timeline, dirs)
 
-    # 4. Normalize user videos to one common codec/resolution/fps/audio format.
-    normalized_sessions = _normalize_sessions(config, timeline, dirs["normalized"])
-
-    # 5. Interleave TOC + [card, session] pairs in the chosen JSON order.
-    concat_segments: List[Path] = list(toc_videos)
-    for card, session in zip(card_videos, normalized_sessions):
+    # 4. Interleave TOC + [card, session] pairs in the chosen JSON order.
+    concat_segments: list[Path] = list(toc_videos)
+    for card, session in zip(card_videos, normalized_sessions, strict=True):
         concat_segments.extend([card, session])
 
     compiled_without_chapters = dirs["temp"] / "compiled_without_chapters.mp4"
@@ -191,7 +194,7 @@ def build_course(config: CourseConfig) -> Path:
         list_path=concat_list_path,
     )
 
-    # 6. Add MP4 chapter metadata at each real session-content start.
+    # 5. Add MP4 chapter metadata at each real session-content start.
     config.output.parent.mkdir(parents=True, exist_ok=True)
 
     if config.add_chapters:

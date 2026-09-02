@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
@@ -11,7 +11,7 @@ from .config import CourseConfig
 from .timeline import SessionTimeline, format_video_timestamp, session_number
 
 
-def _find_default_font(bold: bool = False) -> Optional[Path]:
+def _find_default_font(bold: bool = False) -> Path | None:
     """Find a common system font without shipping font files with the project."""
     candidates = []
 
@@ -26,10 +26,16 @@ def _find_default_font(bold: bool = False) -> Optional[Path]:
     else:
         candidates.extend(
             [
-                Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold
-                     else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-                Path("/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold
-                     else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"),
+                Path(
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+                    if bold
+                    else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+                ),
+                Path(
+                    "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf"
+                    if bold
+                    else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
+                ),
             ]
         )
 
@@ -41,7 +47,7 @@ def _load_font(config: CourseConfig, size: int, bold: bool = False):
     if font_path and font_path.exists():
         return ImageFont.truetype(str(font_path), size=size)
 
-    logging.warning("Không tìm thấy font TrueType. Đang dùng Pillow default font.")
+    logging.warning("TrueType font not found; using Pillow's default font.")
     return ImageFont.load_default()
 
 
@@ -59,7 +65,7 @@ def _make_background(config: CourseConfig) -> Image.Image:
 
     if config.theme_image is not None:
         if not config.theme_image.exists():
-            raise FileNotFoundError(f"Không tìm thấy theme image: {config.theme_image}")
+            raise FileNotFoundError(f"Theme image not found: {config.theme_image}")
         with Image.open(config.theme_image) as source:
             background = _cover_image(source, width, height)
     else:
@@ -80,12 +86,12 @@ def _wrap_text(
     text: str,
     font,
     max_width: int,
-) -> List[str]:
+) -> list[str]:
     words = text.split()
     if not words:
         return [""]
 
-    lines: List[str] = []
+    lines: list[str] = []
     current = words[0]
 
     for word in words[1:]:
@@ -181,14 +187,14 @@ def render_toc_pages(
     config: CourseConfig,
     timeline: Sequence[SessionTimeline],
     output_dir: Path,
-) -> List[Path]:
+) -> list[Path]:
     """Render one or more TOC PNG pages with absolute timestamps."""
     if not config.toc.enabled:
         return []
 
     output_dir.mkdir(parents=True, exist_ok=True)
     items_per_page = config.toc.items_per_page
-    page_paths: List[Path] = []
+    page_paths: list[Path] = []
 
     for page_index, start in enumerate(range(0, len(timeline), items_per_page), start=1):
         page_items = timeline[start : start + items_per_page]
