@@ -29,6 +29,7 @@ def process_video(
 ) -> None:
     """Generate subtitles, optionally generate TTS, and render the output video."""
     transcription = settings.transcription
+    hardware = settings.hardware
     tts = settings.tts
     model_suffix = get_model_filename_suffix(model_path, translation_model_path)
     srt_path = paths.subtitle_dir / f"{video_path.stem}_{model_suffix}.srt"
@@ -58,8 +59,8 @@ def process_video(
             paths=paths,
             task=transcription_task,
             language=transcription.language.strip() or None,
-            device=transcription.device,
-            compute_type=transcription.compute_type,
+            device=hardware.device,
+            compute_type=hardware.compute_type,
         )
 
         if translation_model_path is not None:
@@ -67,7 +68,7 @@ def process_video(
             segments = translate_segments_with_vinai(
                 segments=segments,
                 model_path=translation_model_path,
-                device=transcription.device,
+                device=hardware.device,
                 batch_size=transcription.translation_batch_size,
             )
 
@@ -85,7 +86,12 @@ def process_video(
 
     burn_step = 4 if translation_model_path is not None else 3
     logging.info("Step %d: Burning subtitles: %s", burn_step, subtitled_output_path)
-    burn_subtitles(video_path, srt_path, subtitled_output_path)
+    burn_subtitles(
+        video_path,
+        srt_path,
+        subtitled_output_path,
+        video_encoder=hardware.video_encoder,
+    )
 
     if not tts.enabled:
         logging.info("TTS disabled. DONE: %s", subtitled_output_path)
@@ -106,7 +112,7 @@ def process_video(
             tts_language=tts.language,
             tts_speaker=tts.speaker,
             tts_instruct=tts.instruct,
-            device=transcription.device,
+            device=hardware.device,
             attn_implementation=tts.attn_implementation,
             chunk_minutes=tts.chunk_minutes,
             rerun_chunk=tts.rerun_chunk,
@@ -131,7 +137,7 @@ def process_video(
                     tts_language=tts.language,
                     tts_speaker=tts.speaker,
                     tts_instruct=tts.instruct,
-                    device=transcription.device,
+                    device=hardware.device,
                     attn_implementation=tts.attn_implementation,
                 )
             else:
@@ -143,7 +149,7 @@ def process_video(
                     tts_language=tts.language,
                     tts_speaker=tts.speaker,
                     tts_instruct=tts.instruct,
-                    device=transcription.device,
+                    device=hardware.device,
                     attn_implementation=tts.attn_implementation,
                 )
 

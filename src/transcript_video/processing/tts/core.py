@@ -7,6 +7,7 @@ from numbers import Integral
 from pathlib import Path
 
 from ...config import SubtitleSegment
+from ...hardware import resolve_torch_device
 from ..media import get_media_duration_seconds
 
 
@@ -64,9 +65,7 @@ def load_qwen_tts_model(
     import torch
     from qwen_tts import Qwen3TTSModel
 
-    if device == "cuda" and not torch.cuda.is_available():
-        logging.warning("CUDA is unavailable for Qwen TTS; falling back to CPU.")
-        device = "cpu"
+    device = resolve_torch_device(device, "Qwen TTS")
 
     kwargs = {
         "device_map": "cuda:0" if device == "cuda" else "cpu",

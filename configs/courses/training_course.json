@@ -18,6 +18,7 @@
     "video_bitrate": "8M",
     "audio_bitrate": "192k",
     "audio_sample_rate": 48000,
+    "video_encoder": "auto",
     "font_path": null
   },
   "sessions": [

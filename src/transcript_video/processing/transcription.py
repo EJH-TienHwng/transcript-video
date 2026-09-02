@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from ..config import ProjectPaths, SubtitleSegment
+from ..hardware import resolve_torch_device
 from .media import (
     ensure_ffmpeg_available_for_transformers,
     extract_audio,
@@ -23,6 +24,10 @@ def transcribe_with_faster_whisper(
     """Transcribe/translate using faster-whisper."""
     from faster_whisper import WhisperModel
 
+    device = resolve_torch_device(device, "faster-whisper")
+    if device == "cpu" and compute_type == "float16":
+        logging.warning("float16 is not suitable for CPU inference; using int8 instead.")
+        compute_type = "int8"
     logging.info("Engine: faster-whisper")
     model = WhisperModel(str(model_path), device=device, compute_type=compute_type)
 
@@ -65,9 +70,7 @@ def transcribe_with_huggingface(
     from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
     logging.info("Engine: Hugging Face Transformers")
-    if device == "cuda" and not torch.cuda.is_available():
-        logging.warning("CUDA is unavailable; falling back to CPU.")
-        device = "cpu"
+    device = resolve_torch_device(device, "Hugging Face Whisper")
 
     torch_dtype = torch.float16 if device == "cuda" else torch.float32
     hf_device = 0 if device == "cuda" else -1
@@ -140,15 +143,14 @@ def translate_segments_with_vinai(
     import torch
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-    if device == "cuda" and not torch.cuda.is_available():
-        logging.warning("CUDA is unavailable for VinAI Translate; falling back to CPU.")
-        device = "cpu"
+    device = resolve_torch_device(device, "VinAI Translate")
 
     torch_device = torch.device(device)
+    model_dtype = torch.float16 if device == "cuda" else torch.float32
     logging.info("Translation engine: VinAI Translate (%s)", torch_device)
 
     tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
-    model = AutoModelForSeq2SeqLM.from_pretrained(str(model_path))
+    model = AutoModelForSeq2SeqLM.from_pretrained(str(model_path), dtype=model_dtype)
     model.to(torch_device)
     model.eval()
 

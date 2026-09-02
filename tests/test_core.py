@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import importlib
 import json
-import sys
 import tempfile
-import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -17,6 +14,7 @@ from transcript_video.config import (
     save_run_settings,
 )
 from transcript_video.course.config import CourseConfig, load_course_config
+from transcript_video.hardware import get_ffmpeg_exe, video_encoder_args
 from transcript_video.processing.models import detect_model_type, read_transformers_model_config
 from transcript_video.processing.subtitles import (
     parse_srt_timestamp,
@@ -113,18 +111,20 @@ class CourseConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "overwrite"):
                 load_course_config(config_path)
 
+    def test_rejects_unknown_video_encoder(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = self._write_config(
+                Path(temp_dir),
+                {"render": {"video_encoder": "unknown"}},
+            )
+
+            with self.assertRaisesRegex(ValueError, "render.video_encoder"):
+                load_course_config(config_path)
+
 
 class CourseMediaTests(unittest.TestCase):
     def test_normalization_uses_source_video_duration(self) -> None:
-        fake_imageio_ffmpeg = types.ModuleType("imageio_ffmpeg")
-        fake_imageio_ffmpeg.get_ffmpeg_exe = lambda: "ffmpeg"
-
-        with mock.patch.dict(
-            sys.modules,
-            {"imageio_ffmpeg": fake_imageio_ffmpeg},
-        ):
-            sys.modules.pop("transcript_video.course.media", None)
-            media = importlib.import_module("transcript_video.course.media")
+        from transcript_video.course import media
 
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -145,6 +145,12 @@ class CourseMediaTests(unittest.TestCase):
                     return_value=12.5,
                 ),
                 mock.patch.object(media, "media_has_audio", return_value=True),
+                mock.patch.object(media, "get_ffmpeg_exe", return_value="ffmpeg"),
+                mock.patch.object(
+                    media,
+                    "video_encoder_args",
+                    return_value=["-c:v", "h264_nvenc"],
+                ),
                 mock.patch.object(media, "run_command") as run_command,
             ):
                 media.normalize_session_video(video_in, video_out, config)
@@ -152,6 +158,42 @@ class CourseMediaTests(unittest.TestCase):
             command = run_command.call_args.args[0]
             duration_index = command.index("-t") + 1
             self.assertEqual(command[duration_index], "12.500")
+            self.assertIn("h264_nvenc", command)
+
+
+class HardwareTests(unittest.TestCase):
+    def test_explicit_ffmpeg_path_has_priority(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ffmpeg_path = Path(temp_dir) / "ffmpeg.exe"
+            ffmpeg_path.touch()
+
+            with mock.patch.dict(
+                "os.environ",
+                {"TRANSCRIPT_VIDEO_FFMPEG": str(ffmpeg_path)},
+                clear=False,
+            ):
+                selected = get_ffmpeg_exe()
+
+        self.assertEqual(selected, str(ffmpeg_path.resolve()))
+
+    def test_auto_video_encoder_prefers_nvenc(self) -> None:
+        with mock.patch(
+            "transcript_video.hardware.ffmpeg_encoder_available",
+            return_value=True,
+        ):
+            args = video_encoder_args("ffmpeg", "auto", bitrate="8M")
+
+        self.assertEqual(args[:4], ["-c:v", "h264_nvenc", "-preset", "p4"])
+        self.assertIn("8M", args)
+
+    def test_auto_video_encoder_falls_back_to_libx264(self) -> None:
+        with mock.patch(
+            "transcript_video.hardware.ffmpeg_encoder_available",
+            return_value=False,
+        ):
+            args = video_encoder_args("ffmpeg", "auto")
+
+        self.assertEqual(args[:4], ["-c:v", "libx264", "-preset", "medium"])
 
 
 class RunSettingsTests(unittest.TestCase):
@@ -181,7 +223,7 @@ class RunSettingsTests(unittest.TestCase):
                 ]
             )
 
-            self.assertEqual(settings.transcription.device, "cpu")
+            self.assertEqual(settings.hardware.device, "cpu")
             self.assertTrue(settings.tts.enabled)
 
     def test_rejects_invalid_toml_value_types(self) -> None:
@@ -199,6 +241,30 @@ class RunSettingsTests(unittest.TestCase):
         _args, settings = parse_args(["--language", ""])
 
         self.assertEqual(settings.transcription.language, "")
+
+    def test_migrates_legacy_hardware_settings(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "legacy.toml"
+            config_path.write_text(
+                '[transcription]\ndevice = "cpu"\ncompute_type = "int8"\n',
+                encoding="utf-8",
+            )
+
+            settings = load_run_settings(config_path)
+
+            self.assertEqual(settings.hardware.device, "cpu")
+            self.assertEqual(settings.hardware.compute_type, "int8")
+
+    def test_rejects_unsupported_compute_type(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "invalid.toml"
+            config_path.write_text(
+                '[hardware]\ncompute_type = "fastest"\n',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "hardware.compute_type"):
+                parse_args(["--config", str(config_path)])
 
 
 if __name__ == "__main__":

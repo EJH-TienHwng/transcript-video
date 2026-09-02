@@ -7,9 +7,8 @@ import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
-import imageio_ffmpeg
-
 from ..config import VIDEO_EXTENSIONS
+from ..hardware import get_ffmpeg_exe, video_encoder_args
 
 
 def escape_subtitle_path_for_ffmpeg(path: Path) -> str:
@@ -39,8 +38,8 @@ def run_command(command: Sequence[str], *, hide_output: bool = False) -> None:
 
 
 def ensure_ffmpeg_available_for_transformers() -> None:
-    """Make imageio-ffmpeg's bundled ffmpeg visible to Transformers/audio loaders."""
-    ffmpeg_path = Path(imageio_ffmpeg.get_ffmpeg_exe()).resolve()
+    """Make the selected FFmpeg executable visible to Transformers/audio loaders."""
+    ffmpeg_path = Path(get_ffmpeg_exe()).resolve()
     ffmpeg_dir = str(ffmpeg_path.parent)
     os.environ["IMAGEIO_FFMPEG_EXE"] = str(ffmpeg_path)
 
@@ -51,11 +50,16 @@ def ensure_ffmpeg_available_for_transformers() -> None:
     logging.info("FFmpeg available for Transformers: %s", ffmpeg_path)
 
 
-def burn_subtitles(video_in: Path, srt_in: Path, video_out: Path) -> None:
+def burn_subtitles(
+    video_in: Path,
+    srt_in: Path,
+    video_out: Path,
+    video_encoder: str = "auto",
+) -> None:
     """Burn hard subtitles into a video using FFmpeg."""
     video_out.parent.mkdir(parents=True, exist_ok=True)
 
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     srt_escaped = escape_subtitle_path_for_ffmpeg(srt_in)
 
     # Default subtitle style with white text and black outline. You can customize this as needed.
@@ -91,6 +95,7 @@ def burn_subtitles(video_in: Path, srt_in: Path, video_out: Path) -> None:
         str(video_in),
         "-vf",
         f"subtitles='{srt_escaped}':force_style='{subtitle_style}'",
+        *video_encoder_args(ffmpeg_path, video_encoder),
         "-c:a",
         "copy",
         str(video_out),
@@ -100,7 +105,7 @@ def burn_subtitles(video_in: Path, srt_in: Path, video_out: Path) -> None:
 
 def extract_audio(video_path: Path, audio_path: Path) -> None:
     """Extract mono 16 kHz WAV audio from video for Hugging Face pipeline."""
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     audio_path.parent.mkdir(parents=True, exist_ok=True)
 
     command = [
@@ -171,7 +176,7 @@ def find_videos(input_dir: Path, selected_video: str | None = None) -> list[Path
 
 def get_media_duration_seconds(media_path: Path) -> float | None:
     """Return media duration by parsing FFmpeg output."""
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     process = subprocess.run(
         [ffmpeg_path, "-i", str(media_path)],
         capture_output=True,
@@ -204,7 +209,7 @@ def split_audio_into_chunks(
     if not audio_in.exists():
         raise FileNotFoundError(f"Audio file to split was not found: {audio_in}")
 
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Remove old chunks first. This avoids leaving stale part_010.wav, part_011.wav, ...
@@ -240,7 +245,7 @@ def split_audio_into_chunks(
 
 def mux_audio_into_video_replace(video_in: Path, audio_in: Path, video_out: Path) -> None:
     """Replace the video's original audio with generated TTS audio."""
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     video_duration = get_media_duration_seconds(video_in)
     if video_duration is None:
         raise ValueError(f"Could not read video duration: {video_in}")
@@ -272,7 +277,7 @@ def mux_audio_into_video_replace(video_in: Path, audio_in: Path, video_out: Path
 
 def mux_audio_into_video_mix(video_in: Path, audio_in: Path, video_out: Path) -> None:
     """Mix original video audio with generated TTS audio."""
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     video_duration = get_media_duration_seconds(video_in)
     if video_duration is None:
         raise ValueError(f"Could not read video duration: {video_in}")

@@ -9,6 +9,18 @@ from pathlib import Path
 from typing import Any
 
 VIDEO_EXTENSIONS = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v"}
+FASTER_WHISPER_COMPUTE_TYPES = {
+    "auto",
+    "default",
+    "int8",
+    "int8_float16",
+    "int8_float32",
+    "int8_bfloat16",
+    "int16",
+    "float16",
+    "float32",
+    "bfloat16",
+}
 DEFAULT_CONFIG_PATH = Path("configs/transcription.toml")
 DEFAULT_MODEL_PATH = "models/faster-whisper-large-v3"
 DEFAULT_TTS_MODEL = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
@@ -32,11 +44,16 @@ class ProjectSettings:
 
 
 @dataclass(slots=True)
+class HardwareSettings:
+    device: str = "cuda"
+    compute_type: str = "int8_float16"
+    video_encoder: str = "auto"
+
+
+@dataclass(slots=True)
 class TranscriptionSettings:
     task: str = "transcribe"
     language: str = "vi"
-    device: str = "cuda"
-    compute_type: str = "int8"
     translation_batch_size: int = 8
     overwrite_srt: bool = False
     skip_burn: bool = False
@@ -69,12 +86,13 @@ class TTSSettings:
 @dataclass(slots=True)
 class RunSettings:
     project: ProjectSettings
+    hardware: HardwareSettings
     transcription: TranscriptionSettings
     tts: TTSSettings
 
     @classmethod
     def defaults(cls) -> RunSettings:
-        return cls(ProjectSettings(), TranscriptionSettings(), TTSSettings())
+        return cls(ProjectSettings(), HardwareSettings(), TranscriptionSettings(), TTSSettings())
 
 
 @dataclass(slots=True)
@@ -111,6 +129,7 @@ class ProjectPaths:
 
 _SECTION_TYPES = {
     "project": ProjectSettings,
+    "hardware": HardwareSettings,
     "transcription": TranscriptionSettings,
     "tts": TTSSettings,
 }
@@ -132,6 +151,26 @@ def _load_section(raw: dict[str, Any], section: str, settings_type: type[Any]) -
         raise ValueError(f"Invalid values in config section [{section}].") from exc
 
 
+def _migrate_legacy_hardware_settings(raw: dict[str, Any]) -> None:
+    """Move pre-hardware-section settings without breaking saved run profiles."""
+    transcription = raw.get("transcription")
+    if not isinstance(transcription, dict):
+        return
+
+    hardware = raw.setdefault("hardware", {})
+    if not isinstance(hardware, dict):
+        return
+
+    for key in ("device", "compute_type"):
+        if key not in transcription:
+            continue
+        if key in hardware:
+            raise ValueError(
+                f"Config defines '{key}' in both [hardware] and legacy [transcription]."
+            )
+        hardware[key] = transcription.pop(key)
+
+
 def load_run_settings(config_path: Path) -> RunSettings:
     config_path = config_path.expanduser().resolve()
     if not config_path.is_file():
@@ -143,12 +182,14 @@ def load_run_settings(config_path: Path) -> RunSettings:
     except tomllib.TOMLDecodeError as exc:
         raise ValueError(f"Run config is not valid TOML: {config_path}") from exc
 
+    _migrate_legacy_hardware_settings(raw)
     unknown_sections = sorted(set(raw) - set(_SECTION_TYPES))
     if unknown_sections:
         raise ValueError(f"Unknown config section(s): {', '.join(unknown_sections)}")
 
     return RunSettings(
         project=_load_section(raw, "project", ProjectSettings),
+        hardware=_load_section(raw, "hardware", HardwareSettings),
         transcription=_load_section(raw, "transcription", TranscriptionSettings),
         tts=_load_section(raw, "tts", TTSSettings),
     )

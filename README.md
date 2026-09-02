@@ -2,12 +2,16 @@
 
 Local tools for video transcription, subtitle rendering, Qwen TTS voice-over, and compiling multiple processed videos into a training course.
 
+**Documentation:** [English](docs/README.md) · [Tiếng Việt](docs/README.vi.md)
+
 ## Features
 
 - Transcribe with local faster-whisper or Hugging Face Whisper models.
 - Translate speech directly with Whisper or translate Vietnamese subtitle text with VinAI.
 - Write and reuse SRT files.
-- Burn subtitles with the FFmpeg binary supplied by `imageio-ffmpeg`.
+- Run Whisper, VinAI translation, and Qwen TTS on CUDA with FP16 defaults.
+- Prefer NVIDIA NVENC for H.264 rendering, with a tested libx264 fallback.
+- Burn subtitles with a project, system, or bundled FFmpeg executable.
 - Generate full or fixed-time Qwen TTS audio.
 - Replace or mix the original audio track.
 - Build a course video with a table of contents, session cards, and MP4 chapters.
@@ -32,6 +36,7 @@ transcript-video/
 ├── src/transcript_video/
 │   ├── cli.py                   # primary command-line interface
 │   ├── config.py                # reusable TOML settings and shared domain types
+│   ├── hardware.py              # CUDA and NVIDIA NVENC selection/fallback
 │   ├── processing/              # transcription, subtitles, media, models, and TTS
 │   └── course/                  # course configuration, rendering, timeline, and TUI
 ├── tests/                       # dependency-light automated tests
@@ -50,6 +55,8 @@ The package uses the standard Python `src` layout. `src` is a container director
 - Local Whisper model files under `models/` or an explicit model path
 
 The locked PyTorch packages target CUDA 12.4.
+
+For GPU video encoding, provide an NVENC-capable FFmpeg as `bin/ffmpeg.exe`, on `PATH`, or through `TRANSCRIPT_VIDEO_FFMPEG`. See the [GPU acceleration guide](docs/README.md#gpu-acceleration).
 
 ## Install with uv
 
@@ -75,10 +82,11 @@ The main command automatically loads [configs/transcription.toml](configs/transc
 uv run transcript-video
 ```
 
-The file contains three sections:
+The file contains four sections:
 
 - `[project]`: root directory, selected video, ASR model, and optional translation model.
-- `[transcription]`: task, language, device, compute type, batch size, and subtitle behavior.
+- `[hardware]`: CUDA/CPU inference, faster-whisper compute type, and FFmpeg encoder selection.
+- `[transcription]`: task, language, translation batch size, and subtitle behavior.
 - `[tts]`: voice, model, generation mode, timing, chunking, and audio behavior.
 
 Use another saved configuration:
@@ -90,7 +98,7 @@ uv run transcript-video --config configs/my-run.toml
 CLI arguments override values loaded from TOML:
 
 ```powershell
-uv run transcript-video --config configs/my-run.toml --video lesson-02.mp4 --device cpu
+uv run transcript-video --config configs/my-run.toml --video lesson-02.mp4 --device cuda
 ```
 
 Save the effective combination of config values and CLI overrides:

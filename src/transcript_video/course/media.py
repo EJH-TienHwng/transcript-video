@@ -6,8 +6,7 @@ import subprocess
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
-import imageio_ffmpeg
-
+from ..hardware import get_ffmpeg_exe, video_encoder_args
 from .config import CourseConfig
 
 
@@ -33,7 +32,7 @@ def get_media_duration_seconds(media_path: Path) -> float:
     if not media_path.is_file():
         raise FileNotFoundError(f"Media file not found: {media_path}")
 
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     process = subprocess.run(
         [ffmpeg_path, "-i", str(media_path)],
         capture_output=True,
@@ -51,7 +50,7 @@ def get_media_duration_seconds(media_path: Path) -> float:
 
 
 def media_has_audio(media_path: Path) -> bool:
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     process = subprocess.run(
         [ffmpeg_path, "-i", str(media_path)],
         capture_output=True,
@@ -70,7 +69,7 @@ def still_image_to_video(
     config: CourseConfig,
 ) -> None:
     """Turn a rendered card PNG into a video segment with silent AAC audio."""
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     video_out.parent.mkdir(parents=True, exist_ok=True)
 
     command = [
@@ -94,12 +93,11 @@ def still_image_to_video(
             f"pad={config.render.width}:{config.render.height}:(ow-iw)/2:(oh-ih)/2,"
             f"fps={config.render.fps},format=yuv420p"
         ),
-        "-c:v",
-        "libx264",
-        "-preset",
-        "medium",
-        "-b:v",
-        config.render.video_bitrate,
+        *video_encoder_args(
+            ffmpeg_path,
+            config.render.video_encoder,
+            bitrate=config.render.video_bitrate,
+        ),
         "-c:a",
         "aac",
         "-b:a",
@@ -127,7 +125,7 @@ def normalize_session_video(
     if video_in.resolve() == video_out.resolve():
         raise ValueError("Normalization input and output paths must be different.")
 
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     video_out.parent.mkdir(parents=True, exist_ok=True)
     duration = get_media_duration_seconds(video_in)
 
@@ -149,12 +147,11 @@ def normalize_session_video(
             "0:a:0",
             "-vf",
             video_filter,
-            "-c:v",
-            "libx264",
-            "-preset",
-            "medium",
-            "-b:v",
-            config.render.video_bitrate,
+            *video_encoder_args(
+                ffmpeg_path,
+                config.render.video_encoder,
+                bitrate=config.render.video_bitrate,
+            ),
             "-c:a",
             "aac",
             "-b:a",
@@ -187,12 +184,11 @@ def normalize_session_video(
             video_filter,
             "-t",
             f"{duration:.3f}",
-            "-c:v",
-            "libx264",
-            "-preset",
-            "medium",
-            "-b:v",
-            config.render.video_bitrate,
+            *video_encoder_args(
+                ffmpeg_path,
+                config.render.video_encoder,
+                bitrate=config.render.video_bitrate,
+            ),
             "-c:a",
             "aac",
             "-b:a",
@@ -236,7 +232,7 @@ def concatenate_videos(
         encoding="utf-8",
     )
 
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     command = [
@@ -303,7 +299,7 @@ def add_chapter_metadata(
     chapter_file.parent.mkdir(parents=True, exist_ok=True)
     chapter_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_exe()
     command = [
         ffmpeg_path,
         "-y",

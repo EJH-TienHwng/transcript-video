@@ -8,6 +8,8 @@ from pathlib import Path
 
 from .config import (
     DEFAULT_CONFIG_PATH,
+    FASTER_WHISPER_COMPUTE_TYPES,
+    HardwareSettings,
     ProjectPaths,
     ProjectSettings,
     RunSettings,
@@ -42,6 +44,7 @@ def _config_defaults(argv: Sequence[str]) -> tuple[Path, RunSettings]:
 
 def _build_parser(config_path: Path, defaults: RunSettings) -> argparse.ArgumentParser:
     project = defaults.project
+    hardware = defaults.hardware
     transcription = defaults.transcription
     tts = defaults.tts
 
@@ -93,13 +96,20 @@ def _build_parser(config_path: Path, defaults: RunSettings) -> argparse.Argument
     parser.add_argument(
         "--device",
         choices=["cuda", "cpu"],
-        default=transcription.device,
-        help="Inference device.",
+        default=hardware.device,
+        help="Inference device. CUDA is the GPU-accelerated default.",
     )
     parser.add_argument(
         "--compute-type",
-        default=transcription.compute_type,
+        choices=sorted(FASTER_WHISPER_COMPUTE_TYPES),
+        default=hardware.compute_type,
         help="faster-whisper compute type, such as int8, float16, or float32.",
+    )
+    parser.add_argument(
+        "--video-encoder",
+        choices=["auto", "h264_nvenc", "libx264"],
+        default=hardware.video_encoder,
+        help="FFmpeg video encoder. 'auto' prefers NVIDIA NVENC and falls back to libx264.",
     )
     parser.add_argument(
         "--translation-batch-size",
@@ -202,11 +212,14 @@ def _settings_from_args(args: argparse.Namespace) -> RunSettings:
             model=args.model,
             translation_model=args.translation_model,
         ),
+        hardware=HardwareSettings(
+            device=args.device,
+            compute_type=args.compute_type,
+            video_encoder=args.video_encoder,
+        ),
         transcription=TranscriptionSettings(
             task=args.task,
             language=args.language,
-            device=args.device,
-            compute_type=args.compute_type,
             translation_batch_size=args.translation_batch_size,
             overwrite_srt=args.overwrite_srt,
             skip_burn=args.skip_burn,
@@ -243,6 +256,7 @@ def parse_args(argv: Sequence[str] | None = None) -> tuple[argparse.Namespace, R
 
 def _validate_settings(settings: RunSettings) -> None:
     project = settings.project
+    hardware = settings.hardware
     transcription = settings.transcription
     tts = settings.tts
 
@@ -282,7 +296,7 @@ def _validate_settings(settings: RunSettings) -> None:
     require_string(project.model, "project.model")
     require_string(project.translation_model, "project.translation_model", optional=True)
     require_string(transcription.language, "transcription.language", allow_empty=True)
-    require_string(transcription.compute_type, "transcription.compute_type")
+    require_string(hardware.compute_type, "hardware.compute_type")
     require_string(tts.model, "tts.model")
     require_string(tts.language, "tts.language")
     require_string(tts.speaker, "tts.speaker")
@@ -299,8 +313,12 @@ def _validate_settings(settings: RunSettings) -> None:
 
     if transcription.task not in {"translate", "transcribe"}:
         raise ValueError("transcription.task must be 'translate' or 'transcribe'.")
-    if transcription.device not in {"cuda", "cpu"}:
-        raise ValueError("transcription.device must be 'cuda' or 'cpu'.")
+    if hardware.device not in {"cuda", "cpu"}:
+        raise ValueError("hardware.device must be 'cuda' or 'cpu'.")
+    if hardware.compute_type not in FASTER_WHISPER_COMPUTE_TYPES:
+        raise ValueError("hardware.compute_type is not supported by faster-whisper.")
+    if hardware.video_encoder not in {"auto", "h264_nvenc", "libx264"}:
+        raise ValueError("hardware.video_encoder must be 'auto', 'h264_nvenc', or 'libx264'.")
     require_int(transcription.translation_batch_size, "transcription.translation_batch_size", 1)
     if tts.mode not in {"timed", "simple"}:
         raise ValueError("tts.mode must be 'timed' or 'simple'.")

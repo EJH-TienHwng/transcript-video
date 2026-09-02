@@ -33,6 +33,7 @@ class RenderConfig:
     video_bitrate: str = "8M"
     audio_bitrate: str = "192k"
     audio_sample_rate: int = 48000
+    video_encoder: str = "auto"
     font_path: Path | None = None
 
 
@@ -149,6 +150,7 @@ def load_course_config(config_path: Path) -> CourseConfig:
         video_bitrate=str(render_raw.get("video_bitrate", "8M")),
         audio_bitrate=str(render_raw.get("audio_bitrate", "192k")),
         audio_sample_rate=int(render_raw.get("audio_sample_rate", 48000)),
+        video_encoder=str(render_raw.get("video_encoder", "auto")),
         font_path=_resolve_path(project_root, render_raw.get("font_path")),
     )
 
@@ -166,6 +168,8 @@ def load_course_config(config_path: Path) -> CourseConfig:
         raise ValueError("render.video_bitrate must not be empty.")
     if not render.audio_bitrate.strip():
         raise ValueError("render.audio_bitrate must not be empty.")
+    if render.video_encoder not in {"auto", "h264_nvenc", "libx264"}:
+        raise ValueError("render.video_encoder must be 'auto', 'h264_nvenc', or 'libx264'.")
     if render.font_path is not None and not render.font_path.is_file():
         raise FileNotFoundError(f"Font not found: {render.font_path}")
 

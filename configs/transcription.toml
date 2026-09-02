@@ -2,11 +2,14 @@
 root = "."
 model = "models/faster-whisper-large-v3"
 
+[hardware]
+device = "cuda"
+compute_type = "int8_float16"
+video_encoder = "auto"
+
 [transcription]
 task = "transcribe"
 language = "vi"
-device = "cuda"
-compute_type = "int8"
 translation_batch_size = 8
 overwrite_srt = false
 skip_burn = false

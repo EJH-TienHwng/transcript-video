@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from ..config import setup_logging
+from ..config import configure_binary_path, find_project_root, setup_logging
 from .config import load_course_config
 
 
@@ -28,6 +28,7 @@ def main() -> None:
     from .builder import build_course
 
     config_path = Path(args.config)
+    configure_binary_path(find_project_root(config_path))
     config = load_course_config(config_path)
     build_course(config)
 

@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
         "--dtype",
         choices=["float16", "bfloat16", "float32"],
         default="float16",
-        help="Torch dtype. float16 is recommended for RTX 3060.",
+        help="Torch dtype. float16 is recommended for compatible NVIDIA GPUs.",
     )
     return parser.parse_args()
 
@@ -108,6 +108,11 @@ def main() -> None:
     if device == "cuda" and not torch.cuda.is_available():
         print("[WARNING] CUDA is not available. Falling back to CPU.")
         device = "cpu"
+
+    if device == "cuda":
+        torch.set_float32_matmul_precision("high")
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
 
     dtype = resolve_dtype(args.dtype)
     if device == "cpu":

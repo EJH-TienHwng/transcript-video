@@ -195,7 +195,7 @@ def _collect_sessions(root: Path, output_dir: Path) -> list[dict]:
 
         while True:
             number = _ask_int(
-                f"Session number cho '{video.name}':",
+                f"Session number for '{video.name}':",
                 default=position,
                 minimum=1,
             )
@@ -204,7 +204,7 @@ def _collect_sessions(root: Path, output_dir: Path) -> list[dict]:
                 continue
             break
         title = _ask_text(
-            f"Session title cho '{video.name}':",
+            f"Session title for '{video.name}':",
             default=default_title,
         )
         if not title:
@@ -394,6 +394,7 @@ def create_course_config_interactive(
         "video_bitrate": "8M",
         "audio_bitrate": "192k",
         "audio_sample_rate": 48000,
+        "video_encoder": "auto",
         "font_path": None,
     }
 
@@ -408,6 +409,16 @@ def create_course_config_interactive(
             48000,
             8000,
         )
+        render["video_encoder"] = questionary.select(
+            "Video encoder:",
+            choices=[
+                Choice(title="Auto (prefer NVIDIA NVENC)", value="auto"),
+                Choice(title="NVIDIA NVENC", value="h264_nvenc"),
+                Choice(title="CPU libx264", value="libx264"),
+            ],
+        ).ask()
+        if render["video_encoder"] is None:
+            raise KeyboardInterrupt
 
         custom_font = questionary.confirm(
             "Use a custom .ttf/.otf font?",
