@@ -1,0 +1,50 @@
+{
+  "title": "UT Demo Training",
+  "output": "data/compilation/ut_demo_training_en.mp4",
+  "work_dir": "data/compilation",
+  "theme_image": "assets/bosch_theme.png",
+  "card_duration": 5.0,
+  "add_chapters": true,
+  "toc": {
+    "enabled": true,
+    "heading": "TABLE OF CONTENTS",
+    "items_per_page": 8,
+    "page_duration": 5.0
+  },
+  "render": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "video_bitrate": "8M",
+    "audio_bitrate": "192k",
+    "audio_sample_rate": 48000,
+    "font_path": null
+  },
+  "sessions": [
+    {
+      "number": 1,
+      "title": "Analysis",
+      "video": "data/output/Analysis_en-dub_en-sub.mp4"
+    },
+    {
+      "number": 2,
+      "title": "ASW Demo",
+      "video": "data/output/ASW_Demo_en-dub_en-sub.mp4"
+    },
+    {
+      "number": 3,
+      "title": "UT Cantata Demo",
+      "video": "data/output/UT_Cantata_Demo_Version_1_en-dub_en-sub.mp4"
+    },
+    {
+      "number": 4,
+      "title": "UT Gtest Overview",
+      "video": "data/output/UT_Gtest_Overview_en-dub_en-sub.mp4"
+    },
+    {
+      "number": 5,
+      "title": "Report",
+      "video": "data/output/Report_en-dub_en-sub.mp4"
+    }
+  ]
+}

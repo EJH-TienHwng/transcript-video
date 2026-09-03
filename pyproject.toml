@@ -7,7 +7,8 @@ name = "transcript-video"
 version = "0.3.0"
 description = "Local video transcription, subtitle, TTS, and course-building tools"
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.14,<3.15"
+
 dependencies = [
     "accelerate==1.12.0",
     "faster-whisper==1.2.1",
@@ -19,8 +20,10 @@ dependencies = [
     "qwen-tts==0.1.1",
     "safetensors==0.7.0",
     "soundfile==0.13.1",
-    "torch==2.6.0+cu124",
-    "torchaudio==2.6.0+cu124",
+
+    "torch==2.14.0+cu132",
+    "torchaudio==2.11.0",
+
     "transformers==4.57.3",
     "typer>=0.16,<1",
     "textual>=6,<7",
@@ -53,10 +56,11 @@ markers = [
 packages = ["src/transcript_video"]
 
 [[tool.uv.index]]
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
+name = "local-wheels"
+url = "./wheels"
+format = "flat"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch-cu124" }
-torchaudio = { index = "pytorch-cu124" }
+torch = { index = "local-wheels" }
+torchaudio = { index = "local-wheels" }

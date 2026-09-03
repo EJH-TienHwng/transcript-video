@@ -7,7 +7,7 @@ Hi everyone. In today's video, we will perform unit testing using GTest.
 First, I have a list of C files and items that need to be tested using GTest.
 
 3
-00:00:19,700 --> 00:00:30,440
+00:00:19,700 --> 00:00:25,440
 Here, I will select the first item to demonstrate how to perform UT.
 
 4
@@ -111,7 +111,7 @@ and insert the required information, data types, or definition into the header f
 After solving the data-related issues, we will build it again to check whether there are still any errors.
 
 29
-00:05:58,240 --> 00:06:00,730
+00:05:58,240 --> 00:06:04,730
 We can do this by selecting Terminal, choose Run Task and Build
 
 30
@@ -271,7 +271,7 @@ As you can see, this test case is currently designed to cover the true case of t
 I will add one more test case.
 
 70
-00:14:44,750 --> 00:15:42,360
+00:14:44,750 --> 00:14:55,360
 This test case will cover the false case of this condition at line 59 and check the coverage.
 
 71

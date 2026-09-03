@@ -67,7 +67,7 @@ Here is the analysis file.
 Okay.
 
 18
-00:03:00,170 --> 00:03:40,000
+00:03:00,170 --> 00:03:15,000
 I will apply for MT_Needed, Tester_Comments, CRP_Comments, and CRP_Review_Status.
 
 19

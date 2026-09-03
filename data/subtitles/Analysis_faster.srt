@@ -864,7 +864,7 @@ The same applies to ASCET.
 
 214
 00:36:15,510 --> 00:36:21,145
-If it is EXP, it will be calculated using the ASCET formula.
+If it is exp, it will be calculated using the ASCET formula.
 
 215
 00:36:26,145 --> 00:36:38,780
@@ -943,7 +943,7 @@ I will change the formula a little bit as there are few problems.
 Apply to all items right here.
  
 232
-00:41:39,290 --> 00:41:52,540
+00:41:38,540 --> 00:41:52,540
 Now, I have finished analyzing the task, so I will check it again.
 
 233
@@ -960,7 +960,7 @@ This is the summary.
 
 236
 00:42:17,940 --> 00:42:24,960
-For BB 87328, there are 63 items that need to perform UT.
+For BB 87328, there are 63 items that need to be performed UT.
 
 237
 00:42:24,960 --> 00:42:32,980

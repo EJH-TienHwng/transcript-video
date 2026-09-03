@@ -78,7 +78,7 @@ def ffmpeg_encoder_available(ffmpeg_path: str, encoder: str) -> bool:
         "-f",
         "lavfi",
         "-i",
-        "color=size=16x16:rate=1",
+        "color=size=256x256:rate=1",
         "-frames:v",
         "1",
         "-c:v",
@@ -89,7 +89,12 @@ def ffmpeg_encoder_available(ffmpeg_path: str, encoder: str) -> bool:
     ]
     try:
         run_process(command, timeout=15)
-    except (OSError, TimeoutError, ProcessExecutionError):
+    except (OSError, TimeoutError, ProcessExecutionError) as exc:
+        logger.debug(
+            "FFmpeg encoder probe failed for %s: %s",
+            encoder,
+            exc,
+        )
         return False
     return True
 
