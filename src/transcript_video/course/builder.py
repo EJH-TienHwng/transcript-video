@@ -5,6 +5,7 @@ import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
+from ..events import NullObserver, PipelineEvent, PipelineObserver, PipelineStage
 from .cards import render_session_card, render_toc_pages
 from .config import CourseConfig
 from .media import (
@@ -20,6 +21,8 @@ from .timeline import (
     format_video_timestamp,
     session_number,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _prepare_directories(config: CourseConfig) -> dict:
@@ -48,7 +51,7 @@ def _read_durations(config: CourseConfig) -> list[float]:
 
         duration = get_media_duration_seconds(session.video)
         durations.append(duration)
-        logging.info(
+        logger.info(
             "Session %02d duration: %s | %s",
             session_number(session, position),
             format_video_timestamp(duration),
@@ -69,7 +72,7 @@ def _normalize_sessions(
         number = session_number(item.session, position)
         output_path = output_dir / f"session_{position:03d}_n{number:03d}.mp4"
 
-        logging.info(
+        logger.info(
             "Normalizing session %02d/%02d: %s",
             position,
             len(timeline),
@@ -95,7 +98,7 @@ def _build_toc_videos(
 
     for index, image_path in enumerate(toc_images, start=1):
         video_path = dirs["toc"] / f"toc_{index:03d}.mp4"
-        logging.info("Rendering TOC page %03d", index)
+        logger.info("Rendering TOC page %03d", index)
         still_image_to_video(
             image_path=image_path,
             video_out=video_path,
@@ -119,7 +122,7 @@ def _build_session_cards(
         image_path = dirs["images"] / f"session_{position:03d}_n{number:03d}.png"
         video_path = dirs["cards"] / f"session_{position:03d}_n{number:03d}.mp4"
 
-        logging.info(
+        logger.info(
             "Rendering session card %02d: %s",
             number,
             item.session.title,
@@ -142,10 +145,10 @@ def _build_session_cards(
 
 
 def _print_timeline(timeline: Sequence[SessionTimeline]) -> None:
-    logging.info("Final course timeline:")
+    logger.info("Final course timeline:")
     for position, item in enumerate(timeline, start=1):
         number = session_number(item.session, position)
-        logging.info(
+        logger.info(
             "  %02d | %s | %s",
             number,
             format_video_timestamp(item.content_start),
@@ -153,12 +156,14 @@ def _print_timeline(timeline: Sequence[SessionTimeline]) -> None:
         )
 
 
-def build_course(config: CourseConfig) -> Path:
+def build_course(config: CourseConfig, observer: PipelineObserver | None = None) -> Path:
     """Build TOC + title cards + normalized sessions into one final MP4."""
+    events = observer or NullObserver()
+    events.notify(PipelineEvent(PipelineStage.DISCOVER, "Validating course sessions"))
     dirs = _prepare_directories(config)
 
-    logging.info("Course: %s", config.title)
-    logging.info("Sessions: %d", len(config.sessions))
+    logger.info("Course: %s", config.title)
+    logger.info("Sessions: %d", len(config.sessions))
 
     # 1. Validate source videos and build a preliminary timeline for normalization.
     durations = _read_durations(config)
@@ -171,6 +176,14 @@ def build_course(config: CourseConfig) -> Path:
         preliminary_timeline,
         dirs["normalized"],
     )
+    events.notify(
+        PipelineEvent(
+            PipelineStage.RENDER,
+            "Sessions normalized",
+            current=len(normalized_sessions),
+            total=len(config.sessions),
+        )
+    )
     normalized_durations = [get_media_duration_seconds(path) for path in normalized_sessions]
     timeline = build_timeline(config, normalized_durations)
     _print_timeline(timeline)
@@ -178,6 +191,7 @@ def build_course(config: CourseConfig) -> Path:
     # 3. Render visual intro material using the final timestamps.
     toc_videos = _build_toc_videos(config, timeline, dirs)
     card_videos = _build_session_cards(config, timeline, dirs)
+    events.notify(PipelineEvent(PipelineStage.RENDER, "Course cards rendered"))
 
     # 4. Interleave TOC + [card, session] pairs in the chosen JSON order.
     concat_segments: list[Path] = list(toc_videos)
@@ -187,7 +201,8 @@ def build_course(config: CourseConfig) -> Path:
     compiled_without_chapters = dirs["temp"] / "compiled_without_chapters.mp4"
     concat_list_path = dirs["temp"] / "concat.txt"
 
-    logging.info("Concatenating %d segment(s)...", len(concat_segments))
+    logger.info("Concatenating %d segment(s)...", len(concat_segments))
+    events.notify(PipelineEvent(PipelineStage.MUX, "Concatenating course video"))
     concatenate_videos(
         video_paths=concat_segments,
         output_path=compiled_without_chapters,
@@ -205,7 +220,7 @@ def build_course(config: CourseConfig) -> Path:
         ]
         chapter_file = dirs["temp"] / "chapters.ffmeta"
 
-        logging.info("Adding %d chapter(s)...", len(chapter_titles))
+        logger.info("Adding %d chapter(s)...", len(chapter_titles))
         add_chapter_metadata(
             video_in=compiled_without_chapters,
             video_out=config.output,
@@ -216,5 +231,8 @@ def build_course(config: CourseConfig) -> Path:
     else:
         shutil.copy2(compiled_without_chapters, config.output)
 
-    logging.info("DONE: %s", config.output)
+    logger.info("Completed course: %s", config.output)
+    events.notify(
+        PipelineEvent(PipelineStage.COMPLETE, "Course build complete", artifact=config.output)
+    )
     return config.output

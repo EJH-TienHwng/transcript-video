@@ -12,6 +12,8 @@ from .core import (
     load_qwen_tts_model,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def build_fixed_time_tts_chunks(
     segments: list[SubtitleSegment],
@@ -106,14 +108,14 @@ def synthesize_one_fixed_time_chunk(
         # Silence chunks do not need tail because there is no voice line to preserve.
         full_chunk = np.zeros(int(base_chunk_duration * sr_final), dtype=np.float32)
         sf.write(str(chunk_audio_out), full_chunk, sr_final)
-        logging.info("Chunk %03d has no subtitle. Wrote silence: %s", chunk_index, chunk_audio_out)
+        logger.info("Chunk %03d has no subtitle. Wrote silence: %s", chunk_index, chunk_audio_out)
         return sr_final
 
     generated_items = []
 
     for local_index, segment in enumerate(chunk_segments):
         text = segment.text.strip()
-        logging.info(
+        logger.info(
             "TTS chunk %03d segment %d/%d: %s",
             chunk_index,
             local_index + 1,
@@ -163,7 +165,7 @@ def synthesize_one_fixed_time_chunk(
         original_duration = len(wav) / sr_final
 
         if original_duration > available_duration:
-            logging.warning(
+            logger.warning(
                 "Chunk %03d segment %d too long: %.2fs > %.2fs. Fit with max speedup %.2fx.",
                 chunk_index,
                 local_index + 1,
@@ -196,7 +198,7 @@ def synthesize_one_fixed_time_chunk(
 
     full_chunk = np.clip(full_chunk, -1.0, 1.0)
     sf.write(str(chunk_audio_out), full_chunk, sr_final)
-    logging.info("Wrote TTS chunk %03d: %s", chunk_index, chunk_audio_out)
+    logger.info("Wrote TTS chunk %03d: %s", chunk_index, chunk_audio_out)
     return sr_final
 
 
@@ -264,7 +266,7 @@ def rebuild_full_tts_audio_from_chunks(
     full_audio = np.clip(full_audio, -1.0, 1.0)
     audio_out.parent.mkdir(parents=True, exist_ok=True)
     sf.write(str(audio_out), full_audio, final_sr)
-    logging.info("Rebuilt full TTS audio from timeline-overlaid chunks: %s", audio_out)
+    logger.info("Rebuilt full TTS audio from timeline-overlaid chunks: %s", audio_out)
 
 
 def synthesize_tts_audio_by_time_chunks(
@@ -337,8 +339,8 @@ def synthesize_tts_audio_by_time_chunks(
             chunks_to_generate.append(chunk_index)
 
     if chunks_to_generate:
-        logging.info("Chunks to generate/regenerate: %s", chunks_to_generate)
-        logging.info("Chunk tail safety margin: %.2fs", chunk_tail_seconds)
+        logger.info("Chunks to generate/regenerate: %s", chunks_to_generate)
+        logger.info("Chunk tail safety margin: %.2fs", chunk_tail_seconds)
         model = load_qwen_tts_model(tts_model_name, device, attn_implementation)
         sample_rate = None
 
@@ -351,10 +353,10 @@ def synthesize_tts_audio_by_time_chunks(
             should_generate,
         ) in chunk_infos:
             if not should_generate:
-                logging.info("Reusing existing chunk %03d: %s", chunk_index, chunk_path)
+                logger.info("Reusing existing chunk %03d: %s", chunk_index, chunk_path)
                 continue
 
-            logging.info(
+            logger.info(
                 "Generating TTS chunk %03d / %03d | %.2fs → %.2fs (+%.2fs tail) | %d segment(s)",
                 chunk_index,
                 len(chunks) - 1,
@@ -380,7 +382,7 @@ def synthesize_tts_audio_by_time_chunks(
                 chunk_tail_seconds=chunk_tail_seconds,
             )
     else:
-        logging.info("All TTS chunks already exist. Rebuilding full WAV without loading TTS model.")
+        logger.info("All TTS chunks already exist. Rebuilding full WAV without loading TTS model.")
 
     rebuild_full_tts_audio_from_chunks(
         chunk_infos=[

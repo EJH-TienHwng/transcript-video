@@ -4,6 +4,72 @@
 
 Transcript Video là pipeline chạy local, ưu tiên GPU để nhận dạng giọng nói, dịch tiếng Việt sang tiếng Anh, render phụ đề, tạo thuyết minh bằng Qwen TTS và ghép nhiều video thành một khóa học.
 
+> Bản tiếng Anh là tài liệu chính được ưu tiên hiển thị trên GitHub. Bạn có thể đổi ngôn ngữ bằng liên kết phía trên.
+
+## Tổng quan command
+
+```text
+transcript-video
+├── process [VIDEO]
+├── inspect VIDEO
+├── doctor
+├── config show|validate
+└── course create|build|tui
+```
+
+Các option toàn cục phải đặt trước command: `-q`, `-v`, `-vv`, `--no-color`, `--log-file PATH` và `--json`. Typer cũng hỗ trợ `--install-completion` và `--show-completion`.
+
+Log mặc định trên terminal được rút gọn. `-v` hiện thêm chẩn đoán, còn `-vv` hiện vị trí source và traceback. Log DEBUG chi tiết được rotate tại `logs/transcript-video.log`, hoặc đường dẫn truyền qua `--log-file`. Cả biến `NO_COLOR` và option `--no-color` đều được hỗ trợ.
+
+## Quy trình thường dùng
+
+```powershell
+uv run transcript-video process
+uv run transcript-video process lesson.mp4 --profile gpu-tts
+uv run transcript-video process lesson.mp4 --dry-run
+uv run transcript-video process lesson.mp4 --force transcription --force tts
+uv run transcript-video doctor
+uv run transcript-video inspect data/input/lesson.mp4
+uv run transcript-video config show --sources
+uv run transcript-video config validate --profile gpu-tts
+```
+
+Dry-run kiểm tra config, input path và kế hoạch thực thi nhưng không tạo folder, lưu config, load model AI hay chạy encode FFmpeg. `--force` có thể lặp lại với `transcription`, `translation`, `tts`, `render`; các cờ overwrite cũ vẫn dùng được.
+
+Profile là file TOML không cần khai báo đủ mọi field, đặt tại `configs/profiles/<tên>.toml` hoặc truyền đường dẫn trực tiếp. Thứ tự ghi đè là: mặc định, config gốc, profile, rồi option CLI.
+
+Command chỉ đọc hỗ trợ JSON khi đặt `--json` trước command:
+
+```powershell
+uv run transcript-video --json inspect data/input/lesson.mp4
+uv run transcript-video --json doctor
+```
+
+Exit code: `0` thành công, `1` lỗi runtime/môi trường chưa sẵn sàng, `2` dùng CLI sai và `130` khi người dùng hủy.
+
+## Course Wizard và TUI đầy đủ
+
+`transcript-video course create` mở wizard Questionary gọn nhẹ. Ở bước review có thể sửa title/number, đổi thứ tự, xóa session và quay lại mà không phải chạy lại từ đầu.
+
+`transcript-video course tui` mở ứng dụng Textual gồm ba màn hình Course Metadata, Session Editor và Review/Build. Đọc metadata video và build course đều chạy background worker. Phím tắt chính: `Ctrl+S` lưu, `Esc` quay lại, `A/E/Delete` thêm/sửa/xóa, `U/D` đổi thứ tự và `Q` thoát. Khi còn thay đổi chưa lưu, ứng dụng sẽ hỏi xác nhận.
+
+## Kiến trúc
+
+Presentation nằm trong `cli.py`, `ui/`, `course/wizard.py` và `tui/`. Các application service trong `application/` xử lý config, diagnostics và inspection. `events.py` định nghĩa stage/observer không phụ thuộc UI. `process_runner.py` chịu trách nhiệm subprocess, ffprobe JSON, parse FFmpeg `-progress pipe:1`, lỗi và hủy tiến trình. Logic media/model nằm trong các module processing và course.
+
+## Quy trình phát triển
+
+```powershell
+uv sync
+just format
+just lint
+just test
+just check
+uv run pre-commit install
+```
+
+Các pytest marker gồm `integration`, `gpu`, `slow`; `just test-fast` loại cả ba nhóm. Ruff vừa format vừa lint. Pre-commit chạy Ruff cùng kiểm tra TOML/YAML và whitespace.
+
 ## Mục lục
 
 - [Chức năng](#chức-năng)
@@ -49,13 +115,18 @@ transcript-video/
 ├── scripts/                        # tiện ích smoke test thủ công
 ├── src/transcript_video/
 │   ├── cli.py                      # CLI chính
-│   ├── config.py                   # cấu hình TOML và kiểu dữ liệu dùng chung
-│   ├── hardware.py                 # chọn CUDA/NVENC và fallback
+│   ├── application/                # settings, inspection, diagnostics
+│   ├── ui/                         # Rich console, logging, progress
+│   ├── tui/                        # ứng dụng course Textual đầy đủ
+│   ├── events.py                   # pipeline event độc lập UI
+│   ├── process_runner.py           # subprocess/FFmpeg/ffprobe boundary
 │   ├── processing/                 # ASR, dịch, subtitle, media, TTS
-│   └── course/                     # course builder, card, timeline, TUI
+│   └── course/                     # course builder, card, timeline, wizard
 ├── tests/                          # automated test ít phụ thuộc
 ├── pyproject.toml                  # metadata và dependency trực tiếp
 ├── ruff.toml                       # chính sách lint/format
+├── justfile                        # task runner cho developer
+├── .pre-commit-config.yaml         # kiểm tra trước commit
 └── uv.lock                         # dependency lock tái lập được
 ```
 
@@ -84,8 +155,8 @@ Kiểm tra CLI:
 
 ```powershell
 uv run transcript-video --help
-uv run transcript-course --help
-uv run transcript-course-config --help
+uv run transcript-video course --help
+uv run transcript-video course create --help
 ```
 
 ## Tăng tốc GPU
@@ -283,13 +354,13 @@ uv run python scripts/tts_smoke_test.py --model models/Qwen3-TTS-12Hz-1.7B-Custo
 Tạo JSON profile bằng giao diện terminal:
 
 ```powershell
-uv run transcript-course-config
+uv run transcript-video course create
 ```
 
 Build course:
 
 ```powershell
-uv run transcript-course --config configs/courses/training_course.json
+uv run transcript-video course build --config configs/courses/training_course.json
 ```
 
 Mỗi course profile hỗ trợ:
@@ -320,7 +391,7 @@ Mọi đường dẫn tương đối trong JSON được resolve từ repository
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
-uv run python -m unittest discover -s tests -v
+uv run pytest
 uv build
 ```
 

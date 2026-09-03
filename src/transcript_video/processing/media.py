@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
-import re
-import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
 from ..config import VIDEO_EXTENSIONS
-from ..hardware import get_ffmpeg_exe, video_encoder_args
+from ..hardware import get_ffmpeg_exe, get_ffprobe_exe, video_encoder_args
+from ..process_runner import ProcessExecutionError, probe_media, run_ffmpeg
+
+logger = logging.getLogger(__name__)
 
 
 def escape_subtitle_path_for_ffmpeg(path: Path) -> str:
@@ -21,20 +22,8 @@ def escape_subtitle_path_for_ffmpeg(path: Path) -> str:
 
 def run_command(command: Sequence[str], *, hide_output: bool = False) -> None:
     """Run a subprocess command with error checking."""
-    if hide_output:
-        process = subprocess.run(
-            list(command),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-        if process.returncode != 0:
-            logging.error("Command failed:\n%s", (process.stderr or process.stdout or "").strip())
-            process.check_returncode()
-        return
-
-    subprocess.run(list(command), check=True)
+    del hide_output
+    run_ffmpeg(command)
 
 
 def ensure_ffmpeg_available_for_transformers() -> None:
@@ -47,7 +36,7 @@ def ensure_ffmpeg_available_for_transformers() -> None:
     if ffmpeg_dir not in current_path.split(os.pathsep):
         os.environ["PATH"] = ffmpeg_dir + os.pathsep + current_path
 
-    logging.info("FFmpeg available for Transformers: %s", ffmpeg_path)
+    logger.info("FFmpeg available for Transformers: %s", ffmpeg_path)
 
 
 def burn_subtitles(
@@ -175,22 +164,13 @@ def find_videos(input_dir: Path, selected_video: str | None = None) -> list[Path
 
 
 def get_media_duration_seconds(media_path: Path) -> float | None:
-    """Return media duration by parsing FFmpeg output."""
-    ffmpeg_path = get_ffmpeg_exe()
-    process = subprocess.run(
-        [ffmpeg_path, "-i", str(media_path)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="ignore",
-    )
-    output = process.stderr or process.stdout or ""
-    match = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", output)
-    if not match:
+    """Return media duration from ffprobe JSON."""
+    try:
+        metadata = probe_media(get_ffprobe_exe(), media_path)
+        duration = metadata.get("format", {}).get("duration")
+        return float(duration) if duration is not None else None
+    except (FileNotFoundError, ValueError, TypeError, ProcessExecutionError):
         return None
-
-    hours, minutes, seconds = match.groups()
-    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
 
 
 def split_audio_into_chunks(
@@ -219,7 +199,7 @@ def split_audio_into_chunks(
             try:
                 old_chunk.unlink()
             except OSError:
-                logging.warning("Could not delete stale audio chunk: %s", old_chunk)
+                logger.warning("Could not delete stale audio chunk: %s", old_chunk)
 
     chunk_seconds = int(chunk_minutes * 60)
     output_pattern = output_dir / f"{audio_in.stem}_part_%03d{audio_in.suffix}"
@@ -240,7 +220,7 @@ def split_audio_into_chunks(
         str(output_pattern),
     ]
     run_command(command)
-    logging.info("Split TTS audio into %d-minute chunks: %s", chunk_minutes, output_dir)
+    logger.info("Split TTS audio into %d-minute chunks: %s", chunk_minutes, output_dir)
 
 
 def mux_audio_into_video_replace(video_in: Path, audio_in: Path, video_out: Path) -> None:

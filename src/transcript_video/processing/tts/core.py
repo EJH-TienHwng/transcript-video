@@ -10,6 +10,8 @@ from ...config import SubtitleSegment
 from ...hardware import resolve_torch_device
 from ..media import get_media_duration_seconds
 
+logger = logging.getLogger(__name__)
+
 
 def split_text_for_tts(text: str, max_chars: int = 450) -> list[str]:
     """Split long text into smaller chunks for TTS generation."""
@@ -75,7 +77,7 @@ def load_qwen_tts_model(
     if attn_implementation != "auto":
         kwargs["attn_implementation"] = attn_implementation
 
-    logging.info("Loading Qwen TTS model: %s", tts_model_name)
+    logger.info("Loading Qwen TTS model: %s", tts_model_name)
     return Qwen3TTSModel.from_pretrained(tts_model_name, **kwargs)
 
 
@@ -129,7 +131,7 @@ def synthesize_simple_tts_audio(
     wav_list = []
     sample_rate = None
     for index, chunk in enumerate(chunks, start=1):
-        logging.info("TTS chunk %d/%d", index, len(chunks))
+        logger.info("TTS chunk %d/%d", index, len(chunks))
         wav, sr = generate_qwen_custom_voice(
             model=model,
             text=chunk,
@@ -219,7 +221,7 @@ def synthesize_timed_tts_audio(
 
     for index, segment in enumerate(valid_segments):
         text = segment.text.strip()
-        logging.info("TTS segment %d/%d: %s", index + 1, len(valid_segments), text[:80])
+        logger.info("TTS segment %d/%d: %s", index + 1, len(valid_segments), text[:80])
 
         wav, sr = generate_qwen_custom_voice(
             model=model,
@@ -253,7 +255,7 @@ def synthesize_timed_tts_audio(
             needed_speedup = original_duration / available_duration
             speedup = min(needed_speedup, MAX_SPEEDUP)
 
-            logging.warning(
+            logger.warning(
                 "TTS segment %d too long: %.2fs > %.2fs. Speedup %.2fx.",
                 index + 1,
                 original_duration,
@@ -264,7 +266,7 @@ def synthesize_timed_tts_audio(
             wav = speedup_wav_by_resample(wav, speedup)
 
             if len(wav) > available_samples:
-                logging.warning(
+                logger.warning(
                     "TTS segment %d still too long after speedup. Trim to %.2fs.",
                     index + 1,
                     available_duration,

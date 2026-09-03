@@ -1,3 +1,5 @@
+"""Questionary-based course creation wizard."""
+
 from __future__ import annotations
 
 import json
@@ -278,6 +280,44 @@ def _choose_theme(root: Path) -> str | None:
 
 def _review_sessions(sessions: list[dict]) -> None:
     print()
+
+
+def _edit_sessions(sessions: list[dict]) -> list[dict]:
+    """Review and mutate sessions without restarting the wizard."""
+    while True:
+        _review_sessions(sessions)
+        action = questionary.select(
+            "Review session list:",
+            choices=["Continue", "Edit title/number", "Move up", "Move down", "Remove"],
+        ).ask()
+        if action is None:
+            raise KeyboardInterrupt
+        if action == "Continue":
+            return sessions
+        choices = [
+            Choice(title=f"{index + 1:02d}. {item['title']}", value=index)
+            for index, item in enumerate(sessions)
+        ]
+        selected = questionary.select("Choose a session:", choices=choices).ask()
+        if selected is None:
+            continue
+        if action == "Edit title/number":
+            sessions[selected]["title"] = _ask_text("Session title:", sessions[selected]["title"])
+            sessions[selected]["number"] = _ask_int(
+                "Session number:", sessions[selected]["number"], minimum=1
+            )
+        elif action == "Remove":
+            if len(sessions) == 1:
+                print("A course must contain at least one session.")
+            else:
+                sessions.pop(selected)
+        else:
+            destination = selected - 1 if action == "Move up" else selected + 1
+            if 0 <= destination < len(sessions):
+                sessions[selected], sessions[destination] = (
+                    sessions[destination],
+                    sessions[selected],
+                )
     print("=" * 72)
     print("SESSION ORDER")
     print("=" * 72)
@@ -301,7 +341,7 @@ def create_course_config_interactive(
 
     print()
     print("=" * 72)
-    print("COURSE CONFIG TUI")
+    print("COURSE CONFIG WIZARD")
     print("=" * 72)
     print(f"Project root : {root}")
     print(f"Video folder : {output_dir}")
@@ -309,20 +349,7 @@ def create_course_config_interactive(
 
     course_title = _ask_text("Course title:", "Training Course")
     sessions = _collect_sessions(root, output_dir)
-    _review_sessions(sessions)
-
-    confirmed = questionary.confirm(
-        "Keep the session order shown above?",
-        default=True,
-    ).ask()
-    if confirmed is None:
-        raise KeyboardInterrupt
-    if not confirmed:
-        print(
-            "Run the TUI again and select videos in the desired order. "
-            "Selection order is used directly to keep ordering simple."
-        )
-        raise SystemExit(0)
+    sessions = _edit_sessions(sessions)
 
     theme_image = _choose_theme(root)
 
@@ -485,7 +512,10 @@ def create_course_config_interactive(
     print(config_path)
     print()
     print("Build the course video with:")
-    print(f'uv run transcript-course --config "{_relative_or_absolute(config_path, root)}"')
+    print(
+        "uv run transcript-video course build --config "
+        f'"{_relative_or_absolute(config_path, root)}"'
+    )
     print()
 
     return config_path

@@ -1,65 +1,33 @@
 from __future__ import annotations
 
-import logging
-import re
-import subprocess
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
-from ..hardware import get_ffmpeg_exe, video_encoder_args
+from ..hardware import get_ffmpeg_exe, get_ffprobe_exe, video_encoder_args
+from ..process_runner import probe_media, run_ffmpeg
 from .config import CourseConfig
 
 
 def run_command(command: Sequence[str], *, hide_output: bool = False) -> None:
-    if hide_output:
-        process = subprocess.run(
-            list(command),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-        if process.returncode != 0:
-            logging.error("Command failed:\n%s", (process.stderr or process.stdout or "").strip())
-            process.check_returncode()
-        return
-
-    subprocess.run(list(command), check=True)
+    del hide_output
+    run_ffmpeg(command)
 
 
 def get_media_duration_seconds(media_path: Path) -> float:
-    """Read duration by parsing FFmpeg's input probe output."""
+    """Read duration from ffprobe JSON."""
     if not media_path.is_file():
         raise FileNotFoundError(f"Media file not found: {media_path}")
 
-    ffmpeg_path = get_ffmpeg_exe()
-    process = subprocess.run(
-        [ffmpeg_path, "-i", str(media_path)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="ignore",
-    )
-    output = process.stderr or process.stdout or ""
-    match = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", output)
-    if not match:
+    metadata = probe_media(get_ffprobe_exe(), media_path)
+    duration = metadata.get("format", {}).get("duration")
+    if duration is None:
         raise ValueError(f"Could not read media duration: {media_path}")
-
-    hours, minutes, seconds = match.groups()
-    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+    return float(duration)
 
 
 def media_has_audio(media_path: Path) -> bool:
-    ffmpeg_path = get_ffmpeg_exe()
-    process = subprocess.run(
-        [ffmpeg_path, "-i", str(media_path)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="ignore",
-    )
-    output = process.stderr or process.stdout or ""
-    return bool(re.search(r"Stream #.*Audio:", output))
+    metadata = probe_media(get_ffprobe_exe(), media_path)
+    return any(stream.get("codec_type") == "audio" for stream in metadata.get("streams", []))
 
 
 def still_image_to_video(

@@ -12,6 +12,8 @@ from .media import (
 )
 from .models import detect_model_type, detect_translation_model_type
 
+logger = logging.getLogger(__name__)
+
 
 def transcribe_with_faster_whisper(
     video_path: Path,
@@ -26,9 +28,9 @@ def transcribe_with_faster_whisper(
 
     device = resolve_torch_device(device, "faster-whisper")
     if device == "cpu" and compute_type == "float16":
-        logging.warning("float16 is not suitable for CPU inference; using int8 instead.")
+        logger.warning("float16 is not suitable for CPU inference; using int8 instead.")
         compute_type = "int8"
-    logging.info("Engine: faster-whisper")
+    logger.info("Engine: faster-whisper")
     model = WhisperModel(str(model_path), device=device, compute_type=compute_type)
 
     segments, _info = model.transcribe(
@@ -69,7 +71,7 @@ def transcribe_with_huggingface(
     import torch
     from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
-    logging.info("Engine: Hugging Face Transformers")
+    logger.info("Engine: Hugging Face Transformers")
     device = resolve_torch_device(device, "Hugging Face Whisper")
 
     torch_dtype = torch.float16 if device == "cuda" else torch.float32
@@ -147,7 +149,7 @@ def translate_segments_with_vinai(
 
     torch_device = torch.device(device)
     model_dtype = torch.float16 if device == "cuda" else torch.float32
-    logging.info("Translation engine: VinAI Translate (%s)", torch_device)
+    logger.info("Translation engine: VinAI Translate (%s)", torch_device)
 
     tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
     model = AutoModelForSeq2SeqLM.from_pretrained(str(model_path), dtype=model_dtype)
@@ -182,7 +184,7 @@ def translate_segments_with_vinai(
             SubtitleSegment(segment.start, segment.end, translation)
             for segment, translation in zip(batch, translations, strict=True)
         )
-        logging.info(
+        logger.info(
             "Translated %d/%d subtitle segment(s).",
             min(start + batch_size, len(source_segments)),
             len(source_segments),

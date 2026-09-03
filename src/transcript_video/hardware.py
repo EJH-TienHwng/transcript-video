@@ -3,9 +3,12 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
 from functools import cache
 from pathlib import Path
+
+from .process_runner import ProcessExecutionError, run_process
+
+logger = logging.getLogger(__name__)
 
 
 def get_ffmpeg_exe() -> str:
@@ -28,6 +31,23 @@ def get_ffmpeg_exe() -> str:
     return imageio_ffmpeg.get_ffmpeg_exe()
 
 
+def get_ffprobe_exe() -> str:
+    """Locate ffprobe next to configured FFmpeg or on PATH."""
+    configured = os.environ.get("TRANSCRIPT_VIDEO_FFPROBE")
+    if configured:
+        path = Path(configured).expanduser().resolve()
+        if path.is_file():
+            return str(path)
+        raise FileNotFoundError(f"TRANSCRIPT_VIDEO_FFPROBE does not point to a file: {path}")
+    system = shutil.which("ffprobe")
+    if system:
+        return str(Path(system).resolve())
+    sibling = Path(get_ffmpeg_exe()).with_name("ffprobe.exe" if os.name == "nt" else "ffprobe")
+    if sibling.is_file():
+        return str(sibling)
+    raise FileNotFoundError("ffprobe was not found on PATH or next to FFmpeg.")
+
+
 def resolve_torch_device(requested: str, workload: str) -> str:
     """Prefer CUDA for model inference and configure safe GPU optimizations."""
     import torch
@@ -37,13 +57,13 @@ def resolve_torch_device(requested: str, workload: str) -> str:
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
         device_name = torch.cuda.get_device_name(0)
-        logging.info("%s device: CUDA (%s)", workload, device_name)
+        logger.info("%s device: CUDA (%s)", workload, device_name)
         return "cuda"
 
     if requested == "cuda":
-        logging.warning("CUDA is unavailable for %s; falling back to CPU.", workload)
+        logger.warning("CUDA is unavailable for %s; falling back to CPU.", workload)
     else:
-        logging.info("%s device: CPU (explicitly configured)", workload)
+        logger.info("%s device: CPU (explicitly configured)", workload)
     return "cpu"
 
 
@@ -68,29 +88,29 @@ def ffmpeg_encoder_available(ffmpeg_path: str, encoder: str) -> bool:
         "-",
     ]
     try:
-        result = subprocess.run(command, capture_output=True, timeout=15, check=False)
-    except (OSError, subprocess.TimeoutExpired):
+        run_process(command, timeout=15)
+    except (OSError, TimeoutError, ProcessExecutionError):
         return False
-    return result.returncode == 0
+    return True
 
 
 def resolve_video_encoder(ffmpeg_path: str, requested: str) -> str:
     """Choose NVENC whenever available, with a reliable software fallback."""
     if requested == "libx264":
-        logging.info("FFmpeg video encoder: libx264 (explicitly configured)")
+        logger.info("FFmpeg video encoder: libx264 (explicitly configured)")
         return "libx264"
 
     if ffmpeg_encoder_available(ffmpeg_path, "h264_nvenc"):
-        logging.info("FFmpeg video encoder: h264_nvenc (NVIDIA GPU)")
+        logger.info("FFmpeg video encoder: h264_nvenc (NVIDIA GPU)")
         return "h264_nvenc"
 
     if requested == "h264_nvenc":
-        logging.warning(
+        logger.warning(
             "h264_nvenc was requested but the FFmpeg/NVIDIA runtime probe failed; "
             "falling back to libx264."
         )
     else:
-        logging.info("NVENC is unavailable; FFmpeg video encoder: libx264")
+        logger.info("NVENC is unavailable; FFmpeg video encoder: libx264")
     return "libx264"
 
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import tomllib
 from dataclasses import asdict, dataclass, fields
@@ -135,7 +134,9 @@ _SECTION_TYPES = {
 }
 
 
-def _load_section(raw: dict[str, Any], section: str, settings_type: type[Any]) -> Any:
+def _load_section(
+    raw: dict[str, Any], section: str, settings_type: type[Any], base: Any | None = None
+) -> Any:
     values = raw.get(section, {})
     if not isinstance(values, dict):
         raise ValueError(f"Config section [{section}] must be a TOML table.")
@@ -145,8 +146,10 @@ def _load_section(raw: dict[str, Any], section: str, settings_type: type[Any]) -
     if unknown:
         raise ValueError(f"Unknown key(s) in [{section}]: {', '.join(unknown)}")
 
+    merged = asdict(base) if base is not None else {}
+    merged.update(values)
     try:
-        return settings_type(**values)
+        return settings_type(**merged)
     except TypeError as exc:
         raise ValueError(f"Invalid values in config section [{section}].") from exc
 
@@ -171,7 +174,7 @@ def _migrate_legacy_hardware_settings(raw: dict[str, Any]) -> None:
         hardware[key] = transcription.pop(key)
 
 
-def load_run_settings(config_path: Path) -> RunSettings:
+def load_run_settings(config_path: Path, base: RunSettings | None = None) -> RunSettings:
     config_path = config_path.expanduser().resolve()
     if not config_path.is_file():
         raise FileNotFoundError(f"Run config not found: {config_path}")
@@ -187,11 +190,14 @@ def load_run_settings(config_path: Path) -> RunSettings:
     if unknown_sections:
         raise ValueError(f"Unknown config section(s): {', '.join(unknown_sections)}")
 
+    previous = base or RunSettings.defaults()
     return RunSettings(
-        project=_load_section(raw, "project", ProjectSettings),
-        hardware=_load_section(raw, "hardware", HardwareSettings),
-        transcription=_load_section(raw, "transcription", TranscriptionSettings),
-        tts=_load_section(raw, "tts", TTSSettings),
+        project=_load_section(raw, "project", ProjectSettings, previous.project),
+        hardware=_load_section(raw, "hardware", HardwareSettings, previous.hardware),
+        transcription=_load_section(
+            raw, "transcription", TranscriptionSettings, previous.transcription
+        ),
+        tts=_load_section(raw, "tts", TTSSettings, previous.tts),
     )
 
 
@@ -228,10 +234,6 @@ def find_project_root(start: Path | None = None) -> Path:
         if (candidate / "pyproject.toml").is_file() or (candidate / ".git").exists():
             return candidate
     return current
-
-
-def setup_logging() -> None:
-    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 
 
 def configure_binary_path(root: Path) -> None:

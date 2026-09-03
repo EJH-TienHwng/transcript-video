@@ -10,6 +10,8 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from .config import CourseConfig
 from .timeline import SessionTimeline, format_video_timestamp, session_number
 
+logger = logging.getLogger(__name__)
+
 
 def _find_default_font(bold: bool = False) -> Path | None:
     """Find a common system font without shipping font files with the project."""
@@ -47,7 +49,7 @@ def _load_font(config: CourseConfig, size: int, bold: bool = False):
     if font_path and font_path.exists():
         return ImageFont.truetype(str(font_path), size=size)
 
-    logging.warning("TrueType font not found; using Pillow's default font.")
+    logger.warning("TrueType font not found; using Pillow's default font.")
     return ImageFont.load_default()
 
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "transcript-video"
-version = "0.2.0"
+version = "0.3.0"
 description = "Local video transcription, subtitle, TTS, and course-building tools"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -15,12 +15,15 @@ dependencies = [
     "numpy==2.4.6",
     "pillow==12.2.0",
     "questionary==2.1.1",
+    "rich>=14.1,<15",
     "qwen-tts==0.1.1",
     "safetensors==0.7.0",
     "soundfile==0.13.1",
     "torch==2.6.0+cu124",
     "torchaudio==2.6.0+cu124",
     "transformers==4.57.3",
+    "typer>=0.16,<1",
+    "textual>=6,<7",
 ]
 
 [project.scripts]
@@ -29,7 +32,22 @@ transcript-course = "transcript_video.course.cli:main"
 transcript-course-config = "transcript_video.course.tui_cli:main"
 
 [dependency-groups]
-dev = ["ruff>=0.12,<1"]
+dev = [
+    "pre-commit>=4.3,<5",
+    "pytest>=8.4,<9",
+    "pytest-cov>=6.2,<7",
+    "pytest-asyncio>=1.1,<2",
+    "ruff>=0.12,<1",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+markers = [
+    "integration: tests that invoke external programs or multiple components",
+    "gpu: tests that require a CUDA-capable GPU",
+    "slow: tests that load models or process media",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/transcript_video"]

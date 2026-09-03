@@ -4,6 +4,72 @@
 
 Transcript Video is a local, GPU-first pipeline for speech transcription, optional Vietnamese-to-English translation, subtitle rendering, Qwen TTS voice-over, and course-video compilation.
 
+> This English guide is the canonical documentation. The Vietnamese version is available through the language link above.
+
+## Command overview
+
+```text
+transcript-video
+├── process [VIDEO]
+├── inspect VIDEO
+├── doctor
+├── config show|validate
+└── course create|build|tui
+```
+
+Global options must appear before the command: `-q`, `-v`, `-vv`, `--no-color`, `--log-file PATH`, and `--json`. Typer also provides `--install-completion` and `--show-completion`.
+
+The default terminal log is concise. `-v` adds diagnostics and `-vv` adds source locations and tracebacks. Detailed DEBUG logs always rotate at `logs/transcript-video.log` unless `--log-file` overrides the path. `NO_COLOR` and `--no-color` are both honored.
+
+## Everyday workflows
+
+```powershell
+uv run transcript-video process
+uv run transcript-video process lesson.mp4 --profile gpu-tts
+uv run transcript-video process lesson.mp4 --dry-run
+uv run transcript-video process lesson.mp4 --force transcription --force tts
+uv run transcript-video doctor
+uv run transcript-video inspect data/input/lesson.mp4
+uv run transcript-video config show --sources
+uv run transcript-video config validate --profile gpu-tts
+```
+
+Dry-run performs configuration, input-path, and execution-plan validation, but does not create directories, save config, load AI models, or start FFmpeg encoding. `--force` is repeatable and accepts `transcription`, `translation`, `tts`, and `render`; the older overwrite flags remain supported.
+
+Profiles are partial TOML files in `configs/profiles/<name>.toml` (or an explicit TOML path). Effective values resolve in this order: defaults, base config, profile, then command-line overrides.
+
+Read-only commands support machine output by placing `--json` before the command:
+
+```powershell
+uv run transcript-video --json inspect data/input/lesson.mp4
+uv run transcript-video --json doctor
+```
+
+Exit codes are `0` for success, `1` for a runtime/readiness failure, `2` for invalid CLI usage, and `130` for user cancellation.
+
+## Course wizard and full TUI
+
+`transcript-video course create` launches the lightweight Questionary wizard. Its review loop can edit titles and numbers, reorder sessions, remove sessions, and go back without restarting.
+
+`transcript-video course tui` launches the Textual application. It provides Course Metadata, Session Editor, and Review/Build screens. Video metadata and course builds run in background workers. Keyboard shortcuts include `Ctrl+S` to save, `Esc` to go back, `A/E/Delete` to add/edit/remove, `U/D` to reorder, and `Q` to quit. Unsaved changes require confirmation.
+
+## Architecture
+
+Presentation code lives in `cli.py`, `ui/`, `course/wizard.py`, and `tui/`. Application services in `application/` resolve settings, diagnostics, and inspection. `events.py` defines UI-independent pipeline stages and observers. `process_runner.py` owns subprocess execution, ffprobe JSON, FFmpeg `-progress pipe:1` parsing, failure diagnostics, and cancellation. Processing and course modules contain the media/model business logic.
+
+## Developer workflow
+
+```powershell
+uv sync
+just format
+just lint
+just test
+just check
+uv run pre-commit install
+```
+
+Pytest markers are `integration`, `gpu`, and `slow`; `just test-fast` excludes all three. Ruff is both formatter and linter. The pre-commit configuration runs Ruff plus TOML/YAML and whitespace checks.
+
 ## Contents
 
 - [Capabilities](#capabilities)
@@ -49,13 +115,18 @@ transcript-video/
 ├── scripts/                        # manual smoke-test utilities
 ├── src/transcript_video/
 │   ├── cli.py                      # main CLI
-│   ├── config.py                   # TOML settings and shared data types
-│   ├── hardware.py                 # CUDA/NVENC selection and fallback
+│   ├── application/                # settings, inspection, diagnostics
+│   ├── ui/                         # Rich console, logging, progress
+│   ├── tui/                        # full Textual course application
+│   ├── events.py                   # UI-independent pipeline events
+│   ├── process_runner.py           # subprocess/FFmpeg/ffprobe boundary
 │   ├── processing/                 # ASR, translation, subtitles, media, TTS
-│   └── course/                     # course builder, cards, timeline, TUI
+│   └── course/                     # course builder, cards, timeline, wizard
 ├── tests/                          # dependency-light automated tests
 ├── pyproject.toml                  # package metadata and direct dependencies
 ├── ruff.toml                       # lint/format policy
+├── justfile                        # developer task runner
+├── .pre-commit-config.yaml         # local commit checks
 └── uv.lock                         # reproducible dependency lock
 ```
 
@@ -84,8 +155,8 @@ Verify the CLI:
 
 ```powershell
 uv run transcript-video --help
-uv run transcript-course --help
-uv run transcript-course-config --help
+uv run transcript-video course --help
+uv run transcript-video course create --help
 ```
 
 ## GPU acceleration
@@ -283,13 +354,13 @@ uv run python scripts/tts_smoke_test.py --model models/Qwen3-TTS-12Hz-1.7B-Custo
 Create a JSON profile interactively:
 
 ```powershell
-uv run transcript-course-config
+uv run transcript-video course create
 ```
 
 Build the course:
 
 ```powershell
-uv run transcript-course --config configs/courses/training_course.json
+uv run transcript-video course build --config configs/courses/training_course.json
 ```
 
 Each course profile supports:
@@ -320,7 +391,7 @@ All relative JSON paths are resolved from the repository root. The default `auto
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
-uv run python -m unittest discover -s tests -v
+uv run pytest
 uv build
 ```
 
