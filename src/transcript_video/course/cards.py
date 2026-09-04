@@ -7,10 +7,12 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
+from ..config import find_project_root
 from .config import CourseConfig
 from .timeline import SessionTimeline, format_video_timestamp, session_number
 
 logger = logging.getLogger(__name__)
+TOC_BACKGROUND = Path("assets/table_of_content.png")
 
 
 def _find_default_font(bold: bool = False) -> Path | None:
@@ -62,16 +64,24 @@ def _cover_image(image: Image.Image, width: int, height: int) -> Image.Image:
     )
 
 
-def _make_background(config: CourseConfig) -> Image.Image:
+def _make_background(
+    config: CourseConfig,
+    image_path: Path | None = None,
+    darken: bool = True,
+) -> Image.Image:
     width, height = config.render.width, config.render.height
+    image_path = image_path or config.theme_image
 
-    if config.theme_image is not None:
-        if not config.theme_image.exists():
-            raise FileNotFoundError(f"Theme image not found: {config.theme_image}")
-        with Image.open(config.theme_image) as source:
+    if image_path is not None:
+        if not image_path.exists():
+            raise FileNotFoundError(f"Background image not found: {image_path}")
+        with Image.open(image_path) as source:
             background = _cover_image(source, width, height)
     else:
         background = Image.new("RGB", (width, height), (24, 24, 24))
+
+    if not darken:
+        return background.convert("RGBA")
 
     # Dark transparent overlay improves text readability on arbitrary theme images.
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 96))
@@ -197,10 +207,12 @@ def render_toc_pages(
     output_dir.mkdir(parents=True, exist_ok=True)
     items_per_page = config.toc.items_per_page
     page_paths: list[Path] = []
+    toc_background = find_project_root(config.work_dir) / TOC_BACKGROUND
+    text_color = "black"
 
     for page_index, start in enumerate(range(0, len(timeline), items_per_page), start=1):
         page_items = timeline[start : start + items_per_page]
-        image = _make_background(config)
+        image = _make_background(config, toc_background, darken=False)
         draw = ImageDraw.Draw(image)
         width, height = image.size
 
@@ -215,7 +227,7 @@ def render_toc_pages(
             ((width - heading_width) / 2, height * 0.13),
             heading,
             font=heading_font,
-            fill="white",
+            fill=text_color,
         )
 
         if len(timeline) > items_per_page:
@@ -226,7 +238,7 @@ def render_toc_pages(
                 (width - (page_bbox[2] - page_bbox[0]) - width * 0.06, height * 0.08),
                 page_label,
                 font=page_font,
-                fill=(220, 220, 220, 255),
+                fill=text_color,
             )
 
         left_x = width * 0.14
@@ -247,7 +259,7 @@ def render_toc_pages(
                 (left_x, y),
                 number_text,
                 font=time_font,
-                fill=(230, 230, 230, 255),
+                fill=text_color,
             )
 
             max_title_width = int(time_right_x - title_x - width * 0.13)
@@ -265,7 +277,7 @@ def render_toc_pages(
                 font=row_font,
                 center_x=title_x + max_title_width / 2,
                 start_y=y,
-                fill="white",
+                fill=text_color,
                 line_gap=4,
             )
 
@@ -275,7 +287,7 @@ def render_toc_pages(
                 (time_right_x - timestamp_width, y),
                 timestamp,
                 font=time_font,
-                fill="white",
+                fill=text_color,
             )
 
         page_path = output_dir / f"toc_{page_index:03d}.png"

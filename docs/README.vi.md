@@ -251,6 +251,9 @@ split_audio = true
 chunk_minutes = 5
 max_speedup = 1.15
 chunk_tail_seconds = 10.0
+context_max_sentences = 4
+context_max_chars = 450
+context_break_seconds = 3.0
 ```
 
 Giá trị từ CLI override TOML nhưng không sửa file:
@@ -340,8 +343,14 @@ Các option quan trọng:
 - `tts.generation_mode = "full"`: tạo toàn bộ track trong một lượt.
 - `tts.audio_mode = "replace"`: thay audio nguồn.
 - `tts.audio_mode = "mix"`: trộn audio nguồn với TTS.
-- `tts.max_speedup`: mức tăng tốc resample tối đa để câu vừa slot.
+- `tts.max_speedup`: mức tăng tốc giữ nguyên cao độ bằng FFmpeg `atempo` để câu vừa slot.
 - `tts.chunk_tail_seconds`: khoảng dự phòng cho câu nằm gần cuối chunk.
+- `tts.context_max_sentences` / `context_max_chars`: giới hạn mỗi lần Qwen sinh theo ngữ cảnh.
+- `tts.context_break_seconds`: chỉ khoảng nghỉ lớn hơn mức này mới ngắt ngữ cảnh âm học.
+
+TTS timed align mỗi context bằng model faster-whisper đã cấu hình, rồi đặt từng câu đã tách về
+đúng timestamp bắt đầu trong SRT. Các lỗi cần kiểm tra thủ công được ghi vào
+`data/audio/<video>_tts_review.jsonl`; lời nói không bị âm thầm cắt ngắn.
 
 Chạy smoke test TTS độc lập:
 
@@ -383,6 +392,7 @@ Mọi đường dẫn tương đối trong JSON được resolve từ repository
 | Video có hard subtitle | `data/output/<video>_vi-dub_en-sub.mp4` |
 | WAV TTS hoàn chỉnh | `data/audio/<video>_tts.wav` |
 | Chunk TTS để kiểm tra | `data/audio/<video>_tts_chunks/` |
+| Log kiểm tra timing/alignment TTS | `data/audio/<video>_tts_review.jsonl` |
 | Video TTS cuối | `data/output/<video>_en-dub_en-sub.mp4` |
 | File tạm/course cuối | `data/compilation/` |
 

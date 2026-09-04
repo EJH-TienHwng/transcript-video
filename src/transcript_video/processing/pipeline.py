@@ -53,6 +53,7 @@ def _process_video(
     subtitled_output_path = paths.output_dir / f"{video_path.stem}_vi-dub_en-sub.mp4"
     tts_audio_path = paths.audio_dir / f"{video_path.stem}_tts.wav"
     tts_chunks_dir = paths.audio_dir / f"{video_path.stem}_tts_chunks"
+    tts_review_path = paths.audio_dir / f"{video_path.stem}_tts_review.jsonl"
     final_tts_output_path = paths.output_dir / f"{video_path.stem}_en-dub_en-sub.mp4"
 
     logger = logging.getLogger(__name__)
@@ -163,9 +164,20 @@ def _process_video(
             overwrite_all_chunks=tts.overwrite,
             max_speedup=tts.max_speedup,
             chunk_tail_seconds=tts.chunk_tail_seconds,
+            alignment_model_name=model_path,
+            context_max_sentences=tts.context_max_sentences,
+            context_max_chars=tts.context_max_chars,
+            context_break_seconds=tts.context_break_seconds,
+            review_log_path=tts_review_path,
         )
     else:
-        if tts_audio_path.exists() and not tts.overwrite and tts.rerun_chunk is None:
+        can_reuse_tts = (
+            tts_audio_path.exists()
+            and not tts.overwrite
+            and tts.rerun_chunk is None
+            and (tts.mode == "simple" or tts_review_path.exists())
+        )
+        if can_reuse_tts:
             logger.info("Reusing existing TTS audio: %s", tts_audio_path)
         else:
             if tts.rerun_chunk is not None:
@@ -198,6 +210,12 @@ def _process_video(
                     tts_instruct=tts.instruct,
                     device=hardware.device,
                     attn_implementation=tts.attn_implementation,
+                    alignment_model_name=model_path,
+                    max_speedup=tts.max_speedup,
+                    context_max_sentences=tts.context_max_sentences,
+                    context_max_chars=tts.context_max_chars,
+                    context_break_seconds=tts.context_break_seconds,
+                    review_log_path=tts_review_path,
                 )
 
         if tts.split_audio:

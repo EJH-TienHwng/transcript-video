@@ -83,6 +83,52 @@ def test_rejects_invalid_course_config(
         load_course_config(_course_config(tmp_path, overrides))
 
 
+def test_course_cards_use_requested_background_and_text_colors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from transcript_video.course import cards
+    from transcript_video.course.config import RenderConfig, SessionConfig
+    from transcript_video.course.timeline import SessionTimeline
+
+    project_root = Path.cwd()
+    session = SessionConfig("Section title", tmp_path / "session.mp4", 1)
+    config = CourseConfig(
+        title="Course",
+        output=tmp_path / "course.mp4",
+        theme_image=project_root / "assets/bosch_theme.png",
+        sessions=[session],
+        render=RenderConfig(width=320, height=180),
+        work_dir=project_root / "data/compilation",
+    )
+    timeline = [SessionTimeline(session, 10, 5, 10, 20)]
+    opened: list[Path] = []
+    draws = []
+    real_open = cards.Image.open
+    real_draw = cards.ImageDraw.Draw
+
+    def tracked_open(path):
+        opened.append(Path(path))
+        return real_open(path)
+
+    def tracked_draw(image):
+        draw = mock.Mock(wraps=real_draw(image))
+        draws.append(draw)
+        return draw
+
+    monkeypatch.setattr(cards.Image, "open", tracked_open)
+    monkeypatch.setattr(cards.ImageDraw, "Draw", tracked_draw)
+
+    cards.render_toc_pages(config, timeline, tmp_path / "toc")
+    cards.render_session_card(config, timeline[0], 1, tmp_path / "section.png")
+
+    assert opened[0].resolve() == (project_root / "assets/table_of_content.png").resolve()
+    assert {call.kwargs["fill"] for call in draws[0].text.call_args_list} == {"black"}
+    assert any(
+        call.args[1] in {"Section title", "Section", "title"} and call.kwargs["fill"] == "white"
+        for call in draws[1].text.call_args_list
+    )
+
+
 def test_normalization_uses_source_video_duration(tmp_path: Path) -> None:
     from transcript_video.course import media
 

@@ -29,3 +29,6 @@ split_audio = true
 chunk_minutes = 5
 max_speedup = 1.15
 chunk_tail_seconds = 10.0
+context_max_sentences = 4
+context_max_chars = 450
+context_break_seconds = 3.0

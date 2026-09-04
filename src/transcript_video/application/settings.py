@@ -132,13 +132,30 @@ def validate_settings(settings: RunSettings) -> None:
         raise ValueError("transcription.translation_batch_size must be at least 1.")
     if not isinstance(tts.chunk_minutes, int) or isinstance(tts.chunk_minutes, bool):
         raise ValueError("tts.chunk_minutes must be an integer.")
+    if not isinstance(tts.context_max_sentences, int) or isinstance(
+        tts.context_max_sentences, bool
+    ):
+        raise ValueError("tts.context_max_sentences must be an integer.")
+    if not isinstance(tts.context_max_chars, int) or isinstance(tts.context_max_chars, bool):
+        raise ValueError("tts.context_max_chars must be an integer.")
     if not isinstance(tts.max_speedup, int | float) or isinstance(tts.max_speedup, bool):
         raise ValueError("tts.max_speedup must be a number.")
     if not isinstance(tts.chunk_tail_seconds, int | float) or isinstance(
         tts.chunk_tail_seconds, bool
     ):
         raise ValueError("tts.chunk_tail_seconds must be a number.")
-    if tts.chunk_minutes < 1 or tts.max_speedup < 1 or tts.chunk_tail_seconds < 0:
+    if not isinstance(tts.context_break_seconds, int | float) or isinstance(
+        tts.context_break_seconds, bool
+    ):
+        raise ValueError("tts.context_break_seconds must be a number.")
+    if (
+        tts.chunk_minutes < 1
+        or tts.max_speedup < 1
+        or tts.chunk_tail_seconds < 0
+        or tts.context_max_sentences < 1
+        or tts.context_max_chars < 1
+        or tts.context_break_seconds < 0
+    ):
         raise ValueError("TTS timing settings are outside their supported ranges.")
     if tts.rerun_chunk is not None and tts.rerun_chunk < 0:
         raise ValueError("tts.rerun_chunk must be at least 0.")

@@ -251,6 +251,9 @@ split_audio = true
 chunk_minutes = 5
 max_speedup = 1.15
 chunk_tail_seconds = 10.0
+context_max_sentences = 4
+context_max_chars = 450
+context_break_seconds = 3.0
 ```
 
 CLI values override TOML values without modifying the file:
@@ -340,8 +343,14 @@ Relevant options:
 - `tts.generation_mode = "full"`: generate the complete track in one pass.
 - `tts.audio_mode = "replace"`: replace source audio.
 - `tts.audio_mode = "mix"`: mix source and TTS audio.
-- `tts.max_speedup`: maximum resampling speed-up used to fit a line.
+- `tts.max_speedup`: maximum pitch-preserving FFmpeg `atempo` speed-up used to fit a line.
 - `tts.chunk_tail_seconds`: extra boundary room for lines near a chunk end.
+- `tts.context_max_sentences` / `context_max_chars`: bound each contextual Qwen generation.
+- `tts.context_break_seconds`: only gaps larger than this force a new acoustic context.
+
+Timed TTS aligns each contextual generation with the configured faster-whisper model, then
+places each extracted sentence at its original SRT start. Problems requiring manual inspection
+are written to `data/audio/<video>_tts_review.jsonl`; speech is never silently truncated.
 
 Run the isolated manual TTS check:
 
@@ -383,6 +392,7 @@ All relative JSON paths are resolved from the repository root. The default `auto
 | Hard-subtitled video | `data/output/<video>_vi-dub_en-sub.mp4` |
 | Full TTS WAV | `data/audio/<video>_tts.wav` |
 | TTS review chunks | `data/audio/<video>_tts_chunks/` |
+| TTS timing/alignment review log | `data/audio/<video>_tts_review.jsonl` |
 | Final TTS video | `data/output/<video>_en-dub_en-sub.mp4` |
 | Course work/final files | `data/compilation/` |
 

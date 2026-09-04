@@ -2,15 +2,17 @@
 
 ## Cần phải sửa
 
-làm sao để chạy với 1 list video được chỉ định, thay vì phải gõ từng cái một
+- [ ] làm sao để chạy với 1 list video được chỉ định, thay vì phải gõ từng cái một
 
-tôi muốn có cách nào đó để truyền tham số vào càng ít càng tốt, kiểu chỉ chạy bằng 1 ít lệnh thôi, thay vì vẫn phải truyền khá nhiều tham số như hiện tại
+- [ ] tôi muốn có cách nào đó để truyền tham số vào càng ít càng tốt, kiểu chỉ chạy bằng 1 ít lệnh thôi, thay vì vẫn phải truyền khá nhiều tham số như hiện tại
 
-log lại những phần tts bị quá dài, tràn ra khỏi constrain cho phép lại thành 1 file, để tôi sửa lại file srt thủ công
+- [x] log lại những phần tts bị quá dài, tràn ra khỏi constrain cho phép lại thành 1 file, để tôi sửa lại file srt thủ công
 
-giúp tôi sửa lại phần ảnh cho table of content, dùng file table_of_content.png
+- [x] giúp tôi sửa lại phần ảnh cho table of content, dùng file table_of_content.png
 
-tôi muốn cái TOC thì chữ đen, tại nền của tôi là nền trắng, còn về cái section thì chữ trắng tại vì phần ảnh nền của nó là nền nhiều màu
+- [x] tôi muốn cái TOC thì chữ đen, tại nền của tôi là nền trắng, còn về cái section thì chữ trắng tại vì phần ảnh nền của nó là nền nhiều màu
+
+- [ ] bất kì cái nào dùng tới speed up cũng nên log lại
 
 ## Từ từ rồi sửa
 

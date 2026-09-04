@@ -80,6 +80,9 @@ class TTSSettings:
     chunk_minutes: int = 5
     max_speedup: float = 1.15
     chunk_tail_seconds: float = 10.0
+    context_max_sentences: int = 4
+    context_max_chars: int = 450
+    context_break_seconds: float = 3.0
 
 
 @dataclass(slots=True)
