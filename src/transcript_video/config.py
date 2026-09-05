@@ -22,7 +22,7 @@ FASTER_WHISPER_COMPUTE_TYPES = {
 }
 DEFAULT_CONFIG_PATH = Path("configs/transcription.toml")
 DEFAULT_MODEL_PATH = "models/faster-whisper-large-v3"
-DEFAULT_TTS_MODEL = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+DEFAULT_TTS_MODEL = "models/Qwen3-TTS-12Hz-1.7B-CustomVoice"
 MODEL_FILENAME_SUFFIXES = {"faster-whisper": "faster", "huggingface": "huggingface"}
 TRANSLATION_MODEL_FILENAME_SUFFIXES = {"vinai-translate": "vinai"}
 

@@ -72,17 +72,31 @@ Pytest markers are `integration`, `gpu`, and `slow`; `just test-fast` excludes a
 
 ## Contents
 
-- [Capabilities](#capabilities)
-- [Project structure](#project-structure)
-- [Installation](#installation)
-- [GPU acceleration](#gpu-acceleration)
-- [Configuration](#configuration)
-- [Transcription workflow](#transcription-workflow)
-- [TTS workflow](#tts-workflow)
-- [Course builder](#course-builder)
-- [Outputs](#outputs)
-- [Quality checks](#quality-checks)
-- [Troubleshooting](#troubleshooting)
+- [Transcript Video Documentation](#transcript-video-documentation)
+  - [Command overview](#command-overview)
+  - [Everyday workflows](#everyday-workflows)
+  - [Course wizard and full TUI](#course-wizard-and-full-tui)
+  - [Architecture](#architecture)
+  - [Developer workflow](#developer-workflow)
+  - [Contents](#contents)
+  - [Capabilities](#capabilities)
+  - [Project structure](#project-structure)
+  - [Installation](#installation)
+    - [Requirements](#requirements)
+  - [GPU acceleration](#gpu-acceleration)
+    - [Workload map](#workload-map)
+  - [Configuration](#configuration)
+  - [Transcription workflow](#transcription-workflow)
+  - [TTS workflow](#tts-workflow)
+  - [Course builder](#course-builder)
+  - [Outputs](#outputs)
+  - [Quality checks](#quality-checks)
+  - [Troubleshooting](#troubleshooting)
+    - [CUDA is unavailable](#cuda-is-unavailable)
+    - [NVENC falls back to libx264](#nvenc-falls-back-to-libx264)
+    - [CUDA out of memory](#cuda-out-of-memory)
+    - [CPU activity is still visible](#cpu-activity-is-still-visible)
+    - [Existing artifacts are unexpectedly reused](#existing-artifacts-are-unexpectedly-reused)
 
 ## Capabilities
 
@@ -241,7 +255,7 @@ enabled = false
 overwrite = false
 mode = "timed"
 generation_mode = "chunked"
-model = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+model = "Qwen3-TTS-12Hz-1.7B-CustomVoice"
 language = "English"
 speaker = "Aiden"
 instruct = "Speak clearly and professionally..."

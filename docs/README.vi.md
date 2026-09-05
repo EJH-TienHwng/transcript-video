@@ -72,17 +72,31 @@ Các pytest marker gồm `integration`, `gpu`, `slow`; `just test-fast` loại c
 
 ## Mục lục
 
-- [Chức năng](#chức-năng)
-- [Cấu trúc project](#cấu-trúc-project)
-- [Cài đặt](#cài-đặt)
-- [Tăng tốc GPU](#tăng-tốc-gpu)
-- [Cấu hình](#cấu-hình)
-- [Quy trình transcription](#quy-trình-transcription)
-- [Quy trình TTS](#quy-trình-tts)
-- [Course builder](#course-builder)
-- [File đầu ra](#file-đầu-ra)
-- [Kiểm tra chất lượng](#kiểm-tra-chất-lượng)
-- [Xử lý sự cố](#xử-lý-sự-cố)
+- [Tài liệu Transcript Video](#tài-liệu-transcript-video)
+  - [Tổng quan command](#tổng-quan-command)
+  - [Quy trình thường dùng](#quy-trình-thường-dùng)
+  - [Course Wizard và TUI đầy đủ](#course-wizard-và-tui-đầy-đủ)
+  - [Kiến trúc](#kiến-trúc)
+  - [Quy trình phát triển](#quy-trình-phát-triển)
+  - [Mục lục](#mục-lục)
+  - [Chức năng](#chức-năng)
+  - [Cấu trúc project](#cấu-trúc-project)
+  - [Cài đặt](#cài-đặt)
+    - [Yêu cầu](#yêu-cầu)
+  - [Tăng tốc GPU](#tăng-tốc-gpu)
+    - [Bảng phân bổ workload](#bảng-phân-bổ-workload)
+  - [Cấu hình](#cấu-hình)
+  - [Quy trình transcription](#quy-trình-transcription)
+  - [Quy trình TTS](#quy-trình-tts)
+  - [Course builder](#course-builder)
+  - [File đầu ra](#file-đầu-ra)
+  - [Kiểm tra chất lượng](#kiểm-tra-chất-lượng)
+  - [Xử lý sự cố](#xử-lý-sự-cố)
+    - [CUDA không khả dụng](#cuda-không-khả-dụng)
+    - [NVENC fallback sang libx264](#nvenc-fallback-sang-libx264)
+    - [CUDA hết bộ nhớ](#cuda-hết-bộ-nhớ)
+    - [Vẫn thấy CPU hoạt động](#vẫn-thấy-cpu-hoạt-động)
+    - [Artifact cũ bị tái sử dụng ngoài mong muốn](#artifact-cũ-bị-tái-sử-dụng-ngoài-mong-muốn)
 
 ## Chức năng
 
@@ -241,7 +255,7 @@ enabled = false
 overwrite = false
 mode = "timed"
 generation_mode = "chunked"
-model = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+model = "Qwen3-TTS-12Hz-1.7B-CustomVoice"
 language = "English"
 speaker = "Aiden"
 instruct = "Speak clearly and professionally..."
