@@ -201,3 +201,103 @@ def test_rejects_unsupported_compute_type(tmp_path: Path) -> None:
     path.write_text('[hardware]\ncompute_type = "fastest"\n', encoding="utf-8")
     with pytest.raises(ValueError, match=r"hardware\.compute_type"):
         parse_args(["--config", str(path)])
+
+
+@pytest.mark.parametrize("count", [2, 3, 6, 8])
+def test_toc_sparse_pages_are_compact_and_centered(tmp_path, monkeypatch, count):
+    from transcript_video.course import cards
+    from transcript_video.course.config import SessionConfig
+    from transcript_video.course.timeline import build_timeline
+
+    sessions = [
+        SessionConfig(f"Session title {i}", tmp_path / f"{i}.mp4", i) for i in range(1, count + 1)
+    ]
+    config = CourseConfig("Course", tmp_path / "course.mp4", None, sessions, work_dir=Path.cwd())
+    real_draw = cards.ImageDraw.Draw
+    draws = []
+
+    def track(image):
+        draw = mock.Mock(wraps=real_draw(image))
+        draws.append(draw)
+        return draw
+
+    monkeypatch.setattr(cards.ImageDraw, "Draw", track)
+    pages = cards.render_toc_pages(config, build_timeline(config, [10] * count), tmp_path)
+    assert len(pages) == 1
+    y_positions = [
+        call.args[0][1]
+        for call in draws[0].text.call_args_list
+        if call.args[1] in {f"{i:02d}" for i in range(1, count + 1)}
+    ]
+    height = config.render.height
+    spacing = height * (0.10 if count < 6 else 0.58 / count)
+    assert len(y_positions) == count
+    assert y_positions[1] - y_positions[0] == pytest.approx(spacing)
+    assert y_positions[0] + spacing * count / 2 == pytest.approx(height * (0.28 + 0.58 / 2))
+
+
+def test_wizard_review_and_actions_remain_usable(monkeypatch):
+    from io import StringIO
+
+    from rich.console import Console
+
+    from transcript_video.course import wizard
+    from transcript_video.ui.console import THEME
+
+    output = StringIO()
+    monkeypatch.setattr(wizard, "console", Console(file=output, width=160, theme=THEME))
+    sessions = [dict(number=i, title=f"Title {i}", video=f"video{i}.mp4") for i in range(1, 4)]
+    choices = iter(
+        ["Move up", 1, "Move down", 0, "Edit title/number", 1, "Remove", 2, "Remove", "Continue"]
+    )
+    monkeypatch.setattr(
+        wizard.questionary,
+        "select",
+        lambda *args, **kwargs: mock.Mock(unsafe_ask=lambda: next(choices)),
+    )
+    monkeypatch.setattr(wizard, "_ask_text", lambda *args: "Updated title")
+    monkeypatch.setattr(wizard, "_ask_int", lambda *args, **kwargs: 9)
+    result = wizard._edit_sessions(sessions)
+    assert [(item["number"], item["title"]) for item in result] == [
+        (1, "Title 1"),
+        (9, "Updated title"),
+    ]
+    for value in ("ORDER", "NUMBER", "TITLE", "VIDEO", "video1.mp4", "Updated title"):
+        assert value in output.getvalue()
+
+
+def test_linear_wizard_creates_loadable_config_without_theme(tmp_path, monkeypatch):
+    from io import StringIO
+
+    from rich.console import Console
+
+    from transcript_video.course import wizard
+    from transcript_video.ui.console import THEME
+
+    (tmp_path / "pyproject.toml").touch()
+    video = tmp_path / "video.mp4"
+    video.touch()
+    captured = StringIO()
+    monkeypatch.setattr(wizard, "console", Console(file=captured, width=150, theme=THEME))
+    monkeypatch.setattr(
+        wizard,
+        "_collect_sessions",
+        lambda *args: [dict(number=1, title="Intro", video="video.mp4")],
+    )
+    responses = iter(["Continue", "Recommended", "__none__", "Create configuration"])
+    monkeypatch.setattr(
+        wizard.questionary,
+        "select",
+        lambda *args, **kwargs: mock.Mock(unsafe_ask=lambda: next(responses)),
+    )
+    monkeypatch.setattr(
+        wizard.questionary, "confirm", lambda *args, **kwargs: mock.Mock(unsafe_ask=lambda: False)
+    )
+    monkeypatch.setattr(wizard, "_ask_text", lambda message, default=None: default or "")
+    monkeypatch.setattr(wizard, "_ask_float", lambda *args, **kwargs: 5.0)
+    path = wizard.create_course_config_interactive(tmp_path, tmp_path)
+    config = load_course_config(path)
+    assert config.sessions[0].video == video
+    assert config.theme_image is None
+    assert "Course configuration saved" in captured.getvalue()
+    assert "course build --config" in captured.getvalue()

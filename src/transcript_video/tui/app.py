@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
@@ -12,8 +13,10 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Input, Label, ListItem, ListView, Log, Static
 
-from ..events import PipelineEvent, PipelineStage
-from ..process_runner import ffmpeg_progress_handler
+from ..context import current_context, log_context
+from ..events import EventKind, PipelineEvent, event_scope
+from ..ui.progress import LineThrottle, format_pipeline_event
+from ..ui.theme import PALETTE
 
 
 @dataclass(slots=True)
@@ -263,25 +266,16 @@ class ReviewScreen(Screen):
         from ..course.config import load_course_config
 
         log = self.query_one("#build-log", Log)
-        self.app.call_from_thread(log.write_line, "Building course…")
         try:
             observer = TextualObserver(self.app, log)
-            with ffmpeg_progress_handler(
-                lambda progress: observer.notify(
-                    PipelineEvent(
-                        PipelineStage.RENDER,
-                        "FFmpeg "
-                        f"{progress.elapsed_seconds or 0:.1f}s "
-                        f"{progress.speed or ''}".strip(),
-                        current=progress.elapsed_seconds,
-                    )
-                )
-            ):
-                output = build_course(load_course_config(self.app.draft.config_path), observer)
+            with event_scope(observer, **self.app.run_context.fields()):
+                build_course(load_course_config(self.app.draft.config_path), observer)
         except Exception as exc:
+            with log_context(**self.app.run_context.fields()):
+                logging.getLogger(__name__).debug(
+                    "Course build failed", exc_info=True, extra={"diagnostic_only": True}
+                )
             self.app.call_from_thread(log.write_line, f"Build failed: {exc}")
-        else:
-            self.app.call_from_thread(log.write_line, f"Complete: {output}")
 
     def action_back(self) -> None:
         self.app.pop_screen()
@@ -299,9 +293,20 @@ class TextualObserver:
     def __init__(self, app: App, log: Log) -> None:
         self.app = app
         self.log = log
+        self.throttle = LineThrottle()
 
     def notify(self, event: PipelineEvent) -> None:
-        self.app.call_from_thread(self.log.write_line, f"[{event.stage}] {event.message}")
+        if event.kind == EventKind.FAILURE or (
+            event.kind == EventKind.REVIEW and event.context.operation != "quality"
+        ):
+            return  # The worker owns its one failure line; review details live in the report.
+        if self.throttle.accepts(event):
+            text = format_pipeline_event(event)
+            if event.context.operation == "quality":
+                text += " · " + " · ".join(f"{key}={value}" for key, value in event.details.items())
+            if event.artifact:
+                text += f" · {event.artifact}"
+            self.app.call_from_thread(self.log.write_line, f"{event.timestamp[11:19]} {text}")
 
 
 class CourseApp(App[None]):
@@ -322,6 +327,21 @@ class CourseApp(App[None]):
 
     def __init__(self, config_path: Path | None = None) -> None:
         super().__init__()
+        from textual.theme import Theme
+
+        self.register_theme(
+            Theme(
+                name="transcript-video",
+                primary=PALETTE["accent"],
+                secondary=PALETTE["stage"],
+                accent=PALETTE["accent"],
+                warning=PALETTE["warning"],
+                error=PALETTE["error"],
+                success=PALETTE["success"],
+            )
+        )
+        self.theme = "transcript-video"
+        self.run_context = current_context.get()
         selected = config_path or Path("configs/courses/training-course.json")
         self.draft = self._read_draft(selected)
 

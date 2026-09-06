@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -63,7 +64,7 @@ def _resolve_path(root: Path, value: str | None) -> Path | None:
 
 
 def _require_positive(value: float, name: str) -> None:
-    if value <= 0:
+    if not math.isfinite(value) or value <= 0:
         raise ValueError(f"{name} must be greater than zero.")
 
 
@@ -88,6 +89,11 @@ def load_course_config(config_path: Path) -> CourseConfig:
     except json.JSONDecodeError as exc:
         raise ValueError(f"Course config is not valid JSON: {config_path}") from exc
 
+    return parse_course_config(raw, project_root)
+
+
+def parse_course_config(raw: dict, project_root: Path) -> CourseConfig:
+    """Validate a draft before writing it, using the same rules as the JSON loader."""
     if not isinstance(raw, dict):
         raise ValueError("Course config must be a JSON object.")
 

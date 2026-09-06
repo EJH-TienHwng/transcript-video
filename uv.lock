@@ -1761,8 +1761,8 @@ requires-dist = [
     { name = "safetensors", specifier = "==0.7.0" },
     { name = "soundfile", specifier = "==0.13.1" },
     { name = "textual", specifier = ">=6,<7" },
-    { name = "torch", specifier = "==2.14.0+cu132", index = "file:///C:/Users/AHG5HC/Documents/Code/transcript-video/wheels" },
-    { name = "torchaudio", specifier = "==2.11.0", index = "file:///C:/Users/AHG5HC/Documents/Code/transcript-video/wheels" },
+    { name = "torch", specifier = "==2.14.0+cu132", index = "file:///C:/Users/Hwng/Documents/Code/Bosch/transcript-video/wheels" },
+    { name = "torchaudio", specifier = "==2.11.0", index = "file:///C:/Users/Hwng/Documents/Code/Bosch/transcript-video/wheels" },
     { name = "transformers", specifier = "==4.57.3" },
     { name = "typer", specifier = ">=0.16,<1" },
 ]

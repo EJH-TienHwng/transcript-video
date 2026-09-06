@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 import sys
 from dataclasses import dataclass
@@ -22,7 +23,7 @@ def run_doctor(settings: RunSettings) -> list[Check]:
     root = Path(settings.project.root).expanduser().resolve()
     paths = ProjectPaths.from_root(root)
     checks = [
-        Check("Python", sys.version_info[:2] == (3, 12), sys.version.split()[0]),
+        _python_check(root),
         Check("Project root", root.is_dir(), str(root)),
         Check("Free storage", _free_space(root) >= 2 * 1024**3, _format_bytes(_free_space(root))),
     ]
@@ -50,7 +51,7 @@ def run_doctor(settings: RunSettings) -> list[Check]:
         checks.append(Check("ffprobe", False, str(exc)))
     model = _from_root(root, settings.project.model)
     checks.append(Check("Transcription model", model.is_dir(), str(model)))
-    for name in ("input_dir", "subtitle_dir", "audio_dir", "output_dir", "temp_dir"):
+    for name in ("input_dir", "subtitle_dir", "audio_dir", "output_dir", "temp_dir", "report_dir"):
         folder = getattr(paths, name)
         parent = next((item for item in (folder, *folder.parents) if item.exists()), root)
         checks.append(Check(f"Writable {name}", _writable(parent), str(folder)))
@@ -65,6 +66,25 @@ def run_doctor(settings: RunSettings) -> list[Check]:
             Check("PyTorch", False, str(exc), required=settings.hardware.device == "cuda")
         )
     return checks
+
+
+def _python_check(root: Path) -> Check:
+    version = sys.version.split()[0]
+    source = root / ".python-version"
+    try:
+        expected = source.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeError) as exc:
+        return Check("Python", False, f"{version}; cannot read {source}: {exc}", required=False)
+    if not re.fullmatch(r"\d+\.\d+(?:\.\d+)?", expected):
+        return Check(
+            "Python", False, f"{version}; invalid version in {source}: {expected!r}", required=False
+        )
+    parts = tuple(int(part) for part in expected.split("."))
+    return Check(
+        "Python",
+        sys.version_info[: len(parts)] == parts,
+        f"{version} (project requires {expected}, from {source})",
+    )
 
 
 def _from_root(root: Path, value: str) -> Path:

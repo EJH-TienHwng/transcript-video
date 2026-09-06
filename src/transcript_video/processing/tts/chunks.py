@@ -5,17 +5,20 @@ import logging
 from math import ceil
 from pathlib import Path
 
-from ...config import SubtitleSegment
+from ...config import ProjectPaths, SubtitleSegment, find_project_root
+from ...context import log_context
+from ...events import PipelineStage, emit, stage_context
 from ..media import get_media_duration_seconds
 from .core import (
     TTSContextGroup,
     build_tts_context_groups,
     generate_context_group_items,
+    invalidate_tts_review_log,
     load_faster_whisper_aligner,
     load_qwen_tts_model,
     log_tts_summary,
     overlay_tts_items,
-    tts_review_counts,
+    tts_review_is_current,
     write_tts_review_log,
 )
 
@@ -95,11 +98,23 @@ def synthesize_one_fixed_time_chunk(
     if sample_rate is not None and generated_rate is not None and sample_rate != generated_rate:
         raise ValueError(f"Inconsistent sample rate: {generated_rate} != {sample_rate}")
     final_rate = generated_rate or sample_rate or 24000
-    minimum_duration = max(0.1, chunk_end - chunk_start + (chunk_tail_seconds if items else 0.0))
-    audio = overlay_tts_items(items, final_rate, minimum_duration, offset=chunk_start)
-    sf.write(str(chunk_audio_out), np.asarray(audio, dtype=np.float32), final_rate)
-    if review_path is not None:
+    review_path = review_path or ProjectPaths.from_root(find_project_root()).tts_review_path(
+        chunk_audio_out, chunk=True
+    )
+    if any(entry["action"] == "generation_failed" for entry in reviews):
         write_tts_review_log(review_path, reviews)
+        log_tts_summary(len(reviews), reviews, review_path)
+        raise ValueError(
+            f"TTS chunk {chunk_index}: individual generation failed; see {review_path}"
+        )
+    minimum_duration = max(0.1, chunk_end - chunk_start + (chunk_tail_seconds if items else 0.0))
+    audio = overlay_tts_items(
+        items, final_rate, minimum_duration, offset=chunk_start, reviews=reviews
+    )
+    # Invalidate before replacing the waveform so interrupted writes cannot reuse old ranges.
+    invalidate_tts_review_log(review_path)
+    sf.write(str(chunk_audio_out), np.asarray(audio, dtype=np.float32), final_rate)
+    write_tts_review_log(review_path, reviews)
     logger.info(
         "Wrote TTS chunk %03d with %d context group(s): %s",
         chunk_index,
@@ -113,37 +128,57 @@ def rebuild_full_tts_audio_from_chunks(
     chunk_infos: list[tuple[Path, float, float]],
     audio_out: Path,
     expected_total_duration: float | None = None,
-) -> None:
-    """Rebuild the full track by overlaying chunks at fixed timeline starts."""
-    import numpy as np
+    review_paths: list[Path] | None = None,
+) -> list[dict[str, object]]:
+    """Recover complete cached sentences and place them on one collision-free timeline."""
     import soundfile as sf
 
     if not chunk_infos:
         raise ValueError("No audio chunks are available to rebuild the full track.")
-    loaded = []
+    if review_paths is None:
+        paths = ProjectPaths.from_root(find_project_root())
+        review_paths = [paths.tts_review_path(info[0], chunk=True) for info in chunk_infos]
+    items = []
+    reviews = []
+    seen: set[int] = set()
     final_rate = None
-    for chunk_path, chunk_start, _ in chunk_infos:
+    for (chunk_path, _chunk_start, _), review_path in zip(chunk_infos, review_paths, strict=True):
         if not chunk_path.exists():
             raise FileNotFoundError(f"Missing audio chunk: {chunk_path}")
         wav, sr = sf.read(str(chunk_path), dtype="float32")
         if final_rate is not None and sr != final_rate:
             raise ValueError(f"Inconsistent chunk sample rate: {sr} != {final_rate}")
         final_rate = sr
-        loaded.append((chunk_start, wav))
+        chunk_reviews = _read_reviews([review_path])
+        expected = [
+            (entry["subtitle_index"], SubtitleSegment(entry["start"], entry["end"], entry["text"]))
+            for entry in chunk_reviews
+        ]
+        if not tts_review_is_current(review_path, expected):
+            raise ValueError(
+                f"Unsafe or outdated TTS cache: {chunk_path}; regenerate with --force tts"
+            )
+        if not chunk_reviews and wav.any():
+            raise ValueError(f"Missing sentence ranges in TTS cache: {chunk_path}")
+        for entry in chunk_reviews:
+            index = entry["subtitle_index"]
+            first, last = entry["cache_start_sample"], entry["cache_end_sample"]
+            if index in seen or not 0 <= first < last <= len(wav):
+                raise ValueError(
+                    f"Duplicate subtitle or invalid cached audio range: {chunk_path}, #{index}"
+                )
+            seen.add(index)
+            segment = SubtitleSegment(entry["start"], entry["end"], entry["text"])
+            items.append((index, segment, wav[first:last].copy()))
+        reviews.extend(chunk_reviews)
     if final_rate is None:
         raise ValueError("Could not read a sample rate from the audio chunks.")
 
-    total_samples = max(
-        [round((expected_total_duration or 0.0) * final_rate), 1]
-        + [round(start * final_rate) + len(wav) for start, wav in loaded]
-    )
-    audio = np.zeros(total_samples, dtype=np.float32)
-    for start, wav in loaded:
-        first = max(0, round(start * final_rate))
-        audio[first : first + len(wav)] += wav
+    audio = overlay_tts_items(items, final_rate, expected_total_duration or 0.0, reviews=reviews)
     audio_out.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(audio_out), np.clip(audio, -1.0, 1.0), final_rate)
-    logger.info("Rebuilt full TTS audio from timeline-overlaid chunks: %s", audio_out)
+    sf.write(str(audio_out), audio, final_rate)
+    logger.info("Rebuilt full TTS audio from cached sentences: %s", audio_out)
+    return sorted(reviews, key=lambda entry: (entry["start"], entry["subtitle_index"]))
 
 
 def _dependent_owner_chunks(
@@ -219,15 +254,37 @@ def synthesize_tts_audio_by_time_chunks(
     )
 
     infos = []
+    sentences_by_chunk = {}
+    final_review = review_log_path or ProjectPaths.from_root(find_project_root()).tts_review_path(
+        audio_out
+    )
+    chunk_report_dir = final_review.parent / chunks_dir.name
     for chunk_index, chunk_start, chunk_end, chunk_segments in chunks:
         chunk_path = chunks_dir / f"{audio_out.stem}_chunk_{chunk_index:03d}.wav"
-        review_path = chunk_path.with_suffix(".review.jsonl")
+        review_path = chunk_report_dir / f"{chunk_path.stem}.review.jsonl"
+        owned_segments = [
+            item
+            for group in groups
+            if chunk_start <= group.segments[0][1].start < chunk_end
+            for item in group.segments
+        ]
+        sentences_by_chunk[chunk_index] = len(owned_segments)
         should_generate = (
             overwrite_all_chunks
             or chunk_index in rerun_owners
             or not chunk_path.exists()
-            or not review_path.exists()
+            or not tts_review_is_current(review_path, owned_segments)
         )
+        if (
+            should_generate
+            and chunk_path.exists()
+            and not tts_review_is_current(review_path, owned_segments)
+        ):
+            logger.info(
+                "TTS chunk %03d: missing or outdated report metadata at %s; regenerating safely",
+                chunk_index,
+                review_path,
+            )
         infos.append(
             (
                 chunk_index,
@@ -241,6 +298,8 @@ def synthesize_tts_audio_by_time_chunks(
         )
 
     to_generate = [info[0] for info in infos if info[-1]]
+    completed_chunks = len(infos) - len(to_generate)
+    completed_sentences = sum(sentences_by_chunk[info[0]] for info in infos if not info[-1])
     if to_generate:
         logger.info("Chunks to generate/regenerate: %s", to_generate)
         model = load_qwen_tts_model(tts_model_name, device, attn_implementation)
@@ -259,35 +318,69 @@ def synthesize_tts_audio_by_time_chunks(
         ) in infos:
             if not should_generate:
                 continue
-            sample_rate = synthesize_one_fixed_time_chunk(
-                model=model,
-                aligner=aligner,
-                chunk_index=chunk_index,
-                chunk_start=chunk_start,
-                chunk_end=chunk_end,
-                chunk_segments=chunk_segments,
-                chunk_audio_out=chunk_path,
-                tts_language=tts_language,
-                tts_speaker=tts_speaker,
-                tts_instruct=tts_instruct,
-                sample_rate=sample_rate,
-                max_speedup=max_speedup,
-                all_segments=segments,
-                video_duration=video_duration,
-                chunk_tail_seconds=chunk_tail_seconds,
-                context_groups=groups,
-                review_path=chunk_review,
-            )
+            with (
+                log_context(chunk=chunk_index),
+                stage_context(
+                    PipelineStage.TTS,
+                    f"Generating TTS chunk {chunk_index + 1}/{len(infos)}",
+                    operation="chunk",
+                ),
+            ):
+                sample_rate = synthesize_one_fixed_time_chunk(
+                    model=model,
+                    aligner=aligner,
+                    chunk_index=chunk_index,
+                    chunk_start=chunk_start,
+                    chunk_end=chunk_end,
+                    chunk_segments=chunk_segments,
+                    chunk_audio_out=chunk_path,
+                    tts_language=tts_language,
+                    tts_speaker=tts_speaker,
+                    tts_instruct=tts_instruct,
+                    sample_rate=sample_rate,
+                    max_speedup=max_speedup,
+                    all_segments=segments,
+                    video_duration=video_duration,
+                    chunk_tail_seconds=chunk_tail_seconds,
+                    context_groups=groups,
+                    review_path=chunk_review,
+                )
+            with log_context(operation="chunks", chunk=chunk_index):
+                completed_chunks += 1
+                completed_sentences += sentences_by_chunk[chunk_index]
+                emit(
+                    PipelineStage.TTS,
+                    "TTS chunks ready",
+                    current=completed_chunks,
+                    total=len(infos),
+                    details={
+                        "unit": "chunks",
+                        "sentences": completed_sentences,
+                        "total_sentences": len(valid_segments),
+                    },
+                )
+
     else:
         logger.info("All TTS chunks and review metadata exist; rebuilding without model loading.")
 
-    rebuild_full_tts_audio_from_chunks(
+    with log_context(operation="chunks", chunk=None):
+        emit(
+            PipelineStage.TTS,
+            "TTS chunks ready",
+            current=len(infos),
+            total=len(infos),
+            details={
+                "unit": "chunks",
+                "sentences": len(valid_segments),
+                "total_sentences": len(valid_segments),
+            },
+        )
+    invalidate_tts_review_log(final_review)
+    reviews = rebuild_full_tts_audio_from_chunks(
         [(info[4], info[1], info[2]) for info in infos],
         audio_out,
         expected_duration,
+        review_paths=[info[5] for info in infos],
     )
-    reviews = _read_reviews([info[5] for info in infos])
-    final_review = review_log_path or audio_out.with_name(f"{audio_out.stem}_review.jsonl")
     write_tts_review_log(final_review, reviews)
-    aligned, review_count = tts_review_counts(len(valid_segments), reviews)
-    log_tts_summary(len(valid_segments), aligned, review_count, final_review)
+    log_tts_summary(len(valid_segments), reviews, final_review)

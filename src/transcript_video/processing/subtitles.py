@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from ..config import SubtitleSegment
+from ..events import warn
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,8 @@ def remove_repeated_hallucination_segments(
             previous_text = normalized
             repeat_count = 1
         if duration <= short_segment_seconds and repeat_count > max_same_text_count:
-            logger.warning(
+            warn(
+                logger,
                 "Removed repeated hallucination: %.2f --> %.2f | %s",
                 segment.start,
                 segment.end,
@@ -112,7 +114,8 @@ def fix_too_short_or_invalid_timing(segments: Iterable[SubtitleSegment]) -> list
     cleaned, last_end = [], 0.0
     for segment in sorted(segments, key=lambda item: item.start):
         if segment.end <= segment.start:
-            logger.warning(
+            warn(
+                logger,
                 "Removed invalid timing: %.2f --> %.2f | %s",
                 segment.start,
                 segment.end,
@@ -135,8 +138,12 @@ def post_process_segments(segments: Iterable[SubtitleSegment]) -> list[SubtitleS
         if not text:
             continue
         if is_bad_hallucination_text(text):
-            logger.warning(
-                "Removed known hallucination: %.2f --> %.2f | %s", segment.start, segment.end, text
+            warn(
+                logger,
+                "Removed known hallucination: %.2f --> %.2f | %s",
+                segment.start,
+                segment.end,
+                text,
             )
             continue
         filtered.append(SubtitleSegment(segment.start, segment.end, text))

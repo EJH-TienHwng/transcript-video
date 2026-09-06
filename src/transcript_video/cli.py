@@ -3,16 +3,20 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import time
+from contextlib import ExitStack
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any
+from uuid import uuid4
 
 import click
 import typer
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
+from rich.text import Text
 
 from .application.settings import ResolvedSettings, resolve_settings
 from .config import (
@@ -20,15 +24,18 @@ from .config import (
     RunSettings,
     save_run_settings,
 )
+from .context import log_context
+from .events import CompositeObserver, JsonEventObserver
 from .ui.console import ConsolePair, make_consoles
-from .ui.logging import configure_logging
-from .ui.progress import RichProgressObserver
+from .ui.logging import RunLogs, close_logging, configure_logging
+from .ui.progress import RichProgressObserver, format_duration
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(
     help="Local video transcription, translation, TTS, and course building.",
     no_args_is_help=True,
     invoke_without_command=True,
+    pretty_exceptions_show_locals=False,
 )
 course_app = typer.Typer(help="Create and build multi-session courses.")
 config_app = typer.Typer(help="Inspect and validate reusable run configuration.")
@@ -80,9 +87,23 @@ class CLIState:
     verbosity: int
     log_file: Path
     json_output: bool
+    plain: bool = False
+    run_id: str = ""
+    logs: RunLogs | None = None
 
-    def logging(self, *, write_file: bool = True) -> None:
-        configure_logging(self.consoles.err, self.verbosity, self.log_file if write_file else None)
+    def logging(
+        self, *, write_file: bool = True, command: str | None = None, console_enabled: bool = True
+    ) -> None:
+        self.logs = configure_logging(
+            self.consoles.err,
+            self.verbosity,
+            self.log_file,
+            run_id=self.run_id if command else None,
+            command=command or "command",
+            write_files=write_file,
+            console_enabled=console_enabled,
+        )
+        logger.debug("Invocation started: %s", command or "read-only")
 
 
 @app.callback()
@@ -94,7 +115,7 @@ def global_options(
     ] = False,
     no_color: Annotated[bool, typer.Option("--no-color", help="Disable ANSI colors.")] = False,
     quiet: Annotated[
-        bool, typer.Option("-q", "--quiet", help="Only show warnings and errors.")
+        bool, typer.Option("-q", "--quiet", help="Warnings, errors, and final result; no progress.")
     ] = False,
     verbose: Annotated[
         int,
@@ -103,8 +124,15 @@ def global_options(
         ),
     ] = 0,
     log_file: Annotated[
-        Path, typer.Option("--log-file", help="Detailed rotating log file.")
+        Path,
+        typer.Option(
+            "--log-file",
+            help="Global rotating text log; per-run DEBUG text/JSONL go in its sibling runs/ directory.",
+        ),
     ] = Path("logs/transcript-video.log"),
+    plain: Annotated[
+        bool, typer.Option("--plain", help="Line-based status without live redraw.")
+    ] = False,
     json_output: Annotated[
         bool, typer.Option("--json", help="Emit JSON for read-only commands.")
     ] = False,
@@ -113,8 +141,15 @@ def global_options(
         typer.echo("transcript-video 0.3.0")
         raise typer.Exit()
     ctx.obj = CLIState(
-        make_consoles(no_color=no_color), -1 if quiet else min(verbose, 2), log_file, json_output
+        make_consoles(no_color=no_color),
+        -1 if quiet else min(verbose, 2),
+        log_file,
+        json_output,
+        plain,
+        datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid4().hex[:10],
     )
+    ctx.with_resource(log_context(run_id=ctx.obj.run_id))
+    ctx.call_on_close(close_logging)
 
 
 def _state(ctx: typer.Context) -> CLIState:
@@ -132,8 +167,11 @@ def _resolved(
 @app.command("process")
 def process_command(
     ctx: typer.Context,
-    video: Annotated[
-        Path | None, typer.Argument(help="Video to process; omit to scan data/input.")
+    videos: Annotated[
+        list[Path] | None,
+        typer.Argument(
+            help="Videos in processing order (names in data/input or absolute paths); omit to use project.video or scan data/input."
+        ),
     ] = None,
     config: Annotated[
         Path | None, typer.Option("--config", help="Base TOML run config.")
@@ -191,14 +229,22 @@ def process_command(
         list[ForceTarget] | None,
         typer.Option("--force", help="Rebuild a repeatable pipeline target."),
     ] = None,
+    events_json: Annotated[
+        Path | None,
+        typer.Option(
+            "--events-json", help="Write semantic JSONL events to a new file (exclusive creation)."
+        ),
+    ] = None,
     dry_run: Annotated[
         bool,
         typer.Option("--dry-run", help="Validate and print the execution plan without writes."),
     ] = False,
 ) -> None:
     state = _state(ctx)
-    state.logging(write_file=not dry_run)
-    selected_video = legacy_video or (str(video) if video else None)
+    state.logging(write_file=not dry_run, command="process")
+    if videos and legacy_video:
+        raise typer.BadParameter("Use positional VIDEOS or --video, not both.")
+    selected_video = legacy_video or (str(videos[0]) if videos and len(videos) == 1 else None)
     force_set = set(force or [])
     overrides = {
         "project.root": str(root) if root else None,
@@ -237,13 +283,22 @@ def process_command(
             state.consoles.out.print(f"[warning]Would save config:[/] {save_config.resolve()}")
         else:
             save_run_settings(resolved.settings, save_config)
-    _run_processing(state, resolved.settings, dry_run=dry_run)
+    _run_processing(
+        state, resolved.settings, dry_run=dry_run, videos=videos, events_json=events_json
+    )
 
 
-def _run_processing(state: CLIState, settings: RunSettings, *, dry_run: bool) -> None:
+def _run_processing(
+    state: CLIState,
+    settings: RunSettings,
+    *,
+    dry_run: bool,
+    videos: list[Path] | None = None,
+    events_json: Path | None = None,
+) -> None:
     from .application.processing import build_process_plan, execute_process_plan
 
-    plan = build_process_plan(settings)
+    plan = build_process_plan(settings, videos)
     if dry_run:
         table = Table(title="Dry-run execution plan")
         table.add_column("Item", style="info")
@@ -259,26 +314,62 @@ def _run_processing(state: CLIState, settings: RunSettings, *, dry_run: bool) ->
         table.add_row("TTS", "enabled" if settings.tts.enabled else "disabled")
         state.consoles.out.print(table)
         return
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[stage]{task.description}"),
-        TimeElapsedColumn(),
-        console=state.consoles.out,
-    ) as progress:
-        task_id = progress.add_task("Processing videos", total=len(plan.videos))
-        summary = execute_process_plan(plan, RichProgressObserver(progress, task_id))
-    artifact_text = "\n".join(str(path) for path in summary.artifacts) or "None"
-    state.consoles.out.print(
-        Panel.fit(
-            f"Videos: {summary.succeeded}/{summary.total}\n"
-            f"Elapsed: {summary.elapsed_seconds:.1f}s\nArtifacts:\n{artifact_text}",
-            title="[success]Run complete[/]",
+    if state.verbosity >= 0:
+        state.consoles.out.print(
+            Panel(
+                Text(
+                    f"Processing {len(plan.videos)} videos · {settings.hardware.device} · encoder {settings.hardware.video_encoder}\n"
+                    f"ASR: {plan.model.name} · TTS: {settings.tts.model if settings.tts.enabled else 'disabled'}"
+                ),
+                title="transcript-video",
+                border_style="accent",
+            )
         )
+    with ExitStack() as stack:
+        progress = stack.enter_context(
+            RichProgressObserver(
+                state.consoles.out, verbosity=state.verbosity, plain=state.plain, root=plan.root
+            )
+        )
+        observer = progress
+        if events_json:
+            json_events = JsonEventObserver(events_json)
+            stack.callback(json_events.close)
+            observer = CompositeObserver(progress, json_events)
+        try:
+            summary = execute_process_plan(plan, observer)
+        except Exception as exc:
+            logger.debug("Processing failed", exc_info=True, extra={"diagnostic_only": True})
+            if progress.live:
+                progress.live.stop()
+            _show_error(state, exc)
+            raise typer.Exit(1) from None
+    progress.summary(
+        title="Run completed with errors" if summary.failures else "Run complete",
+        elapsed=summary.elapsed_seconds,
+        failures=summary.failures,
+        logs=state.logs,
     )
     if summary.failures:
-        for failure in summary.failures:
-            logger.error("%s", failure)
-        raise RuntimeError("Failed videos: " + ", ".join(summary.failures))
+        if state.verbosity >= 2:
+            from rich.traceback import Traceback
+
+            for error in summary.errors:
+                state.consoles.err.print(
+                    Traceback.from_exception(
+                        type(error), error, error.__traceback__, show_locals=False
+                    )
+                )
+        raise typer.Exit(1)
+
+
+def _show_error(state: CLIState, exc: Exception) -> None:
+    message = str(exc)
+    if state.logs:
+        message += f"\n\nLog: {state.logs.text}"
+    state.consoles.err.print(Panel(Text(message), title="Processing failed", border_style="error"))
+    if state.verbosity >= 2:
+        state.consoles.err.print_exception(show_locals=False)
 
 
 @config_app.command("show")
@@ -361,20 +452,43 @@ def doctor_command(
     if state.json_output:
         state.consoles.out.print_json(data=[asdict(check) for check in checks])
     else:
-        table = Table(title="Environment doctor")
-        table.add_column("Status")
-        table.add_column("Check")
-        table.add_column("Detail")
+        groups = {"Environment": [], "Media": [], "Project": [], "Hardware": []}
         for check in checks:
-            status = (
-                "[success]PASS[/]"
-                if check.ok
-                else "[error]FAIL[/]"
-                if check.required
-                else "[warning]WARN[/]"
+            group = (
+                "Environment"
+                if check.name in {"Python", "Free storage"}
+                else "Media"
+                if check.name in {"FFmpeg", "ffprobe", "Subtitle filter", "Video encoder"}
+                else "Hardware"
+                if check.name in {"CUDA", "PyTorch"}
+                else "Project"
             )
-            table.add_row(status, check.name, check.detail)
-        state.consoles.out.print(table)
+            groups[group].append(check)
+        for name, items in groups.items():
+            table = Table(title=name, expand=True, border_style="muted")
+            table.add_column("Status", width=6)
+            table.add_column("Check", style="info")
+            table.add_column("Detail", overflow="fold")
+            for check in items:
+                label, style = (
+                    ("PASS", "success")
+                    if check.ok
+                    else ("FAIL", "error")
+                    if check.required
+                    else ("WARN", "warning")
+                )
+                table.add_row(Text(label, style=style), Text(check.name), Text(check.detail))
+            state.consoles.out.print(table)
+        required = sum(not item.ok and item.required for item in checks)
+        optional = sum(not item.ok and not item.required for item in checks)
+        state.consoles.out.print(
+            Text(
+                f"{required} required checks failed · {optional} optional checks failed"
+                if required or optional
+                else "Environment ready",
+                style="error" if required else "warning" if optional else "success",
+            )
+        )
     if any(not item.ok and item.required for item in checks):
         raise typer.Exit(1)
 
@@ -383,14 +497,45 @@ def doctor_command(
 def course_build(
     ctx: typer.Context,
     config: Annotated[Path, typer.Option("--config", help="Course JSON config.")],
+    events_json: Annotated[
+        Path | None,
+        typer.Option("--events-json", help="Write semantic JSONL events to a new file."),
+    ] = None,
 ) -> None:
     from .course.builder import build_course
     from .course.config import load_course_config
 
     state = _state(ctx)
-    state.logging()
-    result = build_course(load_course_config(config))
-    state.consoles.out.print(f"[success]Course built:[/] [path]{result}[/]")
+    state.logging(command="course-build")
+    started = time.perf_counter()
+    with ExitStack() as stack:
+        progress = stack.enter_context(
+            RichProgressObserver(state.consoles.out, verbosity=state.verbosity, plain=state.plain)
+        )
+        observers = [progress]
+        if events_json:
+            json_events = JsonEventObserver(events_json)
+            stack.callback(json_events.close)
+            observers.append(json_events)
+        try:
+            build_course(load_course_config(config), CompositeObserver(*observers))
+        except Exception as exc:
+            logger.debug("Course build failed", exc_info=True, extra={"diagnostic_only": True})
+            if progress.live:
+                progress.live.stop()
+            _show_error(state, exc)
+            raise typer.Exit(1) from None
+    details = progress.state.course_details
+    progress.summary(
+        title="Course built",
+        elapsed=time.perf_counter() - started,
+        logs=state.logs,
+        details={
+            "Sessions": details.get("sessions", "?"),
+            "Duration": format_duration(details.get("duration", 0)),
+            "Chapters": details.get("chapters", 0),
+        },
+    )
 
 
 @course_app.command("create")
@@ -399,22 +544,28 @@ def course_create(
     root: Annotated[Path | None, typer.Option("--root")] = None,
     video_dir: Annotated[Path | None, typer.Option("--video-dir")] = None,
 ) -> None:
-    from .course.wizard import create_course_config_interactive
+    from .course.wizard import create_course_config_interactive, wizard_ui
 
-    _state(ctx).logging()
-    create_course_config_interactive(
-        root=root.resolve() if root else None, output_dir=video_dir.resolve() if video_dir else None
-    )
+    state = _state(ctx)
+    state.logging(command="course-create", console_enabled=False)
+    with wizard_ui(state.consoles.out):
+        create_course_config_interactive(
+            root=root.resolve() if root else None,
+            output_dir=video_dir.resolve() if video_dir else None,
+        )
 
 
 @course_app.command("tui")
 def course_tui(
     ctx: typer.Context, config: Annotated[Path | None, typer.Option("--config")] = None
 ) -> None:
-    _state(ctx).logging()
+    _state(ctx).logging(command="course-tui", console_enabled=False)
     from .tui.app import CourseApp
 
-    CourseApp(config_path=config).run()
+    tui = CourseApp(config_path=config)
+    if _state(ctx).consoles.out.no_color:
+        tui.no_color = True
+    tui.run()
 
 
 def _option_present(option: str) -> bool:
@@ -433,13 +584,16 @@ def _normalize_legacy_argv(argv: list[str]) -> list[str]:
     prefix: list[str] = []
     remaining = list(argv)
     while remaining and (
-        remaining[0] in {"--no-color", "--json", "-q", "--quiet", "-v", "-vv", "--verbose"}
+        remaining[0]
+        in {"--plain", "--no-color", "--json", "-q", "--quiet", "-v", "-vv", "--verbose"}
         or remaining[0].startswith("-vv")
     ):
         prefix.append(remaining.pop(0))
     if remaining and remaining[0] == "--log-file":
         prefix.extend(remaining[:2])
         remaining = remaining[2:]
+    if remaining in (["--help"], ["-h"], ["--version"]):
+        return [*prefix, *remaining]
     return [*prefix, "process", *remaining]
 
 
@@ -477,13 +631,13 @@ def main() -> None:
         result = app(args=argv, prog_name="transcript-video", standalone_mode=False)
         if isinstance(result, int) and result:
             raise SystemExit(result)
-    except (click.ClickException, ValueError, FileNotFoundError, RuntimeError) as exc:
+    except (click.ClickException, ValueError, OSError, RuntimeError) as exc:
         consoles = make_consoles(no_color="--no-color" in argv)
         consoles.err.print(f"[error]Error:[/] {exc}")
         if "-vv" in argv:
-            consoles.err.print_exception()
+            consoles.err.print_exception(show_locals=False)
         raise SystemExit(2 if isinstance(exc, click.UsageError) else 1) from None
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, EOFError):
         make_consoles(no_color="--no-color" in argv).err.print("[warning]Cancelled by user.[/]")
         raise SystemExit(130) from None
 

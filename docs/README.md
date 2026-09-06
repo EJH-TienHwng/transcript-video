@@ -17,16 +17,19 @@ transcript-video
 └── course create|build|tui
 ```
 
-Global options must appear before the command: `-q`, `-v`, `-vv`, `--no-color`, `--log-file PATH`, and `--json`. Typer also provides `--install-completion` and `--show-completion`.
+Global options must appear before the command: `-q`, `-v`, `-vv`, `--no-color`, `--plain`, `--log-file PATH`, and `--json`. Typer also provides `--install-completion` and `--show-completion`.
 
 The default terminal log is concise. `-v` adds diagnostics and `-vv` adds source locations and tracebacks. Detailed DEBUG logs always rotate at `logs/transcript-video.log` unless `--log-file` overrides the path. `NO_COLOR` and `--no-color` are both honored.
 
+
+See [logging/event schema](observability.md): default output contains status/progress, warnings and results; `-q` disables progress. Long commands also write per-run DEBUG text and JSONL in `logs/runs/`. Use `--events-json FILE` on `process` or `course build` for a new event JSONL file; dry-run writes none. The wizard supports batch selection, automatic titles/numbers, Recommended/Custom settings and review before saving.
 ## Everyday workflows
 
 ```powershell
 uv run transcript-video process
 uv run transcript-video process lesson.mp4 --profile gpu-tts
 uv run transcript-video process lesson.mp4 --dry-run
+uv run transcript-video process lesson1.mp4 lesson2.mp4 lesson3.mp4
 uv run transcript-video process lesson.mp4 --force transcription --force tts
 uv run transcript-video doctor
 uv run transcript-video inspect data/input/lesson.mp4
@@ -72,17 +75,31 @@ Pytest markers are `integration`, `gpu`, and `slow`; `just test-fast` excludes a
 
 ## Contents
 
-- [Capabilities](#capabilities)
-- [Project structure](#project-structure)
-- [Installation](#installation)
-- [GPU acceleration](#gpu-acceleration)
-- [Configuration](#configuration)
-- [Transcription workflow](#transcription-workflow)
-- [TTS workflow](#tts-workflow)
-- [Course builder](#course-builder)
-- [Outputs](#outputs)
-- [Quality checks](#quality-checks)
-- [Troubleshooting](#troubleshooting)
+- [Transcript Video Documentation](#transcript-video-documentation)
+  - [Command overview](#command-overview)
+  - [Everyday workflows](#everyday-workflows)
+  - [Course wizard and full TUI](#course-wizard-and-full-tui)
+  - [Architecture](#architecture)
+  - [Developer workflow](#developer-workflow)
+  - [Contents](#contents)
+  - [Capabilities](#capabilities)
+  - [Project structure](#project-structure)
+  - [Installation](#installation)
+    - [Requirements](#requirements)
+  - [GPU acceleration](#gpu-acceleration)
+    - [Workload map](#workload-map)
+  - [Configuration](#configuration)
+  - [Transcription workflow](#transcription-workflow)
+  - [TTS workflow](#tts-workflow)
+  - [Course builder](#course-builder)
+  - [Outputs](#outputs)
+  - [Quality checks](#quality-checks)
+  - [Troubleshooting](#troubleshooting)
+    - [CUDA is unavailable](#cuda-is-unavailable)
+    - [NVENC falls back to libx264](#nvenc-falls-back-to-libx264)
+    - [CUDA out of memory](#cuda-out-of-memory)
+    - [CPU activity is still visible](#cpu-activity-is-still-visible)
+    - [Existing artifacts are unexpectedly reused](#existing-artifacts-are-unexpectedly-reused)
 
 ## Capabilities
 
@@ -134,9 +151,9 @@ transcript-video/
 
 ### Requirements
 
-- Windows and Python 3.12.
+- Windows and Python pinned in `.python-version`.
 - An NVIDIA GPU is strongly recommended.
-- A recent NVIDIA driver compatible with the locked CUDA 12.4 PyTorch wheels.
+- A recent NVIDIA driver compatible with the locked CUDA 13.2 PyTorch wheels.
 - Local Whisper model files and, when used, local VinAI/Qwen model files.
 
 Install uv:
@@ -241,7 +258,7 @@ enabled = false
 overwrite = false
 mode = "timed"
 generation_mode = "chunked"
-model = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+model = "Qwen3-TTS-12Hz-1.7B-CustomVoice"
 language = "English"
 speaker = "Aiden"
 instruct = "Speak clearly and professionally..."
@@ -349,8 +366,20 @@ Relevant options:
 - `tts.context_break_seconds`: only gaps larger than this force a new acoustic context.
 
 Timed TTS aligns each contextual generation with the configured faster-whisper model, then
-places each extracted sentence at its original SRT start. Problems requiring manual inspection
-are written to `data/audio/<video>_tts_review.jsonl`; speech is never silently truncated.
+places each complete sentence as close as possible to its SRT start, shifting to prevent overlap. Problems requiring manual inspection
+are written to `data/report/tts/<video>_tts_review.jsonl`; speech is never silently truncated.
+
+JSONL keeps one object per line; an indented `.pretty.json` sits beside each report.
+Chunk metadata lives in `data/report/tts/<video>_tts_chunks/`, separate from the WAVs.
+Old sidecars beside audio are left untouched and cause one logged, safe regeneration.
+`--force tts` regenerates everything; a chunk rerun also regenerates its cross-boundary context owner.
+The 180 ms tail budget protects the next onset, with a 120 ms minimum release gap at placement.
+Unsafe boundaries still regenerate individual sentences; speech is never hard-trimmed.
+
+Explicit video lists preserve input order, deduplicate paths at first occurrence, and accept
+names in `data/input` or absolute paths. Distinct inputs with the same stem are rejected because
+outputs/caches share that name. No positional inputs still use `project.video` or scan `data/input`.
+Doctor reads `.python-version`, warns for a missing/malformed pin, and checks `data/report` writability.
 
 Run the isolated manual TTS check:
 
@@ -392,7 +421,7 @@ All relative JSON paths are resolved from the repository root. The default `auto
 | Hard-subtitled video | `data/output/<video>_vi-dub_en-sub.mp4` |
 | Full TTS WAV | `data/audio/<video>_tts.wav` |
 | TTS review chunks | `data/audio/<video>_tts_chunks/` |
-| TTS timing/alignment review log | `data/audio/<video>_tts_review.jsonl` |
+| TTS timing/alignment review log | `data/report/tts/<video>_tts_review.jsonl` |
 | Final TTS video | `data/output/<video>_en-dub_en-sub.mp4` |
 | Course work/final files | `data/compilation/` |
 

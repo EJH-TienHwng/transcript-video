@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from ..config import ProjectPaths, SubtitleSegment
+from ..events import PipelineStage, emit, stage_context, warn
 from ..hardware import resolve_torch_device
 from .media import (
     ensure_ffmpeg_available_for_transformers,
@@ -28,10 +29,16 @@ def transcribe_with_faster_whisper(
 
     device = resolve_torch_device(device, "faster-whisper")
     if device == "cpu" and compute_type == "float16":
-        logger.warning("float16 is not suitable for CPU inference; using int8 instead.")
+        warn(logger, "float16 is not suitable for CPU inference; using int8 instead.")
         compute_type = "int8"
     logger.info("Engine: faster-whisper")
-    model = WhisperModel(str(model_path), device=device, compute_type=compute_type)
+    with stage_context(
+        PipelineStage.TRANSCRIBE,
+        "Loading Whisper model",
+        operation="load_whisper",
+        completed="Whisper ready",
+    ):
+        model = WhisperModel(str(model_path), device=device, compute_type=compute_type)
 
     segments, _info = model.transcribe(
         str(video_path),
@@ -81,22 +88,28 @@ def transcribe_with_huggingface(
     extract_audio(video_path, audio_path)
 
     try:
-        model = AutoModelForSpeechSeq2Seq.from_pretrained(
-            str(model_path),
-            torch_dtype=torch_dtype,
-            low_cpu_mem_usage=True,
-        )
-        processor = AutoProcessor.from_pretrained(str(model_path))
+        with stage_context(
+            PipelineStage.TRANSCRIBE,
+            "Loading Whisper model",
+            operation="load_whisper",
+            completed="Whisper ready",
+        ):
+            model = AutoModelForSpeechSeq2Seq.from_pretrained(
+                str(model_path),
+                torch_dtype=torch_dtype,
+                low_cpu_mem_usage=True,
+            )
+            processor = AutoProcessor.from_pretrained(str(model_path))
 
-        asr_pipeline = pipeline(
-            "automatic-speech-recognition",
-            model=model,
-            tokenizer=processor.tokenizer,
-            feature_extractor=processor.feature_extractor,
-            chunk_length_s=30,
-            device=hf_device,
-            torch_dtype=torch_dtype,
-        )
+            asr_pipeline = pipeline(
+                "automatic-speech-recognition",
+                model=model,
+                tokenizer=processor.tokenizer,
+                feature_extractor=processor.feature_extractor,
+                chunk_length_s=30,
+                device=hf_device,
+                torch_dtype=torch_dtype,
+            )
 
         # Do NOT pass the audio filename to Transformers here.
         # Passing a filename makes Transformers call its own ffmpeg loader again,
@@ -151,10 +164,16 @@ def translate_segments_with_vinai(
     model_dtype = torch.float16 if device == "cuda" else torch.float32
     logger.info("Translation engine: VinAI Translate (%s)", torch_device)
 
-    tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
-    model = AutoModelForSeq2SeqLM.from_pretrained(str(model_path), dtype=model_dtype)
-    model.to(torch_device)
-    model.eval()
+    with stage_context(
+        PipelineStage.TRANSLATE,
+        "Loading translation model",
+        operation="load_translation",
+        completed="Translation model ready",
+    ):
+        tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
+        model = AutoModelForSeq2SeqLM.from_pretrained(str(model_path), dtype=model_dtype)
+        model.to(torch_device)
+        model.eval()
 
     source_segments = [segment for segment in segments if (segment.text or "").strip()]
     translated_segments: list[SubtitleSegment] = []
@@ -188,6 +207,13 @@ def translate_segments_with_vinai(
             "Translated %d/%d subtitle segment(s).",
             min(start + batch_size, len(source_segments)),
             len(source_segments),
+        )
+
+        emit(
+            PipelineStage.TRANSLATE,
+            "Translating subtitles",
+            current=len(translated_segments),
+            total=len(source_segments),
         )
 
     return translated_segments

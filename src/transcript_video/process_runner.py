@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProcessExecutionError(RuntimeError):
-    pass
+    """Concise public error; the full subprocess diagnostics remain in DEBUG logs."""
 
 
 @dataclass(slots=True)
@@ -54,14 +54,37 @@ def run_process(
     logger.debug("Running command: %s", subprocess.list2cmdline(command))
     try:
         completed = subprocess.run(
-            command, cwd=cwd, text=True, capture_output=True, check=False, timeout=timeout
+            command,
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout,
+            encoding="utf-8",
+            errors="replace",
         )
     except subprocess.TimeoutExpired as exc:
+        logger.debug(
+            "Command timed out: command=%r timeout=%s stdout=%r stderr=%r",
+            command,
+            timeout,
+            exc.stdout,
+            exc.stderr,
+        )
         raise ProcessExecutionError(f"Command timed out after {timeout}s.") from exc
     result = ProcessResult(command, completed.returncode, completed.stdout, completed.stderr)
     if completed.returncode:
         detail = completed.stderr.strip() or completed.stdout.strip() or "No diagnostic output."
-        raise ProcessExecutionError(f"Command failed ({completed.returncode}): {detail}")
+        logger.debug(
+            "Command failed: command=%r returncode=%s stdout=%s stderr=%s",
+            command,
+            completed.returncode,
+            completed.stdout,
+            completed.stderr,
+        )
+        raise ProcessExecutionError(
+            f"Command failed ({completed.returncode}): {detail.splitlines()[-1][:300]}"
+        )
     return result
 
 
@@ -126,15 +149,25 @@ def run_ffmpeg(
         stderr = error_stream.read()
     result = ProcessResult(tuple(command), process.returncode, "".join(stdout_lines), stderr)
     if process.returncode:
+        logger.debug(
+            "FFmpeg failed: command=%r returncode=%s stdout=%s stderr=%s",
+            command,
+            process.returncode,
+            result.stdout,
+            stderr,
+        )
         raise ProcessExecutionError(
-            f"FFmpeg failed ({process.returncode}): {stderr.strip() or 'No diagnostic output.'}"
+            f"FFmpeg failed ({process.returncode}): {(stderr.strip() or 'No diagnostic output.').splitlines()[-1][:300]}"
         )
     return result
 
 
-def probe_media(ffprobe: str | Path, media: Path) -> dict[str, object]:
+def probe_media(
+    ffprobe: str | Path, media: Path, *, timeout: float | None = None
+) -> dict[str, object]:
     result = run_process(
-        [ffprobe, "-v", "error", "-show_format", "-show_streams", "-of", "json", media]
+        [ffprobe, "-v", "error", "-show_format", "-show_streams", "-of", "json", media],
+        timeout=timeout,
     )
     try:
         return json.loads(result.stdout)

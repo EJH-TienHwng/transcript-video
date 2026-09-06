@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from ..config import find_project_root
+from ..events import warn
 from .config import CourseConfig
 from .timeline import SessionTimeline, format_video_timestamp, session_number
 
@@ -51,7 +52,7 @@ def _load_font(config: CourseConfig, size: int, bold: bool = False):
     if font_path and font_path.exists():
         return ImageFont.truetype(str(font_path), size=size)
 
-    logger.warning("TrueType font not found; using Pillow's default font.")
+    warn(logger, "TrueType font not found; using Pillow's default font.")
     return ImageFont.load_default()
 
 
@@ -246,7 +247,9 @@ def render_toc_pages(
         time_right_x = width * 0.86
         top_y = height * 0.28
         usable_height = height * 0.58
-        row_height = usable_height / max(1, len(page_items))
+        # Cap sparse pages at a comfortable two-line row; six or more retain dense spacing.
+        row_height = min(usable_height / max(1, len(page_items)), height * 0.10)
+        top_y += (usable_height - row_height * len(page_items)) / 2
 
         for local_index, item in enumerate(page_items):
             absolute_position = start + local_index + 1

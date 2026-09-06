@@ -100,3 +100,166 @@ async def test_tui_opens_metadata_screen() -> None:
     async with CourseApp().run_test() as pilot:
         await pilot.pause()
         assert isinstance(pilot.app.screen, MetadataScreen)
+
+
+@pytest.mark.parametrize(
+    "names",
+    [[], ["one.mp4"], ["three.mp4", "one.mp4", "two.mp4"], ["one.mp4", "one.mp4", "two.mp4"]],
+)
+def test_multi_video_cli_preserves_order_without_dry_run_writes(tmp_path, monkeypatch, names):
+    from transcript_video.application import processing
+
+    input_dir = tmp_path / "data/input"
+    input_dir.mkdir(parents=True)
+    for name in ("one.mp4", "two.mp4", "three.mp4"):
+        (input_dir / name).touch()
+    config = tmp_path / "run.toml"
+    config.write_text("", encoding="utf-8")
+    plans = []
+    original = processing.build_process_plan
+
+    def capture(*args):
+        plan = original(*args)
+        plans.append(plan)
+        return plan
+
+    monkeypatch.setattr(processing, "build_process_plan", capture)
+    before = set(tmp_path.rglob("*"))
+    result = CliRunner().invoke(
+        app,
+        ["process", *names, "--root", str(tmp_path), "--config", str(config), "--dry-run"],
+        env={"COLUMNS": "200"},
+    )
+    assert result.exit_code == 0, result.exception
+    expected = list(dict.fromkeys(names)) if names else ["one.mp4", "three.mp4", "two.mp4"]
+    assert [path.name for path in plans[0].videos] == expected
+    assert all(name in result.stdout for name in expected)
+    assert set(tmp_path.rglob("*")) == before
+
+
+def test_multi_absolute_paths_and_legacy_selection(tmp_path):
+    from transcript_video.application.processing import build_process_plan
+    from transcript_video.config import RunSettings
+
+    first, second = tmp_path / "one video.mp4", tmp_path / "two.mp4"
+    first.touch()
+    second.touch()
+    settings = RunSettings.defaults()
+    settings.project.root = str(tmp_path)
+    settings.project.video = str(first)
+    assert build_process_plan(settings).videos == (first,)
+    assert build_process_plan(settings, [second, first, second]).videos == (second, first)
+    result = CliRunner().invoke(
+        app,
+        ["process", str(second), str(first), "--root", str(tmp_path), "--dry-run"],
+        env={"COLUMNS": "200"},
+    )
+    assert result.exit_code == 0, result.exception
+    assert "one video.mp4" in result.stdout and "two.mp4" in result.stdout
+    legacy = CliRunner().invoke(
+        app, ["process", "--video", str(first), "--root", str(tmp_path), "--dry-run"]
+    )
+    assert legacy.exit_code == 0
+    assert not (tmp_path / "data").exists()
+
+
+def test_multi_video_missing_and_conflicting_names_fail_before_writes(tmp_path):
+    from transcript_video.application.processing import build_process_plan
+    from transcript_video.config import RunSettings
+
+    settings = RunSettings.defaults()
+    settings.project.root = str(tmp_path)
+    for folder in ("first", "second"):
+        (tmp_path / folder).mkdir()
+        (tmp_path / folder / "same.mp4").touch()
+    with pytest.raises(ValueError, match="share an output name"):
+        build_process_plan(settings, [tmp_path / "first/same.mp4", tmp_path / "second/same.mp4"])
+    result = CliRunner().invoke(
+        app,
+        [
+            "process",
+            str(tmp_path / "first/same.mp4"),
+            str(tmp_path / "missing.mp4"),
+            "--root",
+            str(tmp_path),
+            "--dry-run",
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Video not found" in str(result.exception)
+    assert not (tmp_path / "data").exists()
+
+
+def test_explicit_video_list_is_executed_in_order(tmp_path, monkeypatch):
+    from transcript_video.application import processing
+    from transcript_video.config import RunSettings
+
+    settings = RunSettings.defaults()
+    settings.project.root = str(tmp_path)
+    settings.project.model = "models/transcription"
+    (tmp_path / settings.project.model).mkdir(parents=True)
+    videos = [tmp_path / name for name in ("C.mp4", "A.mp4", "B.mp4")]
+    for path in videos:
+        path.touch()
+    visited = []
+    monkeypatch.setattr(processing, "process_video", lambda video, *args: visited.append(video))
+    plan = processing.build_process_plan(settings, videos)
+    result = processing.execute_process_plan(plan)
+    assert visited == videos
+    assert result.succeeded == result.total == 3
+    assert plan.paths.report_dir.is_dir()
+
+
+@pytest.mark.parametrize(
+    "pin,current,ok,required",
+    [
+        ("3.14", (3, 14, 7), True, True),
+        ("3.14", (3, 13, 9), False, True),
+        ("3.99", (3, 99, 1), True, True),
+        ("3.14.6", (3, 14, 7), False, True),
+        ("invalid", (3, 14, 7), False, False),
+        (b"\xff", (3, 14, 7), False, False),
+        (None, (3, 14, 7), False, False),
+    ],
+)
+def test_doctor_python_follows_project_pin(tmp_path, monkeypatch, pin, current, ok, required):
+    from types import SimpleNamespace
+
+    from transcript_video.application import diagnostics
+
+    if pin is not None:
+        (tmp_path / ".python-version").write_bytes(
+            pin if isinstance(pin, bytes) else pin.encode("utf-8")
+        )
+    monkeypatch.setattr(
+        diagnostics,
+        "sys",
+        SimpleNamespace(version=".".join(map(str, current)), version_info=current),
+    )
+    check = diagnostics._python_check(tmp_path)
+    assert check.ok is ok and check.required is required
+    assert ".python-version" in check.detail
+    if required:
+        assert f"requires {pin}" in check.detail
+
+
+def test_doctor_checks_report_directory_without_creating_it(tmp_path, monkeypatch):
+    from unittest import mock
+
+    from transcript_video.application import diagnostics
+    from transcript_video.config import RunSettings
+
+    settings = RunSettings.defaults()
+    settings.project.root = str(tmp_path)
+    monkeypatch.setattr(
+        diagnostics, "get_ffmpeg_exe", mock.Mock(side_effect=FileNotFoundError("test"))
+    )
+    monkeypatch.setattr(
+        diagnostics, "get_ffprobe_exe", mock.Mock(side_effect=FileNotFoundError("test"))
+    )
+    monkeypatch.setitem(sys.modules, "torch", mock.Mock())
+    checks = diagnostics.run_doctor(settings)
+    check = next(item for item in checks if item.name == "Writable report_dir")
+    assert check.ok
+    assert Path(check.detail) == tmp_path / "data/report"
+    assert not (tmp_path / "data").exists()

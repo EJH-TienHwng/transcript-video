@@ -6,6 +6,7 @@ import shutil
 from functools import cache
 from pathlib import Path
 
+from .events import warn
 from .process_runner import ProcessExecutionError, run_process
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ def resolve_torch_device(requested: str, workload: str) -> str:
         return "cuda"
 
     if requested == "cuda":
-        logger.warning("CUDA is unavailable for %s; falling back to CPU.", workload)
+        warn(logger, "CUDA is unavailable for %s; falling back to CPU.", workload)
     else:
         logger.info("%s device: CPU (explicitly configured)", workload)
     return "cpu"
@@ -110,9 +111,10 @@ def resolve_video_encoder(ffmpeg_path: str, requested: str) -> str:
         return "h264_nvenc"
 
     if requested == "h264_nvenc":
-        logger.warning(
+        warn(
+            logger,
             "h264_nvenc was requested but the FFmpeg/NVIDIA runtime probe failed; "
-            "falling back to libx264."
+            "falling back to libx264.",
         )
     else:
         logger.info("NVENC is unavailable; FFmpeg video encoder: libx264")

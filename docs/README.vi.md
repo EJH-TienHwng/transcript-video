@@ -17,16 +17,19 @@ transcript-video
 └── course create|build|tui
 ```
 
-Các option toàn cục phải đặt trước command: `-q`, `-v`, `-vv`, `--no-color`, `--log-file PATH` và `--json`. Typer cũng hỗ trợ `--install-completion` và `--show-completion`.
+Các option toàn cục phải đặt trước command: `-q`, `-v`, `-vv`, `--no-color`, `--plain`, `--log-file PATH` và `--json`. Typer cũng hỗ trợ `--install-completion` và `--show-completion`.
 
 Log mặc định trên terminal được rút gọn. `-v` hiện thêm chẩn đoán, còn `-vv` hiện vị trí source và traceback. Log DEBUG chi tiết được rotate tại `logs/transcript-video.log`, hoặc đường dẫn truyền qua `--log-file`. Cả biến `NO_COLOR` và option `--no-color` đều được hỗ trợ.
 
+
+Xem [logging/event schema](observability.md): default chỉ hiện status/progress, warning và kết quả; `-q` tắt progress. Mỗi lệnh dài có log DEBUG text + JSONL riêng trong `logs/runs/`. `--events-json FILE` dùng với `process` hoặc `course build` để ghi event JSONL vào file mới; dry-run không ghi file. Wizard hỗ trợ chọn nhiều video, tự tạo title/number, Recommended/Custom và final review trước khi lưu.
 ## Quy trình thường dùng
 
 ```powershell
 uv run transcript-video process
 uv run transcript-video process lesson.mp4 --profile gpu-tts
 uv run transcript-video process lesson.mp4 --dry-run
+uv run transcript-video process lesson1.mp4 lesson2.mp4 lesson3.mp4
 uv run transcript-video process lesson.mp4 --force transcription --force tts
 uv run transcript-video doctor
 uv run transcript-video inspect data/input/lesson.mp4
@@ -72,17 +75,31 @@ Các pytest marker gồm `integration`, `gpu`, `slow`; `just test-fast` loại c
 
 ## Mục lục
 
-- [Chức năng](#chức-năng)
-- [Cấu trúc project](#cấu-trúc-project)
-- [Cài đặt](#cài-đặt)
-- [Tăng tốc GPU](#tăng-tốc-gpu)
-- [Cấu hình](#cấu-hình)
-- [Quy trình transcription](#quy-trình-transcription)
-- [Quy trình TTS](#quy-trình-tts)
-- [Course builder](#course-builder)
-- [File đầu ra](#file-đầu-ra)
-- [Kiểm tra chất lượng](#kiểm-tra-chất-lượng)
-- [Xử lý sự cố](#xử-lý-sự-cố)
+- [Tài liệu Transcript Video](#tài-liệu-transcript-video)
+  - [Tổng quan command](#tổng-quan-command)
+  - [Quy trình thường dùng](#quy-trình-thường-dùng)
+  - [Course Wizard và TUI đầy đủ](#course-wizard-và-tui-đầy-đủ)
+  - [Kiến trúc](#kiến-trúc)
+  - [Quy trình phát triển](#quy-trình-phát-triển)
+  - [Mục lục](#mục-lục)
+  - [Chức năng](#chức-năng)
+  - [Cấu trúc project](#cấu-trúc-project)
+  - [Cài đặt](#cài-đặt)
+    - [Yêu cầu](#yêu-cầu)
+  - [Tăng tốc GPU](#tăng-tốc-gpu)
+    - [Bảng phân bổ workload](#bảng-phân-bổ-workload)
+  - [Cấu hình](#cấu-hình)
+  - [Quy trình transcription](#quy-trình-transcription)
+  - [Quy trình TTS](#quy-trình-tts)
+  - [Course builder](#course-builder)
+  - [File đầu ra](#file-đầu-ra)
+  - [Kiểm tra chất lượng](#kiểm-tra-chất-lượng)
+  - [Xử lý sự cố](#xử-lý-sự-cố)
+    - [CUDA không khả dụng](#cuda-không-khả-dụng)
+    - [NVENC fallback sang libx264](#nvenc-fallback-sang-libx264)
+    - [CUDA hết bộ nhớ](#cuda-hết-bộ-nhớ)
+    - [Vẫn thấy CPU hoạt động](#vẫn-thấy-cpu-hoạt-động)
+    - [Artifact cũ bị tái sử dụng ngoài mong muốn](#artifact-cũ-bị-tái-sử-dụng-ngoài-mong-muốn)
 
 ## Chức năng
 
@@ -134,9 +151,9 @@ transcript-video/
 
 ### Yêu cầu
 
-- Windows và Python 3.12.
+- Windows và Python theo `.python-version`.
 - Rất nên dùng NVIDIA GPU.
-- NVIDIA driver mới, tương thích với PyTorch CUDA 12.4 đã lock.
+- NVIDIA driver mới, tương thích với PyTorch CUDA 13.2 đã lock.
 - Model Whisper local và model VinAI/Qwen local nếu dùng các tính năng tương ứng.
 
 Cài uv:
@@ -241,7 +258,7 @@ enabled = false
 overwrite = false
 mode = "timed"
 generation_mode = "chunked"
-model = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+model = "Qwen3-TTS-12Hz-1.7B-CustomVoice"
 language = "English"
 speaker = "Aiden"
 instruct = "Speak clearly and professionally..."
@@ -349,8 +366,20 @@ Các option quan trọng:
 - `tts.context_break_seconds`: chỉ khoảng nghỉ lớn hơn mức này mới ngắt ngữ cảnh âm học.
 
 TTS timed align mỗi context bằng model faster-whisper đã cấu hình, rồi đặt từng câu đã tách về
-đúng timestamp bắt đầu trong SRT. Các lỗi cần kiểm tra thủ công được ghi vào
-`data/audio/<video>_tts_review.jsonl`; lời nói không bị âm thầm cắt ngắn.
+gần timestamp bắt đầu trong SRT nhất có thể, dịch câu khi cần để tránh chồng giọng. Các lỗi cần kiểm tra thủ công được ghi vào
+`data/report/tts/<video>_tts_review.jsonl`; lời nói không bị âm thầm cắt ngắn.
+
+JSONL giữ một object trên mỗi dòng. Bản dễ đọc có đuôi `.pretty.json` nằm cùng thư mục.
+Metadata chunk nằm tại `data/report/tts/<video>_tts_chunks/`; WAV vẫn ở `data/audio/`.
+Cache cũ cạnh WAV được giữ nguyên nhưng không tái sử dụng: chương trình log và regenerate an toàn
+một lần. `--force tts` tạo lại toàn bộ; rerun chunk vẫn xử lý cả owner của context vượt biên.
+Padding cuối 180 ms có guard bảo vệ onset câu sau; release gap tối thiểu là 120 ms.
+Boundary không an toàn vẫn sinh riêng sentence, không hard-trim speech.
+
+Video list giữ thứ tự nhập, bỏ path trùng lặp sau lần đầu, hỗ trợ filename trong `data/input`
+và absolute path. Hai file khác nhau trùng stem sẽ bị từ chối vì dùng chung tên output/cache.
+Không truyền video vẫn dùng `project.video` nếu đã cấu hình, nếu không sẽ scan `data/input`.
+Doctor đọc `.python-version`, cảnh báo nếu pin thiếu/sai và kiểm tra quyền ghi `data/report`.
 
 Chạy smoke test TTS độc lập:
 
@@ -392,7 +421,7 @@ Mọi đường dẫn tương đối trong JSON được resolve từ repository
 | Video có hard subtitle | `data/output/<video>_vi-dub_en-sub.mp4` |
 | WAV TTS hoàn chỉnh | `data/audio/<video>_tts.wav` |
 | Chunk TTS để kiểm tra | `data/audio/<video>_tts_chunks/` |
-| Log kiểm tra timing/alignment TTS | `data/audio/<video>_tts_review.jsonl` |
+| Log kiểm tra timing/alignment TTS | `data/report/tts/<video>_tts_review.jsonl` |
 | Video TTS cuối | `data/output/<video>_en-dub_en-sub.mp4` |
 | File tạm/course cuối | `data/compilation/` |
 

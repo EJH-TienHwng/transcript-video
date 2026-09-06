@@ -22,7 +22,7 @@ FASTER_WHISPER_COMPUTE_TYPES = {
 }
 DEFAULT_CONFIG_PATH = Path("configs/transcription.toml")
 DEFAULT_MODEL_PATH = "models/faster-whisper-large-v3"
-DEFAULT_TTS_MODEL = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+DEFAULT_TTS_MODEL = "models/Qwen3-TTS-12Hz-1.7B-CustomVoice"
 MODEL_FILENAME_SUFFIXES = {"faster-whisper": "faster", "huggingface": "huggingface"}
 TRANSLATION_MODEL_FILENAME_SUFFIXES = {"vinai-translate": "vinai"}
 
@@ -105,6 +105,7 @@ class ProjectPaths:
     audio_dir: Path
     output_dir: Path
     temp_dir: Path
+    report_dir: Path
 
     @classmethod
     def from_root(cls, root: Path) -> ProjectPaths:
@@ -116,7 +117,14 @@ class ProjectPaths:
             audio_dir=data_root / "audio",
             output_dir=data_root / "output",
             temp_dir=data_root / "temp",
+            report_dir=data_root / "report",
         )
+
+    def tts_review_path(self, audio_path: Path, *, chunk: bool = False) -> Path:
+        directory = self.report_dir / "tts"
+        if chunk:
+            return directory / audio_path.parent.name / f"{audio_path.stem}.review.jsonl"
+        return directory / f"{audio_path.stem}_review.jsonl"
 
     def create_dirs(self) -> None:
         for folder in (
@@ -125,6 +133,7 @@ class ProjectPaths:
             self.audio_dir,
             self.output_dir,
             self.temp_dir,
+            self.report_dir,
         ):
             folder.mkdir(parents=True, exist_ok=True)
 

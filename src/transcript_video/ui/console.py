@@ -5,18 +5,8 @@ import sys
 from dataclasses import dataclass
 
 from rich.console import Console
-from rich.theme import Theme
 
-THEME = Theme(
-    {
-        "info": "cyan",
-        "success": "bold green",
-        "warning": "yellow",
-        "error": "bold red",
-        "path": "bright_blue",
-        "stage": "bold magenta",
-    }
-)
+from .theme import THEME
 
 
 @dataclass(slots=True)

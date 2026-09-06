@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from ..config import VIDEO_EXTENSIONS
+from ..events import warn
 from ..hardware import get_ffmpeg_exe, get_ffprobe_exe, video_encoder_args
 from ..process_runner import ProcessExecutionError, probe_media, run_ffmpeg
 
@@ -52,7 +53,7 @@ def burn_subtitles(
     srt_escaped = escape_subtitle_path_for_ffmpeg(srt_in)
 
     # Default subtitle style with white text and black outline. You can customize this as needed.
-    subtitle_style = (
+    _subtitle_style = (
         "FontName=Arial,"
         "FontSize=16,"
         "PrimaryColour=&H00FFFFFF,"
@@ -200,7 +201,7 @@ def split_audio_into_chunks(
             try:
                 old_chunk.unlink()
             except OSError:
-                logger.warning("Could not delete stale audio chunk: %s", old_chunk)
+                warn(logger, "Could not delete stale audio chunk: %s", old_chunk)
 
     chunk_seconds = int(chunk_minutes * 60)
     output_pattern = output_dir / f"{audio_in.stem}_part_%03d{audio_in.suffix}"
@@ -225,11 +226,8 @@ def split_audio_into_chunks(
 
 
 def mux_audio_into_video_replace(video_in: Path, audio_in: Path, video_out: Path) -> None:
-    """Replace the video's original audio with generated TTS audio."""
+    """Replace original audio, allowing complete TTS to outlast the video stream."""
     ffmpeg_path = get_ffmpeg_exe()
-    video_duration = get_media_duration_seconds(video_in)
-    if video_duration is None:
-        raise ValueError(f"Could not read video duration: {video_in}")
     video_out.parent.mkdir(parents=True, exist_ok=True)
 
     command = [
@@ -249,19 +247,14 @@ def mux_audio_into_video_replace(video_in: Path, audio_in: Path, video_out: Path
         "aac",
         "-b:a",
         "192k",
-        "-t",
-        f"{video_duration:.3f}",
         str(video_out),
     ]
     run_command(command)
 
 
 def mux_audio_into_video_mix(video_in: Path, audio_in: Path, video_out: Path) -> None:
-    """Mix original video audio with generated TTS audio."""
+    """Mix original audio and complete TTS without limiting their duration."""
     ffmpeg_path = get_ffmpeg_exe()
-    video_duration = get_media_duration_seconds(video_in)
-    if video_duration is None:
-        raise ValueError(f"Could not read video duration: {video_in}")
     video_out.parent.mkdir(parents=True, exist_ok=True)
 
     command = [
@@ -283,8 +276,6 @@ def mux_audio_into_video_mix(video_in: Path, audio_in: Path, video_out: Path) ->
         "aac",
         "-b:a",
         "192k",
-        "-t",
-        f"{video_duration:.3f}",
         str(video_out),
     ]
     run_command(command)

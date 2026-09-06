@@ -5,8 +5,9 @@ from pathlib import Path
 from unittest import mock
 
 import numpy as np
+import pytest
 
-from transcript_video.config import SubtitleSegment
+from transcript_video.config import ProjectPaths, SubtitleSegment
 from transcript_video.processing.tts import chunks, core
 from transcript_video.processing.tts.chunks import _dependent_owner_chunks
 from transcript_video.processing.tts.core import (
@@ -20,6 +21,12 @@ from transcript_video.processing.tts.core import (
     tts_review_counts,
     write_tts_review_log,
 )
+
+
+@pytest.fixture(autouse=True)
+def isolate_tts_reports(tmp_path, monkeypatch):
+    monkeypatch.setattr(core, "find_project_root", lambda: tmp_path)
+    monkeypatch.setattr(chunks, "find_project_root", lambda: tmp_path)
 
 
 def _segments() -> list[SubtitleSegment]:
@@ -56,7 +63,7 @@ def test_context_group_limits_and_large_gap_split() -> None:
 def test_alignment_normalizes_case_and_punctuation() -> None:
     group = build_tts_context_groups(_segments()[:2])[0]
     words = [
-        WordTiming(text, index * 0.2, index * 0.2 + 0.15)
+        WordTiming(text, index * 0.4, index * 0.4 + 0.15)
         for index, text in enumerate(
             [
                 "OPEN",
@@ -71,7 +78,7 @@ def test_alignment_normalizes_case_and_punctuation() -> None:
             ]
         )
     ]
-    aligned, failures = align_context_group(group, words, 2.0)
+    aligned, failures = align_context_group(group, words, 4.0)
     assert failures == {}
     assert [item.subtitle_index for item in aligned] == [1, 2]
     assert aligned[0].source_end <= aligned[1].source_start
@@ -92,7 +99,11 @@ def test_group_generation_places_extracted_sentences_on_original_timeline(
     model = mock.Mock()
     model.generate_custom_voice.return_value = ([np.ones(5000, dtype=np.float32)], 1000)
     timings = [
-        WordTiming(text, index * 0.3, index * 0.3 + 0.2)
+        WordTiming(
+            text,
+            index * 0.3 + 0.2 * (index >= 4) + 0.2 * (index >= 9),
+            index * 0.3 + 0.2 * (index >= 4) + 0.2 * (index >= 9) + 0.2,
+        )
         for index, text in enumerate(
             [
                 "Open",
@@ -127,7 +138,7 @@ def test_group_generation_places_extracted_sentences_on_original_timeline(
     audio = overlay_tts_items(items, sample_rate, 20.0)
 
     assert model.generate_custom_voice.call_count == 1
-    assert reviews == []
+    assert all(entry["action"] == "context_aligned" for entry in reviews)
     assert audio[10_000] != 0 and audio[12_400] != 0 and audio[14_500] != 0
     assert np.all(audio[11_400:12_400] == 0)
 
@@ -172,7 +183,7 @@ def test_alignment_failure_and_overflow_create_complete_review_entries(monkeypat
         max_speedup=1.15,
         video_duration=2.0,
     )
-    reasons = {entry["review_reason"] for entry in reviews}
+    reasons = {reason for entry in reviews for reason in entry["review_reason"].split(";")}
     assert {"alignment_failed", "exceeds_max_speedup"} <= reasons
     required = {
         "subtitle_index",
@@ -182,6 +193,10 @@ def test_alignment_failure_and_overflow_create_complete_review_entries(monkeypat
         "next_start",
         "available_duration",
         "generated_speech_duration",
+        "raw_generated_duration",
+        "applied_speedup",
+        "final_audio_duration",
+        "overflow_duration",
         "required_speedup",
         "max_speedup",
         "context_group_index",
@@ -240,7 +255,11 @@ def test_cache_boundary_group_is_written_once_at_original_starts(
             for group in kwargs["groups"]
             for index, segment in group.segments
         ]
-        return items, 10 if items else None, []
+        return (
+            items,
+            10 if items else None,
+            [_entry(index, segment, len(wav) / 10) for index, segment, wav in items],
+        )
 
     monkeypatch.setattr(chunks, "generate_context_group_items", generated)
     first = tmp_path / "chunk_000.wav"
@@ -274,3 +293,753 @@ def test_cache_boundary_group_is_written_once_at_original_starts(
     second_audio, _ = sf.read(second, dtype="float32")
     assert first_audio[2990] > 0.9 and first_audio[3005] > 0.9
     assert np.all(second_audio == 0)
+
+
+def _entry(index: int, segment: SubtitleSegment, duration: float) -> dict[str, object]:
+    return core._review_entry(
+        subtitle_index=index,
+        segment=segment,
+        next_start=None,
+        available_duration=max(0.001, segment.end - segment.start),
+        generated_duration=duration,
+        max_speedup=1.15,
+        group_index=0,
+        source_start=None,
+        source_end=None,
+        action="context_aligned",
+        reason="",
+    )
+
+
+def _generate(model, segments, aligner=None, max_speedup=1.0):
+    return generate_context_group_items(
+        model=model,
+        aligner=aligner,
+        groups=build_tts_context_groups(segments),
+        all_segments=segments,
+        language="English",
+        speaker="Aiden",
+        instruct="steady",
+        max_speedup=max_speedup,
+        video_duration=20.0,
+    )
+
+
+def test_shorter_audio_never_slows_down_and_logs_actual_speed(monkeypatch) -> None:
+    speedup = mock.Mock(side_effect=AssertionError("must not stretch shorter audio"))
+    monkeypatch.setattr(core, "_pitch_preserving_speedup", speedup)
+    wav = np.full(2000, 0.1, dtype=np.float32)
+    np.testing.assert_array_equal(fit_wav_to_available_duration(wav, 1000, 3.0), wav)
+    segment = SubtitleSegment(0, 2, "Short sentence.")
+    model = mock.Mock()
+    model.generate_custom_voice.return_value = ([wav], 1000)
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        lambda *args: [WordTiming("Short", 0, 0.5), WordTiming("sentence", 0.6, 1.0)],
+    )
+    _, _, reviews = generate_context_group_items(
+        model=model,
+        aligner=object(),
+        groups=build_tts_context_groups([segment]),
+        all_segments=[segment],
+        language="English",
+        speaker="Aiden",
+        instruct="steady",
+        max_speedup=1.15,
+        video_duration=3.0,
+    )
+    assert reviews[0]["required_speedup"] == pytest.approx(2 / 3)
+    assert reviews[0]["applied_speedup"] == 1.0
+    assert reviews[0]["final_audio_duration"] == 2.0
+    speedup.assert_not_called()
+
+
+def test_bounded_speedup_preserves_tail_marker(monkeypatch) -> None:
+    wav = np.full(4000, 0.1, dtype=np.float32)
+    wav[-100:] = 0.9
+
+    def stretch(audio, sample_rate, speed):
+        assert speed == 1.15
+        # Resample the entire synthetic marker, rather than mock a destructive crop.
+        return np.interp(
+            np.linspace(0, len(audio) - 1, round(len(audio) / speed)), np.arange(len(audio)), audio
+        )
+
+    monkeypatch.setattr(core, "_pitch_preserving_speedup", stretch)
+    fitted = fit_wav_to_available_duration(wav, 1000, 3.0, 1.15)
+    assert len(fitted) == round(4000 / 1.15)
+    assert fitted[-1] == pytest.approx(0.9)
+    assert np.count_nonzero(fitted == wav[-1]) > 50
+
+
+@pytest.mark.parametrize("failure", ["exception", "low_confidence", "invalid_range"])
+def test_unsafe_alignment_regenerates_only_failed_sentence(monkeypatch, failure) -> None:
+    segment = SubtitleSegment(0, 1, "one two three four")
+    context = np.full(2000, 0.1, dtype=np.float32)
+    individual = np.full(4000, 0.3, dtype=np.float32)
+    individual[-20:] = 0.9
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = [([context], 1000), ([individual], 1000)]
+    valid = [
+        WordTiming(word, i * 0.3, i * 0.3 + 0.2) for i, word in enumerate(segment.text.split())
+    ]
+    bad = RuntimeError("ASR failed") if failure == "exception" else [WordTiming("one", 0, 0.2)]
+    if failure == "invalid_range":
+        bad = [WordTiming(word, 0.1, 0.3) for word in segment.text.split()]
+    monkeypatch.setattr(core, "transcribe_word_timings", mock.Mock(side_effect=[bad, valid]))
+    # This sentinel must never be invoked, even if someone reintroduces the old helper.
+    monkeypatch.setattr(
+        core,
+        "proportional_alignment_fallback",
+        mock.Mock(side_effect=AssertionError("unsafe slicing")),
+        raising=False,
+    )
+    items, sr, reviews = _generate(model, [segment], aligner=object())
+    assert model.generate_custom_voice.call_count == 2
+    for call in model.generate_custom_voice.call_args_list:
+        assert call.kwargs == dict(
+            text=segment.text, language="English", speaker="Aiden", instruct="steady"
+        )
+    np.testing.assert_array_equal(items[0][2], individual)
+    audio = overlay_tts_items(items, sr, 1, reviews=reviews)
+    assert audio[-1] == pytest.approx(0.9)
+    assert reviews[0]["action"] == "regenerated_individual_sentence"
+    assert reviews[0]["individual_attempts"] == 1
+
+
+def test_individual_retry_keeps_best_coverage_and_reports_failure(monkeypatch) -> None:
+    segment = SubtitleSegment(0, 1, "one two three four")
+    first, second = np.full(1000, 0.2), np.full(2000, 0.4)
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = [([first], 1000), ([second], 1000)]
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        mock.Mock(
+            side_effect=[
+                [WordTiming("one", 0, 0.2), WordTiming("two", 0.3, 0.5)],
+                [WordTiming("one", 0, 0.2)],
+            ]
+        ),
+    )
+    wav, sr, metadata = core.generate_individual_sentence_fallback(
+        model, object(), 1, segment, "English", "Aiden", "steady", 1000
+    )
+    assert model.generate_custom_voice.call_count == 2
+    np.testing.assert_array_equal(wav, first.astype(np.float32))
+    assert sr == 1000
+    assert metadata["verification_confidence"] == 0.5
+    assert metadata["verification_reason"] == "individual_coverage_low"
+
+
+def test_individual_retry_recovers_missing_final_words(monkeypatch) -> None:
+    segment = SubtitleSegment(0, 1, "one two")
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = [
+        ([np.ones(1000) * 0.1], 1000),
+        ([np.ones(2000) * 0.3], 1000),
+    ]
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        mock.Mock(
+            side_effect=[
+                [WordTiming("one", 0, 0.2)],
+                [WordTiming("one", 0, 0.2), WordTiming("two", 0.3, 0.5)],
+            ]
+        ),
+    )
+    wav, _, metadata = core.generate_individual_sentence_fallback(
+        model, object(), 1, segment, "English", "Aiden", "steady", 1000
+    )
+    assert len(wav) == 2000
+    assert metadata["individual_attempts"] == 2
+    assert metadata["verification_reason"] == ""
+
+
+@pytest.mark.parametrize(
+    "result",
+    [
+        ([], 1000),
+        ([np.ones(10)], 0),
+        ([np.ones(10)], 2000),
+        ([np.array([np.nan])], 1000),
+        ([np.zeros(10)], 1000),
+    ],
+)
+def test_invalid_individual_audio_is_explicit_failure(result, caplog) -> None:
+    caplog.set_level("INFO", logger="transcript_video.processing.tts.core")
+    model = mock.Mock()
+    model.generate_custom_voice.return_value = result
+    wav, _, metadata = core.generate_individual_sentence_fallback(
+        model, None, 42, SubtitleSegment(0, 1, "Text"), "English", "Aiden", "steady", 1000
+    )
+    assert wav is None
+    assert metadata["generation_failures"] == 2
+    assert "#42" in caplog.text and "failed" in caplog.text
+
+
+def test_timed_generation_failure_writes_review_and_does_not_publish(tmp_path, monkeypatch) -> None:
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = RuntimeError("Qwen failed")
+    monkeypatch.setattr(core, "load_qwen_tts_model", lambda *args: model)
+    monkeypatch.setattr(core, "get_media_duration_seconds", lambda *args: 2.0)
+    output = tmp_path / "test_tts.wav"
+    output.write_bytes(b"previous output")
+    with pytest.raises(ValueError):
+        core.synthesize_timed_tts_audio(
+            [SubtitleSegment(0, 1, "Text")],
+            output,
+            tmp_path / "video.mp4",
+            "local-model",
+            "English",
+            "Aiden",
+            "steady",
+            "cuda",
+            "sdpa",
+        )
+    assert output.read_bytes() == b"previous output"
+    entry = json.loads((tmp_path / "data/report/tts/test_tts_review.jsonl").read_text())
+    assert entry["action"] == "generation_failed"
+    assert entry["generation_failures"] == 2
+
+
+def test_alignment_padding_preserves_late_tail_without_next_sentence(monkeypatch) -> None:
+    segments = [SubtitleSegment(0, 1, "first"), SubtitleSegment(3, 4, "second")]
+    wav = np.zeros(2000, dtype=np.float32)
+    wav[100:500] = 0.1
+    wav[500:600] = 0.9  # ASR ends 100 ms before the acoustic tail.
+    wav[1000:1500] = 0.4
+    model = mock.Mock()
+    model.generate_custom_voice.return_value = ([wav], 1000)
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        lambda *args: [WordTiming("first", 0.1, 0.5), WordTiming("second", 1.0, 1.5)],
+    )
+    items, _, reviews = _generate(model, segments, aligner=object())
+    assert reviews[0]["alignment_source_end"] == pytest.approx(
+        0.5 + core.ALIGNMENT_END_PADDING_SECONDS
+    )
+    assert np.count_nonzero(items[0][2] == np.float32(0.9)) == 100
+    assert not np.any(items[0][2] == np.float32(0.4))
+    assert len(items[1][2]) == 1040  # Preserve the entire last sentence tail.
+
+
+def test_alignment_rejects_missing_middle_words_and_unsafe_padding() -> None:
+    group = build_tts_context_groups([SubtitleSegment(0, 1, "one two three four")])[0]
+    _, failures = align_context_group(
+        group,
+        [WordTiming("one", 0, 0.1), WordTiming("three", 0.2, 0.3), WordTiming("four", 0.4, 0.5)],
+        1.0,
+    )
+    assert failures == {1: "alignment_low_confidence"}
+    group = build_tts_context_groups([SubtitleSegment(0, 1, "one"), SubtitleSegment(1, 2, "two")])[
+        0
+    ]
+    _, failures = align_context_group(
+        group, [WordTiming("one", 0, 0.5), WordTiming("two", 0.55, 0.9)], 1.0
+    )
+    assert failures[1] == "invalid_audio_range"
+
+
+def test_collision_placement_preserves_samples_logs_shift_and_recovers_gap(caplog) -> None:
+    caplog.set_level("INFO", logger="transcript_video.processing.tts.core")
+    segments = [
+        SubtitleSegment(10, 11, "A"),
+        SubtitleSegment(13, 14, "B"),
+        SubtitleSegment(20, 21, "C"),
+    ]
+    waves = [
+        np.full(4000, 0.3, dtype=np.float32),
+        np.full(1000, 0.4, dtype=np.float32),
+        np.full(1000, 0.5, dtype=np.float32),
+    ]
+    waves[0][-10:] = 0.9
+    reviews = [
+        _entry(i, segment, len(wav) / 1000)
+        for i, (segment, wav) in enumerate(zip(segments, waves, strict=True), 1)
+    ]
+    audio = overlay_tts_items(
+        [(i, seg, wav) for i, (seg, wav) in enumerate(zip(segments, waves, strict=True), 1)],
+        1000,
+        21,
+        reviews=reviews,
+    )
+    np.testing.assert_array_equal(audio[10000:14000], waves[0])
+    assert np.all(audio[14000:14120] == 0)
+    np.testing.assert_array_equal(audio[14120:15120], waves[1])
+    assert reviews[1]["original_start"] == 13
+    assert reviews[1]["actual_start"] == 14.12
+    assert reviews[1]["timing_shift"] == 1.12
+    assert "timing_shift_exceeds_threshold" in reviews[1]["review_reason"]
+    assert reviews[2]["timing_shift"] == 0
+    assert "prevent voice overlap" in caplog.text
+
+
+def test_overlay_scales_peak_without_clipping() -> None:
+    audio = overlay_tts_items([(1, SubtitleSegment(0, 1, "A"), np.array([0.5, 1.5, 2.0]))], 10, 0)
+    np.testing.assert_allclose(audio, [0.25, 0.75, 1.0])
+
+
+def test_chunk_boundary_rebuild_and_rerun_keep_each_sentence_once(tmp_path, monkeypatch) -> None:
+    import soundfile as sf
+
+    segments = [
+        SubtitleSegment(299.0, 299.8, "A"),
+        SubtitleSegment(300.5, 301.5, "B"),
+        SubtitleSegment(302, 303, "C"),
+        SubtitleSegment(310, 311, "D"),
+    ]
+    calls = []
+
+    def generated(**kwargs):
+        items, reviews = [], []
+        for group in kwargs["groups"]:
+            calls.append(group.index)
+            for index, segment in group.segments:
+                wav = np.full(40 if index == 1 else 10, index / 10, dtype=np.float32)
+                wav[-1] = index / 10 + 0.01
+                items.append((index, segment, wav))
+                reviews.append(_entry(index, segment, len(wav) / 10))
+        return items, 10 if items else None, reviews
+
+    monkeypatch.setattr(chunks, "generate_context_group_items", generated)
+    loader = mock.Mock(return_value=object())
+    monkeypatch.setattr(chunks, "load_qwen_tts_model", loader)
+    monkeypatch.setattr(chunks, "get_media_duration_seconds", lambda *args: 311)
+    output = tmp_path / "test_tts.wav"
+    kwargs = dict(
+        segments=segments,
+        audio_out=output,
+        chunks_dir=tmp_path / "chunks",
+        video_path=tmp_path / "video.mp4",
+        tts_model_name="local",
+        tts_language="English",
+        tts_speaker="Aiden",
+        tts_instruct="steady",
+        device="cuda",
+        attn_implementation="sdpa",
+        context_max_sentences=2,
+    )
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    first_audio, _ = sf.read(output, dtype="float32")
+    reviews = [
+        json.loads(line)
+        for line in (tmp_path / "data/report/tts/test_tts_review.jsonl").read_text().splitlines()
+    ]
+    assert [entry["subtitle_index"] for entry in reviews] == [1, 2, 3, 4]
+    assert reviews[2]["timing_shift"] > 2.0  # Collision crosses cache owners.
+    assert reviews[3]["timing_shift"] == 0.0
+    for entry in reviews:
+        index = entry["subtitle_index"]
+        first, last = entry["cache_start_sample"], entry["cache_end_sample"]
+        assert last - first == (40 if index == 1 else 10)
+        assert first_audio[last - 1] == pytest.approx(index / 10 + 0.01, abs=0.0001)
+    calls.clear()
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    assert calls == []
+    assert loader.call_count == 1
+    np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], first_audio)
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs, rerun_chunk=1)
+    assert calls == [0, 1, 2]  # Includes boundary group's owner, each group exactly once.
+    np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], first_audio)
+
+
+def test_old_cache_is_invalidated(tmp_path) -> None:
+    path = tmp_path / "chunk.review.jsonl"
+    segment = SubtitleSegment(0, 1, "A")
+    path.write_text('{"subtitle_index": 1, "action": "used_proportional_fallback"}\n')
+    assert not core.tts_review_is_current(path, [(1, segment)])
+    entry = _entry(1, segment, 0.5)
+    overlay_tts_items([(1, segment, np.ones(5))], 10, 1, reviews=[entry])
+    write_tts_review_log(path, [entry])
+    assert core.tts_review_is_current(path, [(1, segment)])
+    assert not core.tts_review_is_current(path, [(1, SubtitleSegment(0, 1, "Changed"))])
+
+
+@pytest.mark.parametrize("mode", ["replace", "mix"])
+def test_mux_does_not_cut_tts_at_video_end(monkeypatch, tmp_path, mode) -> None:
+    from transcript_video.processing import media
+
+    runner = mock.Mock()
+    monkeypatch.setattr(media, "get_media_duration_seconds", lambda *args: 1.0)
+    monkeypatch.setattr(media, "get_ffmpeg_exe", lambda: "ffmpeg")
+    monkeypatch.setattr(media, "run_command", runner)
+    getattr(media, f"mux_audio_into_video_{mode}")(
+        tmp_path / "video.mp4", tmp_path / "tts.wav", tmp_path / "out.mp4"
+    )
+    command = runner.call_args.args[0]
+    assert "-t" not in command and "-shortest" not in command
+    assert not any("atrim" in str(arg) for arg in command)
+
+
+@pytest.mark.parametrize("recognized", ["first", "second"])
+def test_unrecognized_neighbor_never_leaks_into_aligned_sentence(recognized) -> None:
+    group = build_tts_context_groups(
+        [SubtitleSegment(0, 1, "first"), SubtitleSegment(1, 2, "second")]
+    )[0]
+    aligned, failures = align_context_group(group, [WordTiming(recognized, 0.5, 1.0)], 2.0)
+    assert not aligned
+    assert set(failures) == {1, 2}
+
+
+def test_only_low_coverage_member_is_regenerated(monkeypatch) -> None:
+    segments = [SubtitleSegment(0, 1, "one two"), SubtitleSegment(3, 4, "three four five")]
+    context = np.full(2000, 0.1, dtype=np.float32)
+    individual = np.full(1500, 0.4, dtype=np.float32)
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = [([context], 1000), ([individual], 1000)]
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        mock.Mock(
+            side_effect=[
+                [
+                    WordTiming("one", 0, 0.2),
+                    WordTiming("two", 0.3, 0.5),
+                    WordTiming("three", 1, 1.2),
+                    WordTiming("five", 1.4, 1.6),
+                ],
+                [
+                    WordTiming("three", 0, 0.2),
+                    WordTiming("four", 0.3, 0.5),
+                    WordTiming("five", 0.6, 0.8),
+                ],
+            ]
+        ),
+    )
+    items, _, reviews = _generate(model, segments, object())
+    assert model.generate_custom_voice.call_count == 2
+    assert model.generate_custom_voice.call_args.kwargs["text"] == segments[1].text
+    assert reviews[0]["action"] == "context_aligned"
+    assert reviews[1]["action"] == "regenerated_individual_sentence"
+    np.testing.assert_array_equal(items[1][2], individual)
+
+
+def test_boundary_individual_fallback_is_generated_and_written_once(tmp_path, monkeypatch) -> None:
+    import soundfile as sf
+
+    segments = [SubtitleSegment(299.6, 299.9, "first"), SubtitleSegment(300.2, 300.8, "second")]
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = [
+        ([np.full(100, 0.8)], 100),
+        ([np.full(100, 0.2)], 100),
+        ([np.full(100, 0.4)], 100),
+    ]
+    monkeypatch.setattr(chunks, "load_qwen_tts_model", lambda *args: model)
+    monkeypatch.setattr(chunks, "get_media_duration_seconds", lambda *args: 302)
+    output = tmp_path / "test_tts.wav"
+    chunks.synthesize_tts_audio_by_time_chunks(
+        segments,
+        output,
+        tmp_path / "chunks",
+        tmp_path / "video.mp4",
+        "local",
+        "English",
+        "Aiden",
+        "steady",
+        "cuda",
+        "sdpa",
+        max_speedup=1.0,
+    )
+    audio, _ = sf.read(output, dtype="float32")
+    assert [call.kwargs["text"] for call in model.generate_custom_voice.call_args_list] == [
+        "first second",
+        "first",
+        "second",
+    ]
+    assert np.count_nonzero(np.isclose(audio, 0.2, atol=0.0001)) == 100
+    assert np.count_nonzero(np.isclose(audio, 0.4, atol=0.0001)) == 100
+    assert not np.any(np.isclose(audio, 0.8, atol=0.0001))
+
+
+def test_failed_stretch_keeps_full_waveform_and_applied_speed_one(monkeypatch) -> None:
+    segment = SubtitleSegment(0, 1, "one")
+    following = SubtitleSegment(1, 2, "two")
+    model = mock.Mock()
+    model.generate_custom_voice.return_value = ([np.full(4000, 0.3)], 1000)
+    monkeypatch.setattr(
+        core, "_pitch_preserving_speedup", mock.Mock(side_effect=RuntimeError("ffmpeg failed"))
+    )
+    items, _, reviews = _generate(model, [segment, following], max_speedup=1.15)
+    assert len(items[0][2]) == 4000
+    assert reviews[0]["applied_speedup"] == 1.0
+    assert "time_stretch_failed" in reviews[0]["review_reason"]
+
+
+@pytest.mark.integration
+def test_real_ffmpeg_speedup_preserves_pitch_and_final_marker() -> None:
+    sr = 24000
+    time = np.arange(4 * sr) / sr
+    wav = (0.1 * np.sin(2 * np.pi * 440 * time)).astype(np.float32)
+    wav[-2400:] = 0.8 * np.sin(2 * np.pi * 880 * time[-2400:])
+    fitted = fit_wav_to_available_duration(wav, sr, 3.0, 1.15)
+    assert len(fitted) / sr == pytest.approx(4 / 1.15, abs=0.05)
+    assert np.max(np.abs(fitted[-2000:])) > 0.7
+    frequencies = np.fft.rfftfreq(sr, 1 / sr)
+    assert frequencies[np.argmax(np.abs(np.fft.rfft(fitted[:sr])))] == pytest.approx(440, abs=2)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("mode", ["replace", "mix"])
+def test_real_mux_retains_audio_after_video_ends(tmp_path, mode) -> None:
+    import soundfile as sf
+
+    from transcript_video.hardware import get_ffmpeg_exe
+    from transcript_video.process_runner import run_ffmpeg
+    from transcript_video.processing import media
+
+    video, audio, output, decoded = [
+        tmp_path / name for name in ("video.mp4", "tts.wav", "out.mp4", "decoded.wav")
+    ]
+    run_ffmpeg(
+        [
+            get_ffmpeg_exe(),
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=black:s=32x32:r=10:d=0.4",
+            "-f",
+            "lavfi",
+            "-i",
+            "anullsrc=r=24000:cl=mono:d=0.4",
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "aac",
+            video,
+        ]
+    )
+    time = np.arange(28800) / 24000
+    wav = np.zeros(28800, dtype=np.float32)
+    wav[24000:] = 0.5 * np.sin(2 * np.pi * 440 * time[24000:])
+    sf.write(audio, wav, 24000)
+    getattr(media, f"mux_audio_into_video_{mode}")(video, audio, output)
+    run_ffmpeg([get_ffmpeg_exe(), "-y", "-i", output, "-vn", "-c:a", "pcm_f32le", decoded])
+    recovered, sr = sf.read(decoded, dtype="float32")
+    assert len(recovered) / sr >= 1.19
+    assert np.max(np.abs(recovered[round(sr * 1.1) :])) > 0.1
+
+
+def test_interrupted_chunk_write_invalidates_old_sentence_ranges(tmp_path, monkeypatch) -> None:
+    import soundfile as sf
+
+    segment = SubtitleSegment(0, 1, "one")
+    model = mock.Mock()
+    model.generate_custom_voice.return_value = ([np.full(1000, 0.2)], 1000)
+    output = tmp_path / "chunk.wav"
+    kwargs = dict(
+        model=model,
+        chunk_index=0,
+        chunk_start=0,
+        chunk_end=2,
+        chunk_segments=[segment],
+        chunk_audio_out=output,
+        tts_language="English",
+        tts_speaker="Aiden",
+        tts_instruct="steady",
+    )
+    chunks.synthesize_one_fixed_time_chunk(**kwargs)
+    review_path = ProjectPaths.from_root(tmp_path).tts_review_path(output, chunk=True)
+    assert core.tts_review_is_current(review_path, [(1, segment)])
+    monkeypatch.setattr(sf, "write", mock.Mock(side_effect=OSError("disk full")))
+    with pytest.raises(OSError, match="disk full"):
+        chunks.synthesize_one_fixed_time_chunk(**kwargs)
+    assert not core.tts_review_is_current(review_path, [(1, segment)])
+
+
+@pytest.mark.parametrize("tail_ms", [100, 150])
+def test_fricative_tail_stays_with_its_sentence_through_rebuild(tmp_path, monkeypatch, tail_ms):
+    import soundfile as sf
+
+    segments = [SubtitleSegment(299.5, 300, "testcases"), SubtitleSegment(300.01, 301, "Here")]
+    wav = np.zeros(1800, dtype=np.float32)
+    wav[100:500] = 0.2
+    tail = np.random.default_rng(42).uniform(-0.08, 0.08, tail_ms).astype(np.float32)
+    wav[500 : 500 + tail_ms] = tail
+    wav[1000:1500] = 0.6
+    model = mock.Mock()
+    model.generate_custom_voice.return_value = ([wav], 1000)
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        lambda *args: [WordTiming("testcases", 0.1, 0.5), WordTiming("Here", 1, 1.5)],
+    )
+    monkeypatch.setattr(chunks, "load_qwen_tts_model", lambda *args: model)
+    monkeypatch.setattr(chunks, "load_faster_whisper_aligner", lambda *args: object())
+    monkeypatch.setattr(chunks, "get_media_duration_seconds", lambda *args: 302)
+    paths = ProjectPaths.from_root(tmp_path)
+    output = paths.audio_dir / "test_tts.wav"
+    reports = paths.tts_review_path(output)
+    kwargs = dict(
+        segments=segments,
+        audio_out=output,
+        chunks_dir=paths.audio_dir / "test_tts_chunks",
+        video_path=tmp_path / "video.mp4",
+        tts_model_name="local",
+        tts_language="English",
+        tts_speaker="Aiden",
+        tts_instruct="steady",
+        device="cuda",
+        attn_implementation="sdpa",
+        alignment_model_name="local-aligner",
+        max_speedup=1.0,
+        review_log_path=reports,
+    )
+    from transcript_video.events import RecordingObserver, event_scope
+
+    record = RecordingObserver()
+    with event_scope(record, run_id="test", video="test.mp4"):
+        chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    progress = [event for event in record.events if event.context.operation == "chunks"]
+    assert progress[-1].current == progress[-1].total == 2
+    assert progress[-1].details["sentences"] == progress[-1].details["total_sentences"] == 2
+    assert [event.current for event in progress] == sorted(event.current for event in progress)
+    assert all(event.context.run_id == "test" for event in record.events)
+    entries = [json.loads(line) for line in reports.read_text(encoding="utf-8").splitlines()]
+    assert all(entry["action"] == "context_aligned" for entry in entries)
+    audio, sr = sf.read(output, dtype="float32")
+    start, end = entries[0]["cache_start_sample"], entries[0]["cache_end_sample"]
+    np.testing.assert_allclose(audio[start + 500 : start + 500 + tail_ms], tail, atol=1 / 32768)
+    assert not np.any(np.isclose(audio[start:end], 0.6, atol=0.001))
+    next_start = entries[1]["cache_start_sample"]
+    assert next_start - end >= round(core.MIN_GAP_SECONDS * sr)
+    assert np.all(audio[end:next_start] == 0)
+    assert not list(paths.audio_dir.rglob("*.json*"))
+    chunk_logs = list((paths.report_dir / "tts/test_tts_chunks").glob("*.review.jsonl"))
+    assert len(chunk_logs) == 2
+    assert "\n  {" in reports.with_suffix(".pretty.json").read_text(encoding="utf-8")
+    assert json.loads(reports.with_suffix(".pretty.json").read_text(encoding="utf-8")) == entries
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    assert model.generate_custom_voice.call_count == 1
+    np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], audio)
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs, rerun_chunk=1)
+    assert model.generate_custom_voice.call_count == 2
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs, overwrite_all_chunks=True)
+    assert model.generate_custom_voice.call_count == 3
+
+
+@pytest.mark.parametrize("next_word_start", [0.65, 0.48])
+def test_unsafe_tail_and_onset_regenerate_both_sentences(monkeypatch, next_word_start):
+    segments = [SubtitleSegment(0, 1, "testcases"), SubtitleSegment(1.01, 2, "Here")]
+    context = np.full(2000, 0.8, dtype=np.float32)
+    first = np.full(900, 0.2, dtype=np.float32)
+    first[-150:] = 0.09
+    second = np.full(900, 0.4, dtype=np.float32)
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = [([context], 1000), ([first], 1000), ([second], 1000)]
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        mock.Mock(
+            side_effect=[
+                [WordTiming("testcases", 0.1, 0.5), WordTiming("Here", next_word_start, 1.1)],
+                [WordTiming("testcases", 0.1, 0.5)],
+                [WordTiming("Here", 0.1, 0.5)],
+            ]
+        ),
+    )
+    items, _, reviews = _generate(model, segments, object())
+    assert model.generate_custom_voice.call_count == 3
+    assert all(entry["action"] == "regenerated_individual_sentence" for entry in reviews)
+    np.testing.assert_array_equal(items[0][2], first)
+    np.testing.assert_array_equal(items[1][2], second)
+
+
+def test_release_gap_for_nearby_non_overlapping_sentences():
+    segments = [SubtitleSegment(0, 1, "A"), SubtitleSegment(1.01, 2, "B")]
+    entries = [_entry(i, segment, 1) for i, segment in enumerate(segments, 1)]
+    audio = overlay_tts_items(
+        [(i, segment, np.full(1000, 0.2)) for i, segment in enumerate(segments, 1)],
+        1000,
+        2,
+        reviews=entries,
+    )
+    assert entries[1]["actual_start"] >= 1 + core.MIN_GAP_SECONDS
+    assert np.count_nonzero(audio[1000:1120]) == 0
+
+
+def test_legacy_audio_sidecars_regenerate_once_at_new_report_path(tmp_path, monkeypatch, caplog):
+    import soundfile as sf
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.create_dirs()
+    output = paths.audio_dir / "legacy_tts.wav"
+    cache = paths.audio_dir / "legacy_tts_chunks"
+    cache.mkdir()
+    segment = SubtitleSegment(0, 1, "old")
+    entry = _entry(1, segment, 1)
+    overlay_tts_items([(1, segment, np.full(1000, 0.7))], 1000, 2, reviews=[entry])
+    entry["schema_version"] = 2
+    sf.write(cache / "legacy_tts_chunk_000.wav", np.full(1000, 0.7), 1000)
+    write_tts_review_log(cache / "legacy_tts_chunk_000.review.jsonl", [entry])
+    model = mock.Mock()
+    model.generate_custom_voice.return_value = ([np.full(1000, 0.2)], 1000)
+    monkeypatch.setattr(chunks, "load_qwen_tts_model", lambda *args: model)
+    monkeypatch.setattr(chunks, "get_media_duration_seconds", lambda *args: 2)
+    kwargs = dict(
+        segments=[segment],
+        audio_out=output,
+        chunks_dir=cache,
+        video_path=tmp_path / "video.mp4",
+        tts_model_name="local",
+        tts_language="English",
+        tts_speaker="Aiden",
+        tts_instruct="steady",
+        device="cuda",
+        attn_implementation="sdpa",
+        max_speedup=1,
+    )
+    with caplog.at_level("INFO"):
+        chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    assert "regenerating safely" in caplog.text
+    assert model.generate_custom_voice.call_count == 2
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    assert model.generate_custom_voice.call_count == 2
+    assert (paths.report_dir / "tts/legacy_tts_chunks/legacy_tts_chunk_000.review.jsonl").exists()
+
+
+@pytest.mark.parametrize(
+    "mode,generation", [("timed", "full"), ("timed", "chunked"), ("simple", "full")]
+)
+def test_pipeline_routes_reports_and_preserves_tts_modes(tmp_path, monkeypatch, mode, generation):
+    from transcript_video.config import RunSettings
+    from transcript_video.processing import pipeline
+    from transcript_video.processing.subtitles import write_srt
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.create_dirs()
+    settings = RunSettings.defaults()
+    settings.tts.enabled, settings.tts.mode, settings.tts.generation_mode = True, mode, generation
+    settings.tts.split_audio = False
+    video = tmp_path / "lesson.mp4"
+    write_srt([SubtitleSegment(0, 1, "one")], paths.subtitle_dir / "lesson_faster.srt")
+    monkeypatch.setattr(pipeline, "get_model_filename_suffix", lambda *args: "faster")
+    monkeypatch.setattr(pipeline, "burn_subtitles", mock.Mock())
+    monkeypatch.setattr(pipeline, "mux_audio_into_video_replace", mock.Mock())
+    generators = {
+        name: mock.Mock()
+        for name in (
+            "synthesize_simple_tts_audio",
+            "synthesize_timed_tts_audio",
+            "synthesize_tts_audio_by_time_chunks",
+        )
+    }
+    for name, generator in generators.items():
+        monkeypatch.setattr(pipeline, name, generator)
+    pipeline.process_video(video, tmp_path / "model", None, paths, settings)
+    chosen = (
+        "synthesize_tts_audio_by_time_chunks"
+        if generation == "chunked"
+        else f"synthesize_{mode}_tts_audio"
+    )
+    assert generators[chosen].call_count == 1
+    assert sum(generator.call_count for generator in generators.values()) == 1
+    if mode == "timed":
+        assert (
+            generators[chosen].call_args.kwargs["review_log_path"]
+            == paths.report_dir / "tts/lesson_tts_review.jsonl"
+        )
