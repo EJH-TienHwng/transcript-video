@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,7 @@ from ..config import (
     DEFAULT_CONFIG_PATH,
     FASTER_WHISPER_COMPUTE_TYPES,
     RunSettings,
+    _migrate_legacy_hardware_settings,
     load_run_settings,
 )
 
@@ -77,6 +79,7 @@ def _mark_file_sources(sources: dict[str, str], path: Path, source: str) -> None
 
     with path.open("rb") as stream:
         raw = tomllib.load(stream)
+    _migrate_legacy_hardware_settings(raw)
     for section, values in raw.items():
         if isinstance(values, dict):
             for key in values:
@@ -84,6 +87,20 @@ def _mark_file_sources(sources: dict[str, str], path: Path, source: str) -> None
 
 
 def validate_settings(settings: RunSettings) -> None:
+    settings.subtitle_style.validate()
+    defaults = asdict(RunSettings.defaults())
+    for section, values in asdict(settings).items():
+        for key, value in values.items():
+            default = defaults[section][key]
+            name = f"{section}.{key}"
+            if isinstance(default, bool) and not isinstance(value, bool):
+                raise ValueError(f"{name} must be true or false.")
+            if isinstance(default, float) and (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+            ):
+                raise ValueError(f"{name} must be a finite number.")
     project, hardware, transcription, tts = (
         settings.project,
         settings.hardware,
@@ -104,8 +121,10 @@ def validate_settings(settings: RunSettings) -> None:
             raise ValueError(f"{name} must be a non-empty string.")
     if project.video is not None and not isinstance(project.video, str):
         raise ValueError("project.video must be a string or null.")
-    if project.translation_model is not None and not isinstance(project.translation_model, str):
-        raise ValueError("project.translation_model must be a string or null.")
+    if project.translation_model is not None and (
+        not isinstance(project.translation_model, str) or not project.translation_model.strip()
+    ):
+        raise ValueError("project.translation_model must be a non-empty string or null.")
     if not isinstance(transcription.language, str):
         raise ValueError("transcription.language must be a string.")
     choices = {
@@ -122,7 +141,7 @@ def validate_settings(settings: RunSettings) -> None:
         "tts.audio_mode": (tts.audio_mode, {"replace", "mix"}),
     }
     for name, (value, allowed) in choices.items():
-        if value not in allowed:
+        if not isinstance(value, str) or value not in allowed:
             raise ValueError(f"{name} must be one of: {', '.join(sorted(allowed))}.")
     if not isinstance(transcription.translation_batch_size, int) or isinstance(
         transcription.translation_batch_size, bool
@@ -148,14 +167,21 @@ def validate_settings(settings: RunSettings) -> None:
         tts.context_break_seconds, bool
     ):
         raise ValueError("tts.context_break_seconds must be a number.")
-    if (
-        tts.chunk_minutes < 1
-        or tts.max_speedup < 1
-        or tts.chunk_tail_seconds < 0
-        or tts.context_max_sentences < 1
-        or tts.context_max_chars < 1
-        or tts.context_break_seconds < 0
+    for name, minimum in (
+        ("chunk_minutes", 1),
+        ("max_speedup", 1),
+        ("chunk_tail_seconds", 0),
+        ("context_max_sentences", 1),
+        ("context_max_chars", 1),
+        ("context_break_seconds", 0),
     ):
-        raise ValueError("TTS timing settings are outside their supported ranges.")
-    if tts.rerun_chunk is not None and tts.rerun_chunk < 0:
-        raise ValueError("tts.rerun_chunk must be at least 0.")
+        if getattr(tts, name) < minimum:
+            raise ValueError(f"tts.{name} must be at least {minimum}.")
+    if tts.rerun_chunk is not None and (
+        isinstance(tts.rerun_chunk, bool)
+        or not isinstance(tts.rerun_chunk, int)
+        or tts.rerun_chunk < 0
+    ):
+        raise ValueError("tts.rerun_chunk must be an integer at least 0.")
+    if tts.verify_final_audio and tts.mode == "simple" and tts.generation_mode == "full":
+        raise ValueError("tts.verify_final_audio requires timed or chunked generation.")

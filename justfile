@@ -24,3 +24,12 @@ doctor:
 
 tui:
     python -m uv run transcript-video course tui
+
+wizard:
+    python -m uv run transcript-video course create
+
+test-tui:
+    python -m uv run pytest tests/test_tui.py
+
+coverage:
+    python -m uv run pytest -m "not slow and not gpu" --cov=transcript_video --cov-report=term-missing

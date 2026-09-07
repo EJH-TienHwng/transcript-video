@@ -41,6 +41,7 @@ class EventKind(StrEnum):
     WARNING = "warning"
     FAILURE = "failure"
     ARTIFACT = "artifact"
+    REUSED = "reused"
 
 
 class EventSeverity(StrEnum):
@@ -169,6 +170,7 @@ def stage_context(
     total: float | None = None,
     details: dict | None = None,
     completed: str | None = None,
+    reused: bool = False,
 ):
     """One lifecycle and monotonic duration; nested operations do not complete their parent stage."""
     with log_context(
@@ -190,7 +192,7 @@ def stage_context(
             emit(
                 stage,
                 completed or message,
-                kind=EventKind.COMPLETE,
+                kind=EventKind.REUSED if reused else EventKind.COMPLETE,
                 current=total,
                 total=total,
                 details={"elapsed_seconds": time.perf_counter() - started},

@@ -12,8 +12,69 @@ from .media import (
     read_wav_as_float32_array,
 )
 from .models import detect_model_type, detect_translation_model_type
+from .runtime import reuse_model
 
 logger = logging.getLogger(__name__)
+
+
+@reuse_model("whisper")
+@stage_context(
+    PipelineStage.TRANSCRIBE,
+    "Loading Whisper model",
+    operation="load_whisper",
+    completed="Whisper ready",
+)
+def load_whisper(model_path, device, compute_type):
+    from faster_whisper import WhisperModel
+
+    return WhisperModel(str(model_path), device=device, compute_type=compute_type)
+
+
+@reuse_model("huggingface")
+@stage_context(
+    PipelineStage.TRANSCRIBE,
+    "Loading Whisper model",
+    operation="load_whisper",
+    completed="Whisper ready",
+)
+def load_huggingface(model_path, device):
+    import torch
+    from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+
+    dtype = torch.float16 if device == "cuda" else torch.float32
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(
+        str(model_path), torch_dtype=dtype, low_cpu_mem_usage=True
+    )
+    processor = AutoProcessor.from_pretrained(str(model_path))
+    return pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        chunk_length_s=30,
+        device=0 if device == "cuda" else -1,
+        torch_dtype=dtype,
+    )
+
+
+@reuse_model("translation")
+@stage_context(
+    PipelineStage.TRANSLATE,
+    "Loading translation model",
+    operation="load_translation",
+    completed="Translation model ready",
+)
+def load_translation(model_path, device):
+    import torch
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        str(model_path), dtype=torch.float16 if device == "cuda" else torch.float32
+    )
+    model.to(device)
+    model.eval()
+    return tokenizer, model
 
 
 def transcribe_with_faster_whisper(
@@ -25,20 +86,12 @@ def transcribe_with_faster_whisper(
     compute_type: str,
 ) -> list[SubtitleSegment]:
     """Transcribe/translate using faster-whisper."""
-    from faster_whisper import WhisperModel
-
     device = resolve_torch_device(device, "faster-whisper")
     if device == "cpu" and compute_type == "float16":
         warn(logger, "float16 is not suitable for CPU inference; using int8 instead.")
         compute_type = "int8"
     logger.info("Engine: faster-whisper")
-    with stage_context(
-        PipelineStage.TRANSCRIBE,
-        "Loading Whisper model",
-        operation="load_whisper",
-        completed="Whisper ready",
-    ):
-        model = WhisperModel(str(model_path), device=device, compute_type=compute_type)
+    model = load_whisper(model_path, device, compute_type)
 
     segments, _info = model.transcribe(
         str(video_path),
@@ -75,41 +128,14 @@ def transcribe_with_huggingface(
     # Must run before importing Transformers because it caches ffmpeg availability.
     ensure_ffmpeg_available_for_transformers()
 
-    import torch
-    from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-
     logger.info("Engine: Hugging Face Transformers")
     device = resolve_torch_device(device, "Hugging Face Whisper")
-
-    torch_dtype = torch.float16 if device == "cuda" else torch.float32
-    hf_device = 0 if device == "cuda" else -1
 
     audio_path = temp_dir / f"{video_path.stem}_audio.wav"
     extract_audio(video_path, audio_path)
 
     try:
-        with stage_context(
-            PipelineStage.TRANSCRIBE,
-            "Loading Whisper model",
-            operation="load_whisper",
-            completed="Whisper ready",
-        ):
-            model = AutoModelForSpeechSeq2Seq.from_pretrained(
-                str(model_path),
-                torch_dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-            )
-            processor = AutoProcessor.from_pretrained(str(model_path))
-
-            asr_pipeline = pipeline(
-                "automatic-speech-recognition",
-                model=model,
-                tokenizer=processor.tokenizer,
-                feature_extractor=processor.feature_extractor,
-                chunk_length_s=30,
-                device=hf_device,
-                torch_dtype=torch_dtype,
-            )
+        asr_pipeline = load_huggingface(model_path, device)
 
         # Do NOT pass the audio filename to Transformers here.
         # Passing a filename makes Transformers call its own ffmpeg loader again,
@@ -156,24 +182,13 @@ def translate_segments_with_vinai(
     detect_translation_model_type(model_path)
 
     import torch
-    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
     device = resolve_torch_device(device, "VinAI Translate")
 
     torch_device = torch.device(device)
-    model_dtype = torch.float16 if device == "cuda" else torch.float32
     logger.info("Translation engine: VinAI Translate (%s)", torch_device)
 
-    with stage_context(
-        PipelineStage.TRANSLATE,
-        "Loading translation model",
-        operation="load_translation",
-        completed="Translation model ready",
-    ):
-        tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
-        model = AutoModelForSeq2SeqLM.from_pretrained(str(model_path), dtype=model_dtype)
-        model.to(torch_device)
-        model.eval()
+    tokenizer, model = load_translation(model_path, device)
 
     source_segments = [segment for segment in segments if (segment.text or "").strip()]
     translated_segments: list[SubtitleSegment] = []

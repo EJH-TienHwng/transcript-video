@@ -113,8 +113,11 @@ class PipelineProgressState:
         if event.kind == EventKind.START:
             stage.status = "active"
             stage.current, stage.total = event.current, event.total
-        elif event.kind == EventKind.COMPLETE:
-            stage.status = "complete"
+        elif event.kind in {EventKind.COMPLETE, EventKind.REUSED}:
+            if event.context.operation == "chunks" and event.kind == EventKind.REUSED:
+                return
+            if stage.status != "reused":
+                stage.status = event.kind.value
             stage.elapsed = event.details.get("elapsed_seconds")
             if stage.elapsed is not None:
                 self.timings.setdefault(video, {})[event.stage.value] = stage.elapsed
@@ -219,6 +222,7 @@ class RichProgressObserver:
                             "sentences",
                             "aligned",
                             "regenerated",
+                            "speed_adjusted",
                             "shifted",
                             "overflow",
                             "failures",
@@ -260,7 +264,7 @@ class RichProgressObserver:
                     completed=0,
                     visible=True,
                 )
-            elif event.kind == EventKind.COMPLETE:
+            elif event.kind in {EventKind.COMPLETE, EventKind.REUSED}:
                 if detail is None:
                     self.progress.update(self.stage_task, visible=False)
                 else:
@@ -301,6 +305,7 @@ class RichProgressObserver:
             "pending": self.symbols["pending"],
             "active": self.symbols["start"],
             "complete": self.symbols["complete"],
+            "reused": self.symbols["reused"],
             "review": self.symbols["review"],
             "failed": self.symbols["failure"],
         }
@@ -308,6 +313,7 @@ class RichProgressObserver:
             "pending": "pending",
             "active": "active",
             "complete": "success",
+            "reused": "muted",
             "review": "review",
             "failed": "error",
         }

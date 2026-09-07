@@ -30,14 +30,14 @@ uv run transcript-video process
 uv run transcript-video process lesson.mp4 --profile gpu-tts
 uv run transcript-video process lesson.mp4 --dry-run
 uv run transcript-video process lesson1.mp4 lesson2.mp4 lesson3.mp4
-uv run transcript-video process lesson.mp4 --force transcription --force tts
+uv run transcript-video process lesson.mp4 --enable-tts --force all
 uv run transcript-video doctor
 uv run transcript-video inspect data/input/lesson.mp4
 uv run transcript-video config show --sources
 uv run transcript-video config validate --profile gpu-tts
 ```
 
-Dry-run performs configuration, input-path, and execution-plan validation, but does not create directories, save config, load AI models, or start FFmpeg encoding. `--force` is repeatable and accepts `transcription`, `translation`, `tts`, and `render`; the older overwrite flags remain supported.
+Dry-run performs configuration, input-path, and execution-plan validation, but does not create directories, save config, load AI models, or start FFmpeg encoding. `--force` is repeatable and accepts `transcription`, `tts`, and `all`; force wins over negative overwrite flags. Transcription rebuilds ASR, configured translation and enabled downstream TTS; TTS force regenerates every chunk and requires enabled TTS with rendering. Full force and selective chunk reruns are incompatible. Translation has no independent source cache, and rendering always runs, so neither is exposed as a force target. Dry-run also validates ASR/translation model directories and formats instead of inventing a suffix.
 
 Profiles are partial TOML files in `configs/profiles/<name>.toml` (or an explicit TOML path). Effective values resolve in this order: defaults, base config, profile, then command-line overrides.
 
@@ -52,9 +52,29 @@ Exit codes are `0` for success, `1` for a runtime/readiness failure, `2` for inv
 
 ## Course wizard and full TUI
 
-`transcript-video course create` launches the lightweight Questionary wizard. Its review loop can edit titles and numbers, reorder sessions, remove sessions, and go back without restarting.
+`transcript-video course create` launches the lightweight Questionary wizard. Its review loop can Add session (reusing validation, duplicate protection and metadata cache), edit titles and numbers, reorder sessions, remove sessions, and go back without restarting.
 
 `transcript-video course tui` launches the Textual application. It provides Course Metadata, Session Editor, and Review/Build screens. Video metadata and course builds run in background workers. Keyboard shortcuts include `Ctrl+S` to save, `Esc` to go back, `A/E/Delete` to add/edit/remove, `U/D` to reorder, and `Q` to quit. Unsaved changes require confirmation.
+
+The video browser lists supported media in `data/input` and `data/output` without recursion.
+Enter fills the form; Add confirms. Manual paths are still accepted. Edit preserves the original
+until Save changes validates; `Ctrl+E` cancels. Save/cancel before remove, reorder or review.
+Numbers and unknown JSON fields survive saves. Corrupt JSON aborts launch with the path and is
+never replaced with an empty draft. Wizard/TUI saves and the builder share domain validation;
+writes are atomic. Metadata probes run in workers and cache by path/mtime/size.
+
+Metadata settings expose cards, chapters, TOC and advanced rendering/font options. Review shows
+session/source durations and estimated duration including TOC/cards. Build progress uses actual
+semantic stage/FFmpeg counts and completed-stage totals, with busy indicators for unknown totals.
+`Ctrl+B` builds; save/navigation/quit are guarded until the build finishes. Textual no-color uses
+grayscale and still needs fullscreen cursor control.
+
+`inspect` renders a human table and works without models (subtitle artifacts may be unresolved).
+`--json config validate` returns machine-readable validity; invalid config exits 1. Doctor reports
+configured encoder, NVENC listing/runtime and fallback separately, alongside model, Python,
+PyTorch/CUDA/ASR compute, storage and writable-directory checks as PASS/WARN/FAIL.
+Hosted Windows/Linux CI uses `.github/requirements-test.txt` and an editable `--no-deps` install,
+without the local CUDA stack. See the [root README](../README.md) for the full QoL behavior.
 
 ## Architecture
 
@@ -336,7 +356,9 @@ uv run transcript-video `
   --translation-model models/vinai-translate-vi2en-v2
 ```
 
-Existing SRT files are reused unless `overwrite_srt` is enabled.
+Existing SRT files are reused only when input/config/model provenance matches and `overwrite_srt`
+is disabled. Legacy files without provenance regenerate once. Manual text edits remain usable
+when the source/config provenance matches; TTS fingerprints track the edited content.
 
 ## TTS workflow
 
@@ -468,7 +490,9 @@ The runtime probe failed. Common causes are an old NVIDIA driver, an FFmpeg buil
 - Generate TTS in chunked mode.
 - Use a smaller model when available.
 
-The GTX 1650 Ti has limited VRAM, so loading Whisper, VinAI, and Qwen concurrently should be avoided. The pipeline loads them stage by stage rather than intentionally keeping every model resident.
+The GTX 1650 Ti has limited VRAM. The application-owned batch runtime reuses model instances,
+parking the previous GPU workload on CPU before activating another; the CPU aligner stays
+reusable. Host RAM and transfer time are still required. Real-model offload benchmarks are pending.
 
 ### CPU activity is still visible
 
@@ -477,3 +501,13 @@ This is expected. Media decoding, libass subtitle rasterization, FFmpeg filters,
 ### Existing artifacts are unexpectedly reused
 
 Use `--overwrite-srt` or `--overwrite-tts`. For chunked TTS, use `--rerun-tts-chunk INDEX` to regenerate only the required chunk.
+
+## Quality and safety update
+
+Use `process VIDEO --profile srt` for subtitles only, or `--profile tts-review` for optional
+verification of final persisted WAV sentence ranges. CLI flags override profiles. Review v4
+adds missing/added/final-word checks, coverage, an explicit SequenceMatcher edit ratio and a
+tail-energy review heuristic. Speed-adjusted sentences emit REVIEW even when they fit.
+Duration reports, cache provenance, atomic output, subtitle style configuration and FA2 fallback
+are described in the [README](../README.md#tts-review-reports). No ASR score establishes correct
+pronunciation/prosody. See [validation and remaining acceptance](quality-validation.md).

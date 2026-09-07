@@ -217,3 +217,20 @@ def test_real_questionary_keyboard_flow(tmp_path, monkeypatch):
         with wizard.wizard_ui(Console(file=StringIO(), no_color=True, theme=THEME, width=80)):
             path = wizard.create_course_config_interactive(tmp_path, tmp_path)
     assert load_course_config(path).sessions[0].title == "intro"
+
+
+def test_add_from_review_rejects_duplicate_and_assigns_unused_number(tmp_path, monkeypatch):
+    (tmp_path / "pyproject.toml").touch()
+    first, second = tmp_path / "first.mp4", tmp_path / "second.mp4"
+    first.touch()
+    second.touch()
+    sessions = [dict(number=5, title="First", video="first.mp4")]
+    answers = iter(["Add session", [first], [second], "Continue"])
+    monkeypatch.setattr(wizard, "_ask", lambda *a, **kw: next(answers))
+    monkeypatch.setattr(wizard, "_metadata", lambda *a: {})
+    result = wizard._edit_sessions(sessions, tmp_path, tmp_path, {})
+    assert [item["number"] for item in result] == [5, 6]
+    from transcript_video.course.config import save_course_config
+
+    path = save_course_config(dict(sessions=result), tmp_path / "course.json")
+    assert len(load_course_config(path).sessions) == 2

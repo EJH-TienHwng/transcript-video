@@ -10,11 +10,45 @@ from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 
+from .context import current_context
+
 logger = logging.getLogger(__name__)
 
 
 class ProcessExecutionError(RuntimeError):
     """Concise public error; the full subprocess diagnostics remain in DEBUG logs."""
+
+    def __init__(
+        self,
+        message: str | None = None,
+        *,
+        command: Sequence[str] = (),
+        returncode: int | None = None,
+        stdout: str | bytes | None = "",
+        stderr: str | bytes | None = "",
+        tool: str | None = None,
+        timeout: float | None = None,
+    ):
+        self.command = tuple(command)
+        self.returncode = returncode
+        self.stdout = (
+            stdout.decode("utf-8", errors="replace") if isinstance(stdout, bytes) else stdout or ""
+        )
+        self.stderr = (
+            stderr.decode("utf-8", errors="replace") if isinstance(stderr, bytes) else stderr or ""
+        )
+        self.tool = tool or (Path(self.command[0]).stem if self.command else None)
+        self.timeout = timeout
+        self.stage = current_context.get().stage
+        label = self.tool or "Command"
+        super().__init__(
+            message
+            or (
+                f"{label} timed out after {timeout}s"
+                if timeout is not None
+                else f"{label} exited with code {returncode}"
+            )
+        )
 
 
 @dataclass(slots=True)
@@ -48,7 +82,11 @@ def ffmpeg_progress_handler(callback: Callable[[FFmpegProgress], None]):
 
 
 def run_process(
-    args: Sequence[str | Path], *, cwd: Path | None = None, timeout: float | None = None
+    args: Sequence[str | Path],
+    *,
+    cwd: Path | None = None,
+    timeout: float | None = None,
+    tool: str | None = None,
 ) -> ProcessResult:
     command = tuple(str(item) for item in args)
     logger.debug("Running command: %s", subprocess.list2cmdline(command))
@@ -71,10 +109,19 @@ def run_process(
             exc.stdout,
             exc.stderr,
         )
-        raise ProcessExecutionError(f"Command timed out after {timeout}s.") from exc
+        raise ProcessExecutionError(
+            command=command, stdout=exc.stdout, stderr=exc.stderr, tool=tool, timeout=timeout
+        ) from exc
+    except OSError as exc:
+        logger.debug("Could not start command=%r", command, exc_info=True)
+        raise ProcessExecutionError(
+            command=command,
+            stderr=str(exc),
+            tool=tool,
+            message=f"{tool or Path(command[0]).stem} could not start: {exc.strerror or exc}",
+        ) from exc
     result = ProcessResult(command, completed.returncode, completed.stdout, completed.stderr)
     if completed.returncode:
-        detail = completed.stderr.strip() or completed.stdout.strip() or "No diagnostic output."
         logger.debug(
             "Command failed: command=%r returncode=%s stdout=%s stderr=%s",
             command,
@@ -83,7 +130,11 @@ def run_process(
             completed.stderr,
         )
         raise ProcessExecutionError(
-            f"Command failed ({completed.returncode}): {detail.splitlines()[-1][:300]}"
+            command=command,
+            returncode=completed.returncode,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+            tool=tool,
         )
     return result
 
@@ -117,14 +168,23 @@ def run_ffmpeg(
     values: dict[str, str] = {}
     stdout_lines: list[str] = []
     with tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace") as error_stream:
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=error_stream,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
+        try:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=error_stream,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+        except OSError as exc:
+            logger.debug("Could not start FFmpeg command=%r", command, exc_info=True)
+            raise ProcessExecutionError(
+                f"FFmpeg could not start: {exc.strerror or exc}",
+                command=command,
+                stderr=str(exc),
+                tool="FFmpeg",
+            ) from exc
         try:
             assert process.stdout is not None
             for raw_line in process.stdout:
@@ -138,12 +198,13 @@ def run_ffmpeg(
                         on_progress(parse_ffmpeg_progress(values))
                     values = {}
             process.wait()
-        except KeyboardInterrupt:
+        except BaseException:
             process.terminate()
             try:
                 process.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 process.kill()
+                process.wait()
             raise
         error_stream.seek(0)
         stderr = error_stream.read()
@@ -157,7 +218,11 @@ def run_ffmpeg(
             stderr,
         )
         raise ProcessExecutionError(
-            f"FFmpeg failed ({process.returncode}): {(stderr.strip() or 'No diagnostic output.').splitlines()[-1][:300]}"
+            command=command,
+            returncode=process.returncode,
+            stdout=result.stdout,
+            stderr=stderr,
+            tool="FFmpeg",
         )
     return result
 
@@ -168,8 +233,25 @@ def probe_media(
     result = run_process(
         [ffprobe, "-v", "error", "-show_format", "-show_streams", "-of", "json", media],
         timeout=timeout,
+        tool="ffprobe",
     )
     try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        raise ProcessExecutionError("ffprobe returned invalid JSON.") from exc
+        data = json.loads(result.stdout)
+        if not isinstance(data, dict):
+            raise ValueError("ffprobe metadata must be a JSON object")
+        return data
+    except ValueError as exc:
+        logger.debug(
+            "Invalid ffprobe JSON: command=%r stdout=%s stderr=%s",
+            result.args,
+            result.stdout,
+            result.stderr,
+        )
+        raise ProcessExecutionError(
+            "ffprobe returned invalid JSON.",
+            command=result.args,
+            returncode=result.returncode,
+            stdout=result.stdout,
+            stderr=result.stderr,
+            tool="ffprobe",
+        ) from exc

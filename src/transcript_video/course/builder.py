@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -17,12 +16,13 @@ from ..events import (
 )
 from ..process_runner import ffmpeg_progress_handler
 from .cards import render_session_card, render_toc_pages
-from .config import CourseConfig
+from .config import CourseConfig, course_config_document, parse_course_config
 from .media import (
     add_chapter_metadata,
     concatenate_videos,
     get_media_duration_seconds,
     normalize_session_video,
+    shutil_copy,
     still_image_to_video,
 )
 from .timeline import (
@@ -184,6 +184,7 @@ def _print_timeline(timeline: Sequence[SessionTimeline]) -> None:
 
 def build_course(config: CourseConfig, observer: PipelineObserver | None = None) -> Path:
     """Build the existing media timeline while publishing one shared event stream."""
+    config = parse_course_config(course_config_document(config), Path.cwd())
     with (
         event_scope(observer),
         stage_context(
@@ -254,7 +255,7 @@ def build_course(config: CourseConfig, observer: PipelineObserver | None = None)
                     ],
                 )
             else:
-                shutil.copy2(compiled_without_chapters, config.output)
+                shutil_copy(compiled_without_chapters, config.output)
         emit(
             PipelineStage.COMPLETE,
             "Course built",

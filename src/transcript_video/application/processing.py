@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..artifacts import is_partial_artifact
 from ..config import VIDEO_EXTENSIONS, ProjectPaths, RunSettings, configure_binary_path
 from ..context import log_context
 from ..events import EventKind, PipelineObserver, PipelineStage, emit, event_scope, stage_context
 from ..processing.media import find_videos
 from ..processing.models import get_model_filename_suffix
 from ..processing.pipeline import process_video
+from ..processing.runtime import model_runtime
+from .errors import describe_error
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +42,9 @@ class RunSummary:
 
 
 def build_process_plan(settings: RunSettings, videos: Sequence[Path] | None = None) -> ProcessPlan:
+    from .settings import validate_settings
+
+    validate_settings(settings)
     root = Path(settings.project.root).expanduser().resolve()
     paths = ProjectPaths.from_root(root)
     model = _from_root(root, settings.project.model)
@@ -56,6 +63,8 @@ def build_process_plan(settings: RunSettings, videos: Sequence[Path] | None = No
                 raise FileNotFoundError(f"Video not found: {video}")
             if video.suffix.lower() not in VIDEO_EXTENSIONS:
                 raise ValueError(f"Unsupported video format: {video.name}")
+            if is_partial_artifact(video):
+                raise ValueError(f"Incomplete artifact cannot be used as input: {video}")
         else:
             video = find_videos(paths.input_dir, str(video))[0]
         selected.append(video)
@@ -70,15 +79,24 @@ def build_process_plan(settings: RunSettings, videos: Sequence[Path] | None = No
                 f"Videos share an output name: {stems[video.stem.casefold()]} and {video}; rename one input."
             )
         stems[video.stem.casefold()] = video
-    try:
-        suffix = get_model_filename_suffix(model, translation)
-    except (FileNotFoundError, ValueError):
-        suffix = "<model-suffix>"
+    if not model.is_dir():
+        raise FileNotFoundError(f"Model folder not found: {model}")
+    if translation is not None and not translation.is_dir():
+        raise FileNotFoundError(f"Translation model folder not found: {translation}")
+    suffix = get_model_filename_suffix(model, translation)
+    for variable in ("TRANSCRIPT_VIDEO_FFMPEG", "TRANSCRIPT_VIDEO_FFPROBE"):
+        configured = os.environ.get(variable)
+        if configured and not Path(configured).expanduser().is_file():
+            raise FileNotFoundError(f"{variable} does not point to a file: {configured}")
     artifacts = tuple(
         artifact
         for video in resolved_videos
         for artifact in _artifacts_for(video, suffix, paths, settings)
     )
+    for artifact in artifacts:
+        parent = next(p for p in artifact.parents if p.exists())
+        if artifact.is_dir() or not parent.is_dir():
+            raise ValueError(f"Invalid output path: {artifact}")
     return ProcessPlan(settings, root, paths, model, translation, resolved_videos, artifacts)
 
 
@@ -88,6 +106,7 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
     started = time.perf_counter()
     with (
         event_scope(observer),
+        model_runtime(),
         stage_context(PipelineStage.RUN, "Processing videos", total=len(plan.videos)),
     ):
         plan.paths.create_dirs()
@@ -125,7 +144,7 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
                     logger.debug(
                         "Video processing failed", exc_info=True, extra={"diagnostic_only": True}
                     )
-                    failures.append(f"{video.name}: {exc}")
+                    failures.append(f"{video.name}: {describe_error(exc)}")
                     errors.append(exc)
                     emit(
                         PipelineStage.VIDEO,
@@ -158,7 +177,7 @@ def _artifacts_for(
     artifacts = [paths.subtitle_dir / f"{video.stem}_{suffix}.srt"]
     if not settings.transcription.skip_burn:
         artifacts.append(paths.output_dir / f"{video.stem}_vi-dub_en-sub.mp4")
-    if settings.tts.enabled:
+    if settings.tts.enabled and not settings.transcription.skip_burn:
         artifacts.extend(
             [
                 paths.audio_dir / f"{video.stem}_tts.wav",
@@ -168,6 +187,8 @@ def _artifacts_for(
         if settings.tts.generation_mode == "chunked" or settings.tts.mode == "timed":
             review = paths.tts_review_path(paths.audio_dir / f"{video.stem}_tts.wav")
             artifacts.extend([review, review.with_suffix(".pretty.json")])
+        review = paths.tts_review_path(paths.audio_dir / f"{video.stem}_tts.wav")
+        artifacts.append(review.with_suffix(".duration.json"))
     return artifacts
 
 

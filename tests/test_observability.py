@@ -131,6 +131,9 @@ def test_verbosity_and_owned_handlers(tmp_path, verbosity, visible):
 
 
 def test_dry_run_does_not_open_event_or_log_files(tmp_path, monkeypatch):
+    model = tmp_path / "models/faster-whisper-large-v3"
+    model.mkdir(parents=True)
+    (model / "model.bin").touch()
     from transcript_video.cli import app
 
     video = tmp_path / "test.mp4"
@@ -231,7 +234,14 @@ def test_tts_quality_aggregation_uses_final_metadata_once(tmp_path):
         log_tts_summary(6, entries, tmp_path / "review.jsonl")
     counts = progress.state.quality["A"]
     assert counts == dict(
-        sentences=6, aligned=3, regenerated=3, shifted=2, overflow=1, failures=0, flagged=3
+        sentences=6,
+        aligned=3,
+        regenerated=3,
+        speed_adjusted=0,
+        shifted=2,
+        overflow=1,
+        failures=0,
+        flagged=3,
     )
     assert len([e for e in record.events if e.context.operation == "quality"]) == 1
     assert [e.context.subtitle for e in record.events if e.context.operation == "review"] == [
@@ -250,6 +260,7 @@ def test_batch_continues_after_failure_and_json_remains_separate(tmp_path, monke
         '[project]\nmodel="models/asr"\n[transcription]\nskip_burn=true\n', encoding="utf-8"
     )
     (tmp_path / "models/asr").mkdir(parents=True)
+    (tmp_path / "models/asr/model.bin").touch()
     videos = [tmp_path / f"{name}.mp4" for name in "ABC"]
     for video in videos:
         video.touch()
@@ -431,7 +442,7 @@ def test_subprocess_failure_retains_full_diagnostics_in_json_log(tmp_path):
         logs = configure_logging(
             Console(file=StringIO(), theme=THEME), 0, tmp_path / "global.log", run_id="r"
         )
-        with pytest.raises(ProcessExecutionError, match="last-line"):
+        with pytest.raises(ProcessExecutionError, match="exited with code 7"):
             run_process(
                 [
                     sys.executable,

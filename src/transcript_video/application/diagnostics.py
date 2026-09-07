@@ -7,8 +7,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..config import ProjectPaths, RunSettings
-from ..hardware import ffmpeg_encoder_available, get_ffmpeg_exe, get_ffprobe_exe
+from ..hardware import (
+    ffmpeg_encoder_available,
+    flash_attention_status,
+    get_ffmpeg_exe,
+    get_ffprobe_exe,
+)
 from ..process_runner import run_process
+from .settings import validate_settings
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +34,11 @@ def run_doctor(settings: RunSettings) -> list[Check]:
         Check("Free storage", _free_space(root) >= 2 * 1024**3, _format_bytes(_free_space(root))),
     ]
     try:
+        validate_settings(settings)
+        checks.append(Check("Configuration", True, "Settings valid"))
+    except ValueError as exc:
+        checks.append(Check("Configuration", False, str(exc)))
+    try:
         ffmpeg = get_ffmpeg_exe()
         checks.append(Check("FFmpeg", True, ffmpeg))
         try:
@@ -35,13 +46,34 @@ def run_doctor(settings: RunSettings) -> list[Check]:
             checks.append(Check("Subtitle filter", "subtitles" in filters, "libass subtitles"))
         except Exception as exc:
             checks.append(Check("Subtitle filter", False, str(exc)))
-        checks.append(
-            Check(
-                "Video encoder",
-                ffmpeg_encoder_available(ffmpeg, "h264_nvenc")
-                or ffmpeg_encoder_available(ffmpeg, "libx264"),
-                "h264_nvenc" if ffmpeg_encoder_available(ffmpeg, "h264_nvenc") else "libx264",
-            )
+        encoders = run_process([ffmpeg, "-hide_banner", "-encoders"], timeout=15).stdout
+        nvenc = ffmpeg_encoder_available(ffmpeg, "h264_nvenc")
+        fallback = ffmpeg_encoder_available(ffmpeg, "libx264")
+        requested = settings.hardware.video_encoder
+        configured_ok = (
+            fallback
+            if requested == "libx264"
+            else nvenc
+            if requested == "h264_nvenc"
+            else nvenc or fallback
+        )
+        checks.extend(
+            [
+                Check("Configured encoder", configured_ok, requested),
+                Check(
+                    "NVENC encoder availability",
+                    "h264_nvenc" in encoders,
+                    "h264_nvenc",
+                    required=False,
+                ),
+                Check("NVENC runtime usability", nvenc, "One-frame runtime probe", required=False),
+                Check(
+                    "Fallback encoder",
+                    fallback,
+                    "libx264",
+                    required=requested == "libx264" or not nvenc,
+                ),
+            ]
         )
     except Exception as exc:
         checks.append(Check("FFmpeg", False, str(exc)))
@@ -51,6 +83,30 @@ def run_doctor(settings: RunSettings) -> list[Check]:
         checks.append(Check("ffprobe", False, str(exc)))
     model = _from_root(root, settings.project.model)
     checks.append(Check("Transcription model", model.is_dir(), str(model)))
+    if settings.project.translation_model:
+        translation = _from_root(root, settings.project.translation_model)
+        checks.append(Check("Translation model", translation.is_dir(), str(translation)))
+    if settings.tts.enabled:
+        supported, detail = flash_attention_status(settings.hardware.device)
+        checks.append(Check("FlashAttention 2 (optional)", supported, detail, required=False))
+        tts_model = _from_root(root, settings.tts.model)
+        checks.append(Check("TTS model", tts_model.is_dir(), str(tts_model)))
+        checks.append(
+            Check(
+                "TTS cache",
+                _writable(
+                    next(p for p in (paths.audio_dir, *paths.audio_dir.parents) if p.exists())
+                ),
+                str(paths.audio_dir),
+            )
+        )
+        checks.append(
+            Check(
+                "TTS configuration",
+                True,
+                f"{settings.tts.generation_mode} / {settings.tts.mode}; {settings.tts.language}; {settings.tts.speaker}",
+            )
+        )
     for name in ("input_dir", "subtitle_dir", "audio_dir", "output_dir", "temp_dir", "report_dir"):
         folder = getattr(paths, name)
         parent = next((item for item in (folder, *folder.parents) if item.exists()), root)
@@ -58,6 +114,15 @@ def run_doctor(settings: RunSettings) -> list[Check]:
     try:
         import torch
 
+        checks.append(Check("PyTorch version", True, str(torch.__version__)))
+        checks.append(
+            Check(
+                "PyTorch CUDA build",
+                bool(torch.version.cuda),
+                str(torch.version.cuda or "CPU build"),
+                required=settings.hardware.device == "cuda",
+            )
+        )
         available = torch.cuda.is_available()
         detail = torch.cuda.get_device_name(0) if available else "CUDA unavailable"
         checks.append(Check("CUDA", available, detail, required=settings.hardware.device == "cuda"))
@@ -65,6 +130,22 @@ def run_doctor(settings: RunSettings) -> list[Check]:
         checks.append(
             Check("PyTorch", False, str(exc), required=settings.hardware.device == "cuda")
         )
+    try:
+        import ctranslate2
+
+        device = settings.hardware.device
+        support = ctranslate2.get_supported_compute_types(device)
+        checks.append(
+            Check(
+                "ASR compute support",
+                settings.hardware.compute_type in support
+                or settings.hardware.compute_type in {"auto", "default"},
+                ", ".join(sorted(support)),
+                required=False,
+            )
+        )
+    except (ImportError, RuntimeError, ValueError) as exc:
+        checks.append(Check("ASR compute support", False, str(exc), required=False))
     return checks
 
 

@@ -30,14 +30,14 @@ uv run transcript-video process
 uv run transcript-video process lesson.mp4 --profile gpu-tts
 uv run transcript-video process lesson.mp4 --dry-run
 uv run transcript-video process lesson1.mp4 lesson2.mp4 lesson3.mp4
-uv run transcript-video process lesson.mp4 --force transcription --force tts
+uv run transcript-video process lesson.mp4 --enable-tts --force all
 uv run transcript-video doctor
 uv run transcript-video inspect data/input/lesson.mp4
 uv run transcript-video config show --sources
 uv run transcript-video config validate --profile gpu-tts
 ```
 
-Dry-run kiểm tra config, input path và kế hoạch thực thi nhưng không tạo folder, lưu config, load model AI hay chạy encode FFmpeg. `--force` có thể lặp lại với `transcription`, `translation`, `tts`, `render`; các cờ overwrite cũ vẫn dùng được.
+Dry-run kiểm tra config, input path và kế hoạch thực thi nhưng không tạo folder, lưu config, load model AI hay chạy encode FFmpeg. `--force` nhận `transcription`, `tts`, `all`; force ưu tiên hơn cờ overwrite phủ định cũ. Transcription tạo lại cả translation và TTS downstream đang bật. Force TTS tạo lại mọi chunk, yêu cầu bật TTS và không skip burn; không dùng cùng rerun chunk. Không có cache nguồn ASR riêng nên bỏ target translation; render luôn chạy nên bỏ target render. Dry-run kiểm tra cả thư mục/định dạng model ASR và translation, không dùng suffix giả.
 
 Profile là file TOML không cần khai báo đủ mọi field, đặt tại `configs/profiles/<tên>.toml` hoặc truyền đường dẫn trực tiếp. Thứ tự ghi đè là: mặc định, config gốc, profile, rồi option CLI.
 
@@ -52,9 +52,25 @@ Exit code: `0` thành công, `1` lỗi runtime/môi trường chưa sẵn sàng,
 
 ## Course Wizard và TUI đầy đủ
 
-`transcript-video course create` mở wizard Questionary gọn nhẹ. Ở bước review có thể sửa title/number, đổi thứ tự, xóa session và quay lại mà không phải chạy lại từ đầu.
+`transcript-video course create` mở wizard Questionary gọn nhẹ. Ở bước review có thể Add session (dùng lại validation/cache, chặn video trùng), sửa title/number, đổi thứ tự, xóa session và quay lại mà không phải chạy lại từ đầu.
 
 `transcript-video course tui` mở ứng dụng Textual gồm ba màn hình Course Metadata, Session Editor và Review/Build. Đọc metadata video và build course đều chạy background worker. Phím tắt chính: `Ctrl+S` lưu, `Esc` quay lại, `A/E/Delete` thêm/sửa/xóa, `U/D` đổi thứ tự và `Q` thoát. Khi còn thay đổi chưa lưu, ứng dụng sẽ hỏi xác nhận.
+
+Browser chỉ liệt kê media trong `data/input` và `data/output`, không quét đệ quy. Enter điền form,
+Add xác nhận; vẫn có manual path. Edit giữ nguyên session đến khi Save changes hợp lệ; `Ctrl+E`
+hủy edit, giữ nguyên vị trí và number. Phải save/cancel trước khi remove/reorder/review.
+Metadata chạy worker, cache theo path/mtime/size. Settings có card duration, chapters, TOC và
+advanced rendering/font. Review có duration từng session, tổng nguồn và ước tính gồm card/TOC.
+ProgressBar hiển thị số stage hoàn tất, progress thực của stage/FFmpeg và session; total chưa biết
+thì busy. `Ctrl+B` build tại review; trong khi build, khóa save/navigation/quit đến khi worker xong.
+JSON hỏng báo lỗi kèm path và không ghi đè; Wizard/TUI/builder dùng chung domain validation,
+atomic save giữ unknown fields. TUI no-color là grayscale, vẫn cần điều khiển cursor fullscreen.
+
+`inspect` dùng bảng dễ đọc và hoạt động khi thiếu model; subtitle artifact có thể unresolved.
+`--json config validate` trả kết quả machine-readable; config sai exit 1. Doctor tách configured
+encoder/NVENC listing/runtime/fallback, hiển thị PASS/WARN/FAIL cho môi trường, model và storage.
+CI Windows/Linux dùng `.github/requirements-test.txt` + editable `--no-deps`, không cần CUDA wheels.
+Xem [README chính](../README.md) để biết đầy đủ behavior và recipe mới.
 
 ## Kiến trúc
 
@@ -336,7 +352,9 @@ uv run transcript-video `
   --translation-model models/vinai-translate-vi2en-v2
 ```
 
-SRT đã có sẽ được tái sử dụng trừ khi bật `overwrite_srt`.
+SRT chỉ được tái sử dụng khi provenance của input/config/model khớp và không bật `overwrite_srt`.
+Cache cũ thiếu provenance sẽ tạo lại một lần. Sửa text thủ công vẫn được giữ nếu provenance
+nguồn/config khớp; fingerprint TTS theo dõi nội dung đã sửa.
 
 ## Quy trình TTS
 
@@ -468,7 +486,9 @@ Runtime probe đã thất bại. Nguyên nhân thường gặp gồm NVIDIA driv
 - Dùng TTS chunked mode.
 - Dùng model nhỏ hơn nếu có.
 
-GTX 1650 Ti có VRAM hạn chế, vì vậy không nên giữ Whisper, VinAI và Qwen trong VRAM cùng lúc. Pipeline hiện nạp model theo từng stage thay vì cố tình giữ tất cả model resident.
+Runtime batch do application sở hữu tái sử dụng model, chuyển workload GPU trước đó về CPU
+trước khi kích hoạt model tiếp theo; aligner CPU được giữ để dùng lại. Cách này vẫn cần RAM
+và thời gian truyền CPU/GPU. Chưa benchmark offload với model thật.
 
 ### Vẫn thấy CPU hoạt động
 
@@ -477,3 +497,24 @@ GTX 1650 Ti có VRAM hạn chế, vì vậy không nên giữ Whisper, VinAI và
 ### Artifact cũ bị tái sử dụng ngoài mong muốn
 
 Dùng `--overwrite-srt` hoặc `--overwrite-tts`. Với TTS chunked, dùng `--rerun-tts-chunk INDEX` để chỉ tạo lại chunk cần thiết.
+
+## Cập nhật QA và an toàn artifact
+
+```powershell
+uv run transcript-video process lesson.mp4 --profile srt
+uv run transcript-video process lesson.mp4 --profile tts-review
+uv run transcript-video process one.mp4 two.mp4 --profile srt
+```
+
+Profile `tts-review` bật ASR verifier đọc sentence từ WAV cuối đã publish; CLI override vẫn thắng.
+Review v4 có từ thiếu/thừa, `missing_final_word`, coverage và edit ratio dùng SequenceMatcher
+(không phải minimum-edit WER). Tail RMS là heuristic REVIEW, không phải kết luận mất âm cuối.
+Mọi speed-up thực tế có REVIEW và được đếm trong `speed_adjusted`. Report duration ghi nguồn,
+WAV, MP4 và delta; không cắt speech để bằng thời lượng nguồn.
+
+SRT/WAV/MP4 được ghi tạm rồi atomic replace. Manifest cấu hình mới ngăn reuse sai speaker/instruct;
+chunk rerun vẫn giữ owner context vượt biên. `[subtitle_style]` có validation, mặc định vẫn
+`MarginV=25`. FA2 là tùy chọn và fallback SDPA khi không hỗ trợ; không thêm SoX.
+Chi tiết schema/cache và cách lọc câu speed-up nằm trong [README](../README.md#tts-review-reports).
+Các mục phát âm/prosody, giọng nhất quán và natural pauses vẫn cần nghe thủ công;
+xem [giới hạn kiểm chứng](quality-validation.md) và [TODO](todo.md).

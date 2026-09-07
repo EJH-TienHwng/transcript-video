@@ -54,7 +54,7 @@ def test_ffmpeg_progress_parser(raw: dict[str, str], seconds: float | None) -> N
 
 
 def test_subprocess_runner_reports_stderr() -> None:
-    with pytest.raises(ProcessExecutionError, match="intentional"):
+    with pytest.raises(ProcessExecutionError, match="exited with code 3"):
         run_process(
             [sys.executable, "-c", "import sys; sys.stderr.write('intentional'); sys.exit(3)"]
         )
@@ -79,6 +79,9 @@ def test_legacy_cli_keeps_global_options_before_process() -> None:
 
 
 def test_dry_run_does_not_create_project_directories(tmp_path: Path) -> None:
+    model = tmp_path / "models/faster-whisper-large-v3"
+    model.mkdir(parents=True)
+    (model / "model.bin").touch()
     video = tmp_path / "lesson.mp4"
     video.touch()
     result = CliRunner().invoke(
@@ -107,6 +110,9 @@ async def test_tui_opens_metadata_screen() -> None:
     [[], ["one.mp4"], ["three.mp4", "one.mp4", "two.mp4"], ["one.mp4", "one.mp4", "two.mp4"]],
 )
 def test_multi_video_cli_preserves_order_without_dry_run_writes(tmp_path, monkeypatch, names):
+    model = tmp_path / "models/faster-whisper-large-v3"
+    model.mkdir(parents=True)
+    (model / "model.bin").touch()
     from transcript_video.application import processing
 
     input_dir = tmp_path / "data/input"
@@ -138,6 +144,9 @@ def test_multi_video_cli_preserves_order_without_dry_run_writes(tmp_path, monkey
 
 
 def test_multi_absolute_paths_and_legacy_selection(tmp_path):
+    model = tmp_path / "models/faster-whisper-large-v3"
+    model.mkdir(parents=True)
+    (model / "model.bin").touch()
     from transcript_video.application.processing import build_process_plan
     from transcript_video.config import RunSettings
 
@@ -198,6 +207,7 @@ def test_explicit_video_list_is_executed_in_order(tmp_path, monkeypatch):
     settings.project.root = str(tmp_path)
     settings.project.model = "models/transcription"
     (tmp_path / settings.project.model).mkdir(parents=True)
+    (tmp_path / settings.project.model / "model.bin").touch()
     videos = [tmp_path / name for name in ("C.mp4", "A.mp4", "B.mp4")]
     for path in videos:
         path.touch()

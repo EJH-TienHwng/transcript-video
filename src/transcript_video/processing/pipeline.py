@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import json
 import logging
+from dataclasses import asdict
 from pathlib import Path
 
+from ..artifacts import write_text
 from ..config import ProjectPaths, RunSettings
+from ..context import log_context
 from ..events import (
     EventKind,
     PipelineObserver,
@@ -23,6 +27,14 @@ from .media import (
     split_audio_into_chunks,
 )
 from .models import get_model_filename_suffix
+from .provenance import (
+    cache_matches,
+    manifest_path,
+    model_identity,
+    subtitle_provenance,
+    tts_provenance,
+    write_provenance,
+)
 from .subtitles import post_process_segments, read_srt, write_srt
 from .transcription import transcribe_video, translate_segments_with_vinai
 from .tts import (
@@ -68,8 +80,14 @@ def _process_video(
 
     logger = logging.getLogger(__name__)
 
-    if srt_path.exists() and not transcription.overwrite_srt:
-        with stage_context(PipelineStage.SUBTITLES, "Reusing cached subtitles"):
+    subtitle_fingerprint = subtitle_provenance(
+        video_path, model_path, translation_model_path, settings
+    )
+    subtitles_reused = not transcription.overwrite_srt and cache_matches(
+        srt_path, subtitle_fingerprint, PipelineStage.SUBTITLES
+    )
+    if subtitles_reused:
+        with stage_context(PipelineStage.SUBTITLES, "Reusing cached subtitles", reused=True):
             segments = read_srt(srt_path)
             if not segments:
                 raise ValueError(f"SRT contains no valid subtitles: {srt_path}")
@@ -103,7 +121,11 @@ def _process_video(
             raise ValueError(f"No valid subtitles were generated for: {video_path.name}")
 
         with stage_context(PipelineStage.SUBTITLES, "Writing subtitles"):
+            manifest_path(srt_path).unlink(missing_ok=True)
             write_srt(segments, srt_path)
+            write_provenance(srt_path, subtitle_fingerprint)
+            # Use the exact published millisecond timestamps on every run.
+            segments = read_srt(srt_path)
     emit(
         PipelineStage.SUBTITLES,
         "Subtitles ready",
@@ -127,6 +149,7 @@ def _process_video(
             srt_path,
             subtitled_output_path,
             video_encoder=hardware.video_encoder,
+            subtitle_style=settings.subtitle_style,
         )
 
     emit(
@@ -138,6 +161,23 @@ def _process_video(
     )
     if not tts.enabled:
         return
+    tts_model_path = Path(tts.model).expanduser()
+    tts_model_name = (
+        str((paths.root / tts_model_path).resolve())
+        if not tts_model_path.is_absolute()
+        else str(tts_model_path)
+    )
+
+    tts_fingerprint = tts_provenance(
+        segments,
+        {
+            **asdict(tts),
+            "model": model_identity(tts_model_name),
+            "alignment_model": model_identity(model_path),
+            "input": subtitle_fingerprint["input"],
+            "device": hardware.device,
+        },
+    )
 
     with stage_context(PipelineStage.TTS, "Generating voice-over"):
         if tts.generation_mode == "chunked":
@@ -147,7 +187,7 @@ def _process_video(
                 audio_out=tts_audio_path,
                 chunks_dir=tts_chunks_dir,
                 video_path=video_path,
-                tts_model_name=tts.model,
+                tts_model_name=tts_model_name,
                 tts_language=tts.language,
                 tts_speaker=tts.speaker,
                 tts_instruct=tts.instruct,
@@ -155,7 +195,7 @@ def _process_video(
                 attn_implementation=tts.attn_implementation,
                 chunk_minutes=tts.chunk_minutes,
                 rerun_chunk=tts.rerun_chunk,
-                overwrite_all_chunks=tts.overwrite,
+                overwrite_all_chunks=tts.overwrite or not subtitles_reused,
                 max_speedup=tts.max_speedup,
                 chunk_tail_seconds=tts.chunk_tail_seconds,
                 alignment_model_name=model_path,
@@ -163,10 +203,13 @@ def _process_video(
                 context_max_chars=tts.context_max_chars,
                 context_break_seconds=tts.context_break_seconds,
                 review_log_path=tts_review_path,
+                verify_final_audio=tts.verify_final_audio,
             )
         else:
             can_reuse_tts = (
                 tts_audio_path.exists()
+                and cache_matches(tts_audio_path, tts_fingerprint, PipelineStage.TTS)
+                and subtitles_reused
                 and not tts.overwrite
                 and tts.rerun_chunk is None
                 and (
@@ -183,6 +226,12 @@ def _process_video(
             )
             if can_reuse_tts:
                 logger.info("Reusing existing TTS audio: %s", tts_audio_path)
+                emit(
+                    PipelineStage.TTS,
+                    "Reusing existing TTS audio",
+                    kind=EventKind.REUSED,
+                    artifact=tts_audio_path,
+                )
                 if tts.mode == "timed":
                     log_tts_summary(
                         len(segments), _read_reviews([tts_review_path]), tts_review_path
@@ -197,7 +246,7 @@ def _process_video(
                     synthesize_simple_tts_audio(
                         segments=segments,
                         audio_out=tts_audio_path,
-                        tts_model_name=tts.model,
+                        tts_model_name=tts_model_name,
                         tts_language=tts.language,
                         tts_speaker=tts.speaker,
                         tts_instruct=tts.instruct,
@@ -209,7 +258,7 @@ def _process_video(
                         segments=segments,
                         audio_out=tts_audio_path,
                         video_path=video_path,
-                        tts_model_name=tts.model,
+                        tts_model_name=tts_model_name,
                         tts_language=tts.language,
                         tts_speaker=tts.speaker,
                         tts_instruct=tts.instruct,
@@ -221,7 +270,10 @@ def _process_video(
                         context_max_chars=tts.context_max_chars,
                         context_break_seconds=tts.context_break_seconds,
                         review_log_path=tts_review_path,
+                        verify_final_audio=tts.verify_final_audio,
                     )
+
+                write_provenance(tts_audio_path, tts_fingerprint)
 
             if tts.split_audio:
                 logger.info(
@@ -258,7 +310,14 @@ def _process_video(
             artifact=tts_review_path.with_suffix(".pretty.json"),
             details={"category": "Review"},
         )
-    mux_duration = max(duration or 0, get_media_duration_seconds(tts_audio_path) or 0) or None
+    from .tts.qa import duration_qa
+
+    audio_duration = get_media_duration_seconds(tts_audio_path)
+    report_path = tts_review_path.with_suffix(".duration.json")
+    write_text(
+        report_path, json.dumps(duration_qa(duration, audio_duration, None), indent=2) + "\n"
+    )
+    mux_duration = max(duration or 0, audio_duration or 0) or None
     with (
         stage_context(PipelineStage.MUX, "Muxing voice-over"),
         ffmpeg_progress_handler(
@@ -279,3 +338,25 @@ def _process_video(
         artifact=final_tts_output_path,
         details={"category": "Video"},
     )
+    report = duration_qa(
+        duration,
+        audio_duration,
+        get_media_duration_seconds(final_tts_output_path),
+    )
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    write_text(report_path, json.dumps(report, indent=2) + "\n")
+    emit(
+        PipelineStage.MUX,
+        "Duration QA report",
+        kind=EventKind.ARTIFACT,
+        details={"category": "Review"},
+        artifact=report_path,
+    )
+    with log_context(operation="duration_qa"):
+        emit(
+            PipelineStage.MUX,
+            "Duration QA",
+            kind=EventKind.REVIEW,
+            details=report,
+            artifact=report_path,
+        )

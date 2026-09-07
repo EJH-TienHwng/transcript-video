@@ -26,7 +26,7 @@ Every event line has these fields:
 | --- | --- |
 | schema_version | Integer `1` |
 | timestamp | ISO 8601 wall time, milliseconds, local UTC offset |
-| kind | `start`, `progress`, `complete`, `review`, `warning`, `failure`, `artifact` |
+| kind | `start`, `progress`, `complete`, `review`, `warning`, `failure`, `artifact`, `reused` |
 | severity | Derived: `normal`, `review`, `warning`, `error` |
 | stage | Stable `PipelineStage` string |
 | message | Human description; consumers should branch on kind/stage, not parse messages |
@@ -62,7 +62,9 @@ Example line (formatted here for reading; on disk it is one physical line):
 
 ## Lifecycle and progress
 
-`stage_context()` emits START and COMPLETE, or FAILURE before re-raising. Terminal lifecycle
+`stage_context()` emits START and COMPLETE (REUSED when `reused=True`), or FAILURE before re-raising.
+REUSED is an additive v1 kind for validated subtitle/audio/chunk cache reuse; JSON fields are unchanged.
+Chunk reuse uses operation=chunks and does not complete the enclosing TTS stage. Consumers should tolerate new kinds. Terminal lifecycle
 events include `details.elapsed_seconds`, measured with a monotonic clock. Nested operations
 such as `load_qwen`, `load_aligner`, `load_whisper`, `load_translation`, and `chunk` do not complete
 the enclosing stage. RUN completion means all inputs were attempted; count VIDEO failures to
@@ -80,12 +82,16 @@ only an estimate and is omitted for invalid/missing speed.
 
 TTS emits owned-sentence progress within context groups and ready chunk counts including reused
 cache entries. A sentence crossing a fixed chunk boundary is counted by its owner, once.
-`operation=quality` provides final metadata counts: sentences, aligned, regenerated, shifted,
+`operation=quality` provides final metadata counts: sentences, aligned, regenerated, speed_adjusted, shifted,
 overflow, failures, flagged. `failures` counts sentences with no generated waveform, not recovered
 attempts. `flagged` counts unique report entries with a nonempty review_reason, including recovered
 alignment cases. Counts overlap (a regenerated sentence can also overflow). Individual REVIEW
-events carry subtitle context plus action, timing_shift, overflow_duration. Detailed audio/cache
-metadata remains in the existing TTS reports; its schema and placement rules are unchanged.
+events carry subtitle context plus action, timing_shift, overflow_duration, required_speedup and
+applied_speedup. Every speed-up above 1 + 1e-6 has a `speed_adjusted` reason even without overflow.
+Review schema v4 adds text/tail QA; semantic event schema remains v1. Cache invalidation uses a
+WARNING with `operation=cache`, `decision=invalidated` and a short reason; matching artifact/model
+reuse emits REUSED. Mux REVIEW carries source/WAV/output durations and both duration deltas.
+See [the README](../README.md#tts-review-reports) for fields and manual acceptance limits.
 
 ARTIFACT events use `details.category`: Subtitles, Audio, Video, Review. They are emitted when the
 artifact is available, including validated reused artifacts. The CLI collects these for its result.
@@ -99,7 +105,8 @@ close. Text files include only nonempty context fields. JSONL records contain sc
 timestamp, level, logger, message, optional context and optional formatted exception text.
 
 Core code raises exceptions. The subprocess runner retains complete command, return code,
-stdout and stderr in DEBUG logs while raising a short error. Batch execution records each
+stdout and stderr in DEBUG logs while raising a short `ProcessExecutionError`. Its command, returncode, stdout, stderr, tool,
+timeout and stage fields retain structured context; str() does not include stderr. Batch execution records each
 exception and continues; the command renders its final failure list once. Single course failures
 use one error panel. Tracebacks never include locals or environment dumps. Per-stage lifecycle
 and review diagnostics are written to files without duplicating status on the console.
@@ -110,7 +117,9 @@ Without an observer, standard logging keeps its normal warning behavior.
 
 The Textual worker forwards events using call_from_thread, with invocation context installed
 inside the worker. It does not install a second FFmpeg callback. Its worker owns the single
-failure line; other events use the same formatting and progress throttling as CLI line mode.
+failure log line; a separate main-thread callback updates Textual ProgressBar widgets for every
+semantic event. Overall progress counts completed course stages, not estimated encoding work.
+Other log events use the same formatting and progress throttling as CLI line mode.
 
 ## Terminal and storage limits
 

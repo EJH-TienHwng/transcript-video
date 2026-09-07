@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import math
 import os
+import re
 import tomllib
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +85,66 @@ class TTSSettings:
     context_max_sentences: int = 4
     context_max_chars: int = 450
     context_break_seconds: float = 3.0
+    verify_final_audio: bool = False
+
+
+@dataclass(slots=True)
+class SubtitleStyle:
+    font_name: str | None = None
+    font_size: float | None = None
+    primary_color: str | None = None
+    outline_color: str | None = None
+    border_style: int | None = None
+    outline: float | None = None
+    shadow: float | None = None
+    alignment: int | None = None
+    margin_vertical: int = 25
+    margin_left: int | None = None
+    margin_right: int | None = None
+
+    def validate(self) -> None:
+        if self.font_name is not None and (
+            not isinstance(self.font_name, str)
+            or not self.font_name.strip()
+            or not re.fullmatch(r"[\w .()\-]+", self.font_name)
+        ):
+            raise ValueError(
+                "subtitle_style.font_name must use letters, numbers, spaces, dots, parentheses, hyphens or underscores; filter/ASS delimiters are not allowed."
+            )
+        for key in ("primary_color", "outline_color"):
+            value = getattr(self, key)
+            if value is not None and (
+                not isinstance(value, str) or not re.fullmatch(r"&H[0-9A-Fa-f]{8}", value)
+            ):
+                raise ValueError(f"subtitle_style.{key} must use ASS &HAABBGGRR notation.")
+        for key in (
+            "font_size",
+            "outline",
+            "shadow",
+            "border_style",
+            "alignment",
+            "margin_vertical",
+            "margin_left",
+            "margin_right",
+        ):
+            value = getattr(self, key)
+            if value is None and key != "margin_vertical":
+                continue
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or value < 0
+            ):
+                raise ValueError(f"subtitle_style.{key} must be a finite nonnegative number.")
+            if key not in {"font_size", "outline", "shadow"} and not isinstance(value, int):
+                raise ValueError(f"subtitle_style.{key} must be an integer.")
+            if (
+                (key == "font_size" and value == 0)
+                or (key == "border_style" and value not in {1, 3})
+                or (key == "alignment" and value not in range(1, 10))
+            ):
+                raise ValueError(f"subtitle_style.{key} is outside its supported range.")
 
 
 @dataclass(slots=True)
@@ -91,6 +153,7 @@ class RunSettings:
     hardware: HardwareSettings
     transcription: TranscriptionSettings
     tts: TTSSettings
+    subtitle_style: SubtitleStyle = field(default_factory=SubtitleStyle)
 
     @classmethod
     def defaults(cls) -> RunSettings:
@@ -143,6 +206,7 @@ _SECTION_TYPES = {
     "hardware": HardwareSettings,
     "transcription": TranscriptionSettings,
     "tts": TTSSettings,
+    "subtitle_style": SubtitleStyle,
 }
 
 
@@ -210,6 +274,7 @@ def load_run_settings(config_path: Path, base: RunSettings | None = None) -> Run
             raw, "transcription", TranscriptionSettings, previous.transcription
         ),
         tts=_load_section(raw, "tts", TTSSettings, previous.tts),
+        subtitle_style=_load_section(raw, "subtitle_style", SubtitleStyle, previous.subtitle_style),
     )
 
 

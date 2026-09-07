@@ -1,0 +1,15 @@
+[transcription]
+skip_burn = false
+task = "translate"
+
+[tts]
+enabled = true
+language = "English"
+mode = "timed"
+generation_mode = "chunked"
+verify_final_audio = true
+attn_implementation = "sdpa"
+max_speedup = 1.15
+context_max_sentences = 4
+context_max_chars = 450
+context_break_seconds = 3.0

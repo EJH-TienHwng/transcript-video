@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
@@ -35,6 +36,199 @@ def _segments() -> list[SubtitleSegment]:
         SubtitleSegment(12.4, 14.0, "Then select the network interface."),
         SubtitleSegment(14.5, 16.2, "Now update the address."),
     ]
+
+
+def _qwen_model(pad=None, eos=2150):
+    return SimpleNamespace(
+        model=SimpleNamespace(
+            talker=SimpleNamespace(
+                generation_config=SimpleNamespace(pad_token_id=pad, eos_token_id=999)
+            ),
+            config=SimpleNamespace(
+                talker_config=SimpleNamespace(codec_eos_token_id=eos, codec_pad_id=777),
+                tts_pad_token_id=888,
+            ),
+            generation_config=SimpleNamespace(pad_token_id=666),
+        ),
+        generate_custom_voice=mock.Mock(return_value=([np.ones((2, 3))], np.int64(24000))),
+    )
+
+
+@pytest.mark.parametrize(
+    "pad,eos,expected",
+    [
+        (123, 456, 123),
+        (0, 456, 0),
+        (None, 2150, 2150),
+        (None, [2150, 2151], 2150),
+        (None, (2150, 2151), 2150),
+        (None, np.int64(2150), 2150),
+        (None, None, None),
+        (None, [], None),
+        (None, (), None),
+        (None, True, None),
+        (None, -1, None),
+        (None, "2150", None),
+        (None, object(), None),
+        (None, [2150, False], None),
+        (None, [2150, -1], None),
+        (None, [[2150]], None),
+        (False, 2150, None),
+        (-1, 2150, None),
+        ([123], 2150, None),
+        (object(), 2150, None),
+    ],
+)
+def test_qwen_pad_resolution_and_explicit_kwargs(pad, eos, expected):
+    model = _qwen_model(pad, eos)
+    assert core.resolve_generation_pad_token_id(model) == expected
+    wav, sr = core.generate_qwen_custom_voice(model, "Hello", "English", "Aiden", "steady")
+    kwargs = dict(text="Hello", language="English", speaker="Aiden", instruct="steady")
+    if expected is not None:
+        kwargs["pad_token_id"] = expected
+        assert type(core.resolve_generation_pad_token_id(model)) is int
+    model.generate_custom_voice.assert_called_once_with(**kwargs)
+    assert model.model.talker.generation_config.pad_token_id is pad
+    np.testing.assert_array_equal(wav, np.ones(6, dtype=np.float32))
+    assert wav.dtype == np.float32 and type(sr) is int and sr == 24000
+
+
+@pytest.mark.parametrize("model", [object(), SimpleNamespace(model=object())])
+def test_qwen_pad_missing_generation_config(model):
+    assert core.resolve_generation_pad_token_id(model) is None
+
+
+@pytest.mark.parametrize(
+    "pad,eos,expected", [(None, 2150, 2150), (123, 456, 123), (None, None, None)]
+)
+def test_qwen_loader_initializes_only_missing_talker_pad(monkeypatch, pad, eos, expected):
+    import sys
+
+    model = _qwen_model(pad, eos)
+    factory = mock.Mock(return_value=model)
+    monkeypatch.setitem(
+        sys.modules,
+        "qwen_tts",
+        SimpleNamespace(Qwen3TTSModel=SimpleNamespace(from_pretrained=factory)),
+    )
+    monkeypatch.setitem(sys.modules, "torch", SimpleNamespace(float16="float16", float32="float32"))
+    monkeypatch.setattr(core, "resolve_torch_device", lambda *args: "cpu")
+    assert core.load_qwen_tts_model("local-model", "cpu", "sdpa") is model
+    factory.assert_called_once_with(
+        "local-model", device_map="cpu", dtype="float32", attn_implementation="sdpa"
+    )
+    assert vars(model.model.talker.generation_config) == dict(
+        pad_token_id=expected, eos_token_id=999
+    )
+    assert model.model.config.talker_config.codec_eos_token_id == eos
+    assert model.model.generation_config.pad_token_id == 666
+
+
+@pytest.mark.parametrize(
+    "result,match",
+    [
+        ((None, 24000), "no waveform"),
+        (([], 24000), "no waveform"),
+        (([np.ones(2)], True), "sample rate"),
+        (([np.ones(2)], -1), "sample rate"),
+        (([np.ones(2)], 0), "sample rate"),
+        (([np.ones(2)], 24000.0), "sample rate"),
+        (([np.array([])], 24000), "empty, silent, or non-finite"),
+        (([np.zeros(2)], 24000), "empty, silent, or non-finite"),
+        (([np.array([np.nan])], 24000), "empty, silent, or non-finite"),
+        (([np.array([np.inf])], 24000), "empty, silent, or non-finite"),
+    ],
+)
+def test_qwen_explicit_pad_preserves_audio_validation(result, match):
+    model = _qwen_model()
+    model.generate_custom_voice.return_value = result
+    with pytest.raises(ValueError, match=match):
+        core.generate_qwen_custom_voice(model, "Hello", "English", "Aiden", "steady")
+    assert model.generate_custom_voice.call_args.kwargs["pad_token_id"] == 2150
+
+
+@pytest.mark.integration
+def test_installed_qwen_talker_pad_prevents_transformers_fallback(monkeypatch, caplog):
+    """Exercise installed Qwen prompt/kwargs flow and HF token preparation without weights."""
+    from copy import deepcopy
+    from functools import partial
+
+    torch = pytest.importorskip("torch")
+    qwen_tts = pytest.importorskip("qwen_tts")
+    from qwen_tts.core.models import Qwen3TTSForConditionalGeneration
+    from transformers import GenerationConfig
+    from transformers.generation.utils import GenerationMixin
+    from transformers.generation.utils import logger as generation_logger
+
+    # Transformers does not propagate to pytest's root capture handler by default.
+    monkeypatch.setattr(
+        generation_logger, "handlers", [*generation_logger.handlers, caplog.handler]
+    )
+
+    model = _qwen_model()
+    qwen = model.model
+    talker = qwen.talker
+    talker.generation_config = GenerationConfig(eos_token_id=999)
+    talker.device = torch.device("cpu")
+    talker.config = SimpleNamespace(is_encoder_decoder=False)
+    talker.text_projection = torch.nn.Identity()
+    embedding = torch.nn.Embedding(16, 2)
+    talker.get_text_embeddings = lambda: embedding
+    talker.get_input_embeddings = lambda: embedding
+    for field in (
+        "codec_nothink_id",
+        "codec_think_bos_id",
+        "codec_think_eos_id",
+        "codec_pad_id",
+        "codec_bos_id",
+    ):
+        setattr(qwen.config.talker_config, field, 1)
+    qwen.config.talker_config.vocab_size = 4096
+    qwen.config.tts_bos_token_id = 2
+    qwen.config.tts_eos_token_id = 3
+    qwen.config.tts_pad_token_id = 4
+    qwen.tts_model_type = "custom_voice"
+    qwen.tts_model_size = "1b7"
+    qwen.generate = mock.Mock(wraps=partial(Qwen3TTSForConditionalGeneration.generate, qwen))
+
+    wrapper = object.__new__(qwen_tts.Qwen3TTSModel)
+    wrapper.model = qwen
+    wrapper.generate_defaults = {}
+    wrapper._validate_languages = mock.Mock()
+    wrapper._validate_speakers = mock.Mock()
+    wrapper._tokenize_texts = lambda texts: [torch.zeros((1, 12), dtype=torch.long)]
+
+    class ReachedTalker(Exception):
+        pass
+
+    prepared_pads = []
+
+    def prepare_tokens(**kwargs):
+        assert "pad_token_id" not in kwargs  # Qwen 0.1.1 drops it at this boundary.
+        assert kwargs["eos_token_id"] == 2150  # Overrides talker's generation_config EOS.
+        config = deepcopy(talker.generation_config)
+        config.update(**kwargs)
+        GenerationMixin._prepare_special_tokens(talker, config, kwargs_has_attention_mask=True)
+        prepared_pads.append(config._pad_token_tensor.item())
+        raise ReachedTalker
+
+    talker.generate = prepare_tokens
+    warning = "Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation."
+    with pytest.raises(ReachedTalker):
+        core.generate_qwen_custom_voice(wrapper, "Hello", "Auto", "", "")
+    assert qwen.generate.call_args.kwargs["pad_token_id"] == 2150
+    assert warning in caplog.text
+
+    monkeypatch.setattr(qwen_tts.Qwen3TTSModel, "from_pretrained", lambda *args, **kwargs: wrapper)
+    monkeypatch.setattr(core, "resolve_torch_device", lambda *args: "cpu")
+    loaded = core.load_qwen_tts_model("fixture-without-weights", "cpu", "auto")
+    caplog.clear()
+    for _ in range(3):
+        with pytest.raises(ReachedTalker):
+            core.generate_qwen_custom_voice(loaded, "Hello", "Auto", "", "")
+    assert warning not in caplog.text
+    assert prepared_pads == [2150] * 4
+    assert talker.generation_config.pad_token_id == 2150
 
 
 def test_context_group_keeps_one_second_pause_and_complete_sentences() -> None:
@@ -96,7 +290,7 @@ def test_group_generation_places_extracted_sentences_on_original_timeline(
 ) -> None:
     segments = _segments()
     groups = build_tts_context_groups(segments)
-    model = mock.Mock()
+    model = _qwen_model()
     model.generate_custom_voice.return_value = ([np.ones(5000, dtype=np.float32)], 1000)
     timings = [
         WordTiming(
@@ -138,6 +332,7 @@ def test_group_generation_places_extracted_sentences_on_original_timeline(
     audio = overlay_tts_items(items, sample_rate, 20.0)
 
     assert model.generate_custom_voice.call_count == 1
+    assert model.generate_custom_voice.call_args.kwargs["pad_token_id"] == 2150
     assert all(entry["action"] == "context_aligned" for entry in reviews)
     assert audio[10_000] != 0 and audio[12_400] != 0 and audio[14_500] != 0
     assert np.all(audio[11_400:12_400] == 0)
@@ -435,7 +630,7 @@ def test_individual_retry_keeps_best_coverage_and_reports_failure(monkeypatch) -
 
 def test_individual_retry_recovers_missing_final_words(monkeypatch) -> None:
     segment = SubtitleSegment(0, 1, "one two")
-    model = mock.Mock()
+    model = _qwen_model()
     model.generate_custom_voice.side_effect = [
         ([np.ones(1000) * 0.1], 1000),
         ([np.ones(2000) * 0.3], 1000),
@@ -456,6 +651,10 @@ def test_individual_retry_recovers_missing_final_words(monkeypatch) -> None:
     assert len(wav) == 2000
     assert metadata["individual_attempts"] == 2
     assert metadata["verification_reason"] == ""
+    assert len(model.generate_custom_voice.call_args_list) == 2
+    assert all(
+        call.kwargs["pad_token_id"] == 2150 for call in model.generate_custom_voice.call_args_list
+    )
 
 
 @pytest.mark.parametrize(
@@ -503,6 +702,50 @@ def test_timed_generation_failure_writes_review_and_does_not_publish(tmp_path, m
     entry = json.loads((tmp_path / "data/report/tts/test_tts_review.jsonl").read_text())
     assert entry["action"] == "generation_failed"
     assert entry["generation_failures"] == 2
+
+
+@pytest.mark.parametrize("mode", ["simple", "timed", "chunked"])
+def test_qwen_pad_reaches_generation_in_all_output_modes(tmp_path, monkeypatch, mode):
+    import soundfile as sf
+
+    model = _qwen_model()
+    model.generate_custom_voice.return_value = ([np.full(1000, 0.2)], 1000)
+    for module in (core, chunks):
+        monkeypatch.setattr(module, "load_qwen_tts_model", lambda *args: model)
+        monkeypatch.setattr(module, "get_media_duration_seconds", lambda *args: 2.0)
+    output = tmp_path / "speech.wav"
+    kwargs = dict(
+        segments=[SubtitleSegment(0, 1, "Hello")],
+        audio_out=output,
+        tts_model_name="local-model",
+        tts_language="English",
+        tts_speaker="Aiden",
+        tts_instruct="steady",
+        device="cpu",
+        attn_implementation="auto",
+    )
+    if mode == "simple":
+        core.synthesize_simple_tts_audio(**kwargs)
+    elif mode == "timed":
+        core.synthesize_timed_tts_audio(**kwargs, video_path=tmp_path / "video.mp4")
+    else:
+        chunks.synthesize_tts_audio_by_time_chunks(
+            **kwargs, video_path=tmp_path / "video.mp4", chunks_dir=tmp_path / "chunks"
+        )
+        chunks.synthesize_tts_audio_by_time_chunks(
+            **kwargs,
+            video_path=tmp_path / "video.mp4",
+            chunks_dir=tmp_path / "chunks",
+            rerun_chunk=0,
+        )
+    # Without an aligner, timed modes generate context then fall back to individual audio.
+    assert model.generate_custom_voice.call_count == {"simple": 1, "timed": 2, "chunked": 4}[mode]
+    assert all(
+        call.kwargs["pad_token_id"] == 2150 for call in model.generate_custom_voice.call_args_list
+    )
+    wav, sr = sf.read(output)
+    assert sr == 1000
+    np.testing.assert_allclose(wav[:1000], 0.2, atol=1 / 32768)
 
 
 def test_alignment_padding_preserves_late_tail_without_next_sentence(monkeypatch) -> None:
@@ -965,6 +1208,8 @@ def test_release_gap_for_nearby_non_overlapping_sentences():
 def test_legacy_audio_sidecars_regenerate_once_at_new_report_path(tmp_path, monkeypatch, caplog):
     import soundfile as sf
 
+    from transcript_video.events import EventKind, RecordingObserver, event_scope
+
     paths = ProjectPaths.from_root(tmp_path)
     paths.create_dirs()
     output = paths.audio_dir / "legacy_tts.wav"
@@ -997,7 +1242,13 @@ def test_legacy_audio_sidecars_regenerate_once_at_new_report_path(tmp_path, monk
         chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
     assert "regenerating safely" in caplog.text
     assert model.generate_custom_voice.call_count == 2
-    chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    observer = RecordingObserver()
+    with event_scope(observer):
+        chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    assert any(
+        event.kind == EventKind.REUSED and event.context.operation == "chunks"
+        for event in observer.events
+    )
     assert model.generate_custom_voice.call_count == 2
     assert (paths.report_dir / "tts/legacy_tts_chunks/legacy_tts_chunk_000.review.jsonl").exists()
 
@@ -1016,7 +1267,16 @@ def test_pipeline_routes_reports_and_preserves_tts_modes(tmp_path, monkeypatch, 
     settings.tts.enabled, settings.tts.mode, settings.tts.generation_mode = True, mode, generation
     settings.tts.split_audio = False
     video = tmp_path / "lesson.mp4"
+    video.touch()
+    (tmp_path / "model").mkdir()
+    (tmp_path / "model/model.bin").touch()
     write_srt([SubtitleSegment(0, 1, "one")], paths.subtitle_dir / "lesson_faster.srt")
+    from transcript_video.processing.provenance import subtitle_provenance, write_provenance
+
+    write_provenance(
+        paths.subtitle_dir / "lesson_faster.srt",
+        subtitle_provenance(video, tmp_path / "model", None, settings),
+    )
     monkeypatch.setattr(pipeline, "get_model_filename_suffix", lambda *args: "faster")
     monkeypatch.setattr(pipeline, "burn_subtitles", mock.Mock())
     monkeypatch.setattr(pipeline, "mux_audio_into_video_replace", mock.Mock())

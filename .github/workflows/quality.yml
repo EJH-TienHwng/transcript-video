@@ -1,0 +1,24 @@
+name: Quality
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.14'
+      - run: uv venv
+      - run: uv pip install -r .github/requirements-test.txt
+      - run: uv pip install --no-deps -e .
+      - run: uv run --no-sync ruff format --check .
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync python scripts/check_python_version.py
+      - run: uv run --no-sync pytest -m "not gpu and not slow and not integration"

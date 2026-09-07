@@ -12,6 +12,26 @@ from .process_runner import ProcessExecutionError, run_process
 logger = logging.getLogger(__name__)
 
 
+def flash_attention_status(device: str) -> tuple[bool, str]:
+    """Probe the optional FA2 ABI/kernel without loading a model or installing packages."""
+    try:
+        import torch
+
+        if device != "cuda" or not torch.cuda.is_available():
+            return False, "FlashAttention 2 requires CUDA; using sdpa"
+        if torch.cuda.get_device_capability(0)[0] < 8:
+            return False, "FlashAttention 2 requires Ampere or newer for this backend; using sdpa"
+        from flash_attn import flash_attn_func
+
+        with torch.inference_mode():
+            sample = torch.zeros((1, 8, 2, 64), dtype=torch.float16, device="cuda")
+            flash_attn_func(sample, sample, sample)
+            torch.cuda.synchronize()
+        return True, "FlashAttention 2 import and FP16 kernel probe passed"
+    except (ImportError, OSError, RuntimeError, ValueError) as exc:
+        return False, f"FlashAttention 2 unavailable: {exc}; using sdpa"
+
+
 def get_ffmpeg_exe() -> str:
     """Prefer a user-supplied FFmpeg and fall back to imageio-ffmpeg."""
     configured = os.environ.get("TRANSCRIPT_VIDEO_FFMPEG")

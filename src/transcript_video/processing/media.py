@@ -5,7 +5,8 @@ import os
 from collections.abc import Sequence
 from pathlib import Path
 
-from ..config import VIDEO_EXTENSIONS
+from ..artifacts import atomic_output, is_partial_artifact
+from ..config import VIDEO_EXTENSIONS, SubtitleStyle
 from ..events import warn
 from ..hardware import get_ffmpeg_exe, get_ffprobe_exe, video_encoder_args
 from ..process_runner import ProcessExecutionError, probe_media, run_ffmpeg
@@ -24,7 +25,8 @@ def escape_subtitle_path_for_ffmpeg(path: Path) -> str:
 def run_command(command: Sequence[str], *, hide_output: bool = False) -> None:
     """Run a subprocess command with error checking."""
     del hide_output
-    run_ffmpeg(command)
+    with atomic_output(Path(command[-1])) as temporary:
+        run_ffmpeg([*command[:-1], str(temporary)])
 
 
 def ensure_ffmpeg_available_for_transformers() -> None:
@@ -40,11 +42,35 @@ def ensure_ffmpeg_available_for_transformers() -> None:
     logger.info("FFmpeg available for Transformers: %s", ffmpeg_path)
 
 
+def build_force_style(style: SubtitleStyle) -> str:
+    """Serialize validated ASS values; delimiters in font names are rejected, not interpolated."""
+    style.validate()
+    names = dict(
+        font_name="FontName",
+        font_size="FontSize",
+        primary_color="PrimaryColour",
+        outline_color="OutlineColour",
+        border_style="BorderStyle",
+        outline="Outline",
+        shadow="Shadow",
+        alignment="Alignment",
+        margin_vertical="MarginV",
+        margin_left="MarginL",
+        margin_right="MarginR",
+    )
+    return ",".join(
+        f"{ass}={value:g}" if isinstance(value, (int, float)) else f"{ass}={value}"
+        for key, ass in names.items()
+        if (value := getattr(style, key)) is not None
+    )
+
+
 def burn_subtitles(
     video_in: Path,
     srt_in: Path,
     video_out: Path,
     video_encoder: str = "auto",
+    subtitle_style: SubtitleStyle | None = None,
 ) -> None:
     """Burn hard subtitles into a video using FFmpeg."""
     video_out.parent.mkdir(parents=True, exist_ok=True)
@@ -52,31 +78,7 @@ def burn_subtitles(
     ffmpeg_path = get_ffmpeg_exe()
     srt_escaped = escape_subtitle_path_for_ffmpeg(srt_in)
 
-    # Default subtitle style with white text and black outline. You can customize this as needed.
-    _subtitle_style = (
-        "FontName=Arial,"
-        "FontSize=16,"
-        "PrimaryColour=&H00FFFFFF,"
-        "SecondaryColour=&H00FFFFFF,"
-        "OutlineColour=&H00000000,"
-        "BackColour=&H00000000,"
-        "Bold=0,"
-        "Italic=0,"
-        "Underline=0,"
-        "StrikeOut=0,"
-        "ScaleX=100,"
-        "ScaleY=100,"
-        "Spacing=0,"
-        "Angle=0,"
-        "BorderStyle=1,"
-        "Outline=1,"
-        "Shadow=0,"
-        "Alignment=2,"  # Bottom-center
-        "MarginL=10,"
-        "MarginR=10,"
-        "MarginV=25,"  # Adjust vertical margin to move subtitles up/down
-        "Encoding=1"
-    )
+    force_style = build_force_style(subtitle_style or SubtitleStyle())
 
     command = [
         ffmpeg_path,
@@ -84,8 +86,7 @@ def burn_subtitles(
         "-i",
         str(video_in),
         "-vf",
-        # f"subtitles='{srt_escaped}':force_style='{subtitle_style}'",
-        f"subtitles='{srt_escaped}':force_style='MarginV=25'",
+        f"subtitles='{srt_escaped}':force_style='{force_style}'",
         *video_encoder_args(ffmpeg_path, video_encoder),
         "-c:a",
         "copy",
@@ -153,12 +154,16 @@ def find_videos(input_dir: Path, selected_video: str | None = None) -> list[Path
             raise FileNotFoundError(f"Video not found: {video_path}")
         if video_path.suffix.lower() not in VIDEO_EXTENSIONS:
             raise ValueError(f"Unsupported video format: {video_path.name}")
+        if is_partial_artifact(video_path):
+            raise ValueError(f"Incomplete artifact cannot be used as input: {video_path}")
         return [video_path]
 
     videos = sorted(
         path
         for path in input_dir.iterdir()
-        if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS
+        if path.is_file()
+        and path.suffix.lower() in VIDEO_EXTENSIONS
+        and not is_partial_artifact(path)
     )
     if not videos:
         raise FileNotFoundError(f"No supported videos found in: {input_dir}")
@@ -221,7 +226,8 @@ def split_audio_into_chunks(
         "copy",
         str(output_pattern),
     ]
-    run_command(command)
+    # These are disposable review copies, not generation cache artifacts.
+    run_ffmpeg(command)
     logger.info("Split TTS audio into %d-minute chunks: %s", chunk_minutes, output_dir)
 
 

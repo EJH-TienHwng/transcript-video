@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import math
 import re
@@ -22,13 +21,20 @@ except ImportError as exc:
         "Course wizard requires 'questionary'. Install dependencies with: uv sync"
     ) from exc
 
+from ..artifacts import is_partial_artifact
 from ..config import VIDEO_EXTENSIONS, find_project_root
 from ..hardware import get_ffprobe_exe
 from ..process_runner import probe_media
 from ..ui.console import make_consoles
 from ..ui.progress import format_duration
 from ..ui.theme import questionary_style, terminal_symbols
-from .config import RenderConfig, TocConfig, parse_course_config
+from .config import (
+    RenderConfig,
+    TocConfig,
+    parse_course_config,
+    save_course_config,
+    validate_session_video,
+)
 from .timeline import build_timeline
 
 console = make_consoles().out
@@ -109,7 +115,9 @@ def _scan_videos(directory: Path) -> list[Path]:
     return sorted(
         path.resolve()
         for path in directory.iterdir()
-        if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS
+        if path.is_file()
+        and path.suffix.lower() in VIDEO_EXTENSIONS
+        and not is_partial_artifact(path)
     )
 
 
@@ -196,19 +204,18 @@ def _manual_video(root: Path, selected: list[Path]) -> Path:
     while True:
         path = Path(_ask_text("Video path:")).expanduser()
         path = (path if path.is_absolute() else root / path).resolve()
-        if not path.is_file():
-            console.print(Text(f"File not found: {path}", style="error"))
-        elif path.suffix.lower() not in VIDEO_EXTENSIONS:
-            console.print("Unsupported video format.", style="error")
-        elif path in selected:
-            console.print("This video is already selected.", style="warning")
-        else:
-            return path
+        try:
+            return validate_session_video(str(path), root, selected)
+        except ValueError as exc:
+            console.print(Text(str(exc), style="error"))
 
 
-def _collect_sessions(root: Path, output_dir: Path, cache: dict | None = None) -> list[dict]:
+def _collect_sessions(
+    root: Path, output_dir: Path, cache: dict | None = None, existing: list[dict] = ()
+) -> list[dict]:
     cache = cache if cache is not None else {}
-    videos = _scan_videos(output_dir)
+    used = [(root / item["video"]).resolve() for item in existing]
+    videos = [video for video in _scan_videos(output_dir) if video not in used]
     console.print(Text(f"Found {len(videos)} videos · {output_dir}", style="muted"))
     console.print("Space toggles · Enter confirms · Review changes the final order", style="info")
     with console.status("Scanning video metadata…", spinner_style="accent"):
@@ -222,9 +229,16 @@ def _collect_sessions(root: Path, output_dir: Path, cache: dict | None = None) -
         answer = _ask("checkbox", "Select course videos:", choices=choices)
         # Questionary returns checklist/display order; reordering is explicit on the review screen.
         selected = list(dict.fromkeys(path for path in answer if isinstance(path, Path)))
+        try:
+            for path in selected:
+                validate_session_video(str(path), root, used)
+        except ValueError as exc:
+            console.print(Text(str(exc), style="error"))
+            selected = []
+            continue
         if "__manual__" in answer:
             while True:
-                path = _manual_video(root, selected)
+                path = _manual_video(root, used + selected)
                 selected.append(path)
                 _metadata(path, cache)
                 if not _ask("confirm", "Add another manual video?", default=False):
@@ -238,7 +252,9 @@ def _collect_sessions(root: Path, output_dir: Path, cache: dict | None = None) -
             "title": _default_title_from_video(path) or f"Session {index}",
             "video": _relative_or_absolute(path, root),
         }
-        for index, path in enumerate(selected, 1)
+        for index, path in enumerate(
+            selected, max((item["number"] for item in existing), default=0) + 1
+        )
     ]
 
 
@@ -285,9 +301,20 @@ def _choose_theme(root: Path) -> str | None:
 
 
 def _review_sessions(sessions: list[dict]) -> None:
-    table = Table(title="Session order", header_style="accent", border_style="muted", expand=True)
-    for name in ("ORDER", "NUMBER", "TITLE", "VIDEO", "STATUS"):
-        table.add_column(name, overflow="fold")
+    table = Table(
+        title=f"Session order · {len(sessions)} sessions",
+        header_style="accent",
+        border_style="muted",
+        expand=True,
+    )
+    for name, width in (
+        ("ORDER", 5),
+        ("NUMBER", 6),
+        ("TITLE", None),
+        ("VIDEO", None),
+        ("STATUS", 6),
+    ):
+        table.add_column(name, width=width, overflow="fold")
     for position, session in enumerate(sessions, 1):
         path = Path(session["video"])
         video = Text(path.name, style="path")
@@ -303,16 +330,36 @@ def _review_sessions(sessions: list[dict]) -> None:
     console.print(table)
 
 
-def _edit_sessions(sessions: list[dict]) -> list[dict]:
+def _edit_sessions(
+    sessions: list[dict],
+    root: Path | None = None,
+    output_dir: Path | None = None,
+    cache: dict | None = None,
+) -> list[dict]:
+    root = root or _project_root()
+    output_dir = output_dir or root / "data/output"
     while True:
         _review_sessions(sessions)
         action = _ask(
             "select",
             "Review session list:",
-            choices=["Continue", "Edit title/number", "Move up", "Move down", "Remove"],
+            choices=[
+                "Continue",
+                "Add session",
+                "Edit title/number",
+                "Move up",
+                "Move down",
+                "Remove",
+                "Cancel",
+            ],
         )
         if action == "Continue":
             return sessions
+        if action == "Cancel":
+            raise KeyboardInterrupt
+        if action == "Add session":
+            sessions.extend(_collect_sessions(root, output_dir, cache, sessions))
+            continue
         selected = _ask(
             "select",
             "Choose a session:",
@@ -450,7 +497,7 @@ def create_course_config_interactive(
         style="muted",
     )
     title = _ask_text("Course title:", "Training Course") or "Training Course"
-    sessions = _edit_sessions(_collect_sessions(root, output_dir, cache))
+    sessions = _edit_sessions(_collect_sessions(root, output_dir, cache), root, output_dir, cache)
     custom = _ask("select", "Setup mode:", choices=["Recommended", "Custom"]) == "Custom"
     slug = _slugify_filename(title)
     config = {
@@ -480,7 +527,16 @@ def create_course_config_interactive(
         for key, value in summary.items():
             table.add_row(
                 Text(key, style="muted"),
-                Text(str(value), style="path" if key in {"Config", "Output"} else "info"),
+                Text(
+                    str(value),
+                    style="path"
+                    if key in {"Config", "Output"}
+                    else "bold accent"
+                    if key == "Title"
+                    else "success"
+                    if key == "Estimated total"
+                    else "info",
+                ),
             )
         console.print(Panel(table, title="Course summary", border_style="accent"))
         action = _ask(
@@ -497,7 +553,7 @@ def create_course_config_interactive(
             if section == "Course & Sessions":
                 _step(1)
                 config["title"] = _ask_text("Course title:", config["title"]) or config["title"]
-                config["sessions"] = _edit_sessions(config["sessions"])
+                config["sessions"] = _edit_sessions(config["sessions"], root, output_dir, cache)
             elif section == "Appearance":
                 _appearance(config, root, True)
             else:
@@ -507,10 +563,7 @@ def create_course_config_interactive(
             "confirm", f"Overwrite {config_path.name}?", default=False
         ):
             continue
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_path.write_text(
-            json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        save_course_config(config, config_path, root)
         logger.info("Wizard config written: %s", config_path)
         console.print(
             Panel(

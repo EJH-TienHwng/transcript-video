@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
+from ..artifacts import atomic_output
 from ..hardware import get_ffmpeg_exe, get_ffprobe_exe, video_encoder_args
 from ..process_runner import probe_media, run_ffmpeg
 from .config import CourseConfig
@@ -10,7 +11,8 @@ from .config import CourseConfig
 
 def run_command(command: Sequence[str], *, hide_output: bool = False) -> None:
     del hide_output
-    run_ffmpeg(command)
+    with atomic_output(Path(command[-1])) as temporary:
+        run_ffmpeg([*command[:-1], str(temporary)])
 
 
 def get_media_duration_seconds(media_path: Path) -> float:
@@ -294,4 +296,5 @@ def shutil_copy(source: Path, destination: Path) -> None:
     import shutil
 
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, destination)
+    with atomic_output(destination) as temporary:
+        shutil.copy2(source, temporary)

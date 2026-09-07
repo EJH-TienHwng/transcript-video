@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass, field
+import os
+import tempfile
+from copy import deepcopy
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..config import find_project_root
+from ..artifacts import is_partial_artifact
+from ..config import VIDEO_EXTENSIONS, find_project_root
 
 
 @dataclass
@@ -16,6 +20,7 @@ class SessionConfig:
     title: str
     video: Path
     number: int | None = None
+    extra: dict = field(default_factory=dict, repr=False, compare=False)
 
 
 @dataclass
@@ -49,6 +54,7 @@ class CourseConfig:
     render: RenderConfig = field(default_factory=RenderConfig)
     work_dir: Path = Path("data/compilation")
     add_chapters: bool = True
+    raw: dict = field(default_factory=dict, repr=False, compare=False)
 
 
 def _resolve_path(root: Path, value: str | None) -> Path | None:
@@ -77,6 +83,13 @@ def _read_bool(data: dict[str, Any], key: str, default: bool, name: str) -> bool
 
 def load_course_config(config_path: Path) -> CourseConfig:
     """Load and validate a course-builder JSON configuration file."""
+    return parse_course_config(
+        read_course_document(config_path), find_project_root(config_path.parent)
+    )
+
+
+def read_course_document(config_path: Path) -> dict:
+    """Read a validated editable document, preserving unknown fields at every level."""
     config_path = config_path.expanduser().resolve()
     if not config_path.is_file():
         raise FileNotFoundError(f"Course config not found: {config_path}")
@@ -89,25 +102,98 @@ def load_course_config(config_path: Path) -> CourseConfig:
     except json.JSONDecodeError as exc:
         raise ValueError(f"Course config is not valid JSON: {config_path}") from exc
 
-    return parse_course_config(raw, project_root)
+    parse_course_config(raw, project_root)
+    return raw
 
 
-def parse_course_config(raw: dict, project_root: Path) -> CourseConfig:
+def course_config_document(config: CourseConfig) -> dict:
+    payload = asdict(config)
+    original = payload.pop("raw")
+    for section in ("toc", "render"):
+        payload[section] = {**original.get(section, {}), **payload[section]}
+    # Extras belong to the session even when its path/title/order changes.
+    for index, item in enumerate(payload["sessions"]):
+        extras = item.pop("extra")
+        payload["sessions"][index] = {**extras, **item}
+    return json.loads(json.dumps({**original, **payload}, default=str))
+
+
+def save_course_config(
+    config: CourseConfig | dict, config_path: Path, project_root: Path | None = None
+) -> Path:
+    """Validate before creating anything; atomically replace a complete JSON document."""
+    config_path = config_path.expanduser().resolve()
+    payload = course_config_document(config) if isinstance(config, CourseConfig) else config
+    parse_course_config(payload, project_root or find_project_root(config_path.parent))
+    content = json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=config_path.parent, delete=False
+        ) as stream:
+            temporary = Path(stream.name)
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, config_path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    return config_path
+
+
+def validate_session_video(value: str, root: Path, selected: list[Path] = ()) -> Path:
+    path = _resolve_path(root, value)
+    if path is None or not path.is_file():
+        raise ValueError(f"Video not found: {path or value}")
+    if path.suffix.lower() not in VIDEO_EXTENSIONS:
+        raise ValueError("Unsupported video format.")
+    if is_partial_artifact(path):
+        raise ValueError("Incomplete artifact cannot be used as a session video.")
+    if path in selected:
+        raise ValueError("This video is already selected.")
+    return path
+
+
+def parse_course_config(
+    raw: dict, project_root: Path, *, allow_empty_sessions: bool = False
+) -> CourseConfig:
     """Validate a draft before writing it, using the same rules as the JSON loader."""
     if not isinstance(raw, dict):
         raise ValueError("Course config must be a JSON object.")
+    for section, values, defaults in (
+        ("", raw, {"card_duration": 5.0}),
+        ("toc.", raw.get("toc", {}), asdict(TocConfig())),
+        ("render.", raw.get("render", {}), asdict(RenderConfig())),
+    ):
+        if not isinstance(values, dict):
+            raise ValueError(f"{section.rstrip('.')} must be a JSON object.")
+        for key, default in defaults.items():
+            value = values.get(key, default)
+            if type(default) is int and (type(value) is not int):
+                raise ValueError(f"{section}{key} must be an integer.")
+            if type(default) is float and (
+                type(value) not in (int, float) or not math.isfinite(value)
+            ):
+                raise ValueError(f"{section}{key} must be a finite number.")
+            if isinstance(default, str) and not isinstance(value, str):
+                raise ValueError(f"{section}{key} must be a string.")
 
     sessions_raw = raw.get("sessions")
-    if not isinstance(sessions_raw, list) or not sessions_raw:
+    if not isinstance(sessions_raw, list) or (not sessions_raw and not allow_empty_sessions):
         raise ValueError("Course config must contain at least one session.")
 
     sessions: list[SessionConfig] = []
     used_numbers = set()
+    used_videos = set()
 
     for index, item in enumerate(sessions_raw, start=1):
         if not isinstance(item, dict):
             raise ValueError(f"Session {index} must be a JSON object.")
-        title = str(item.get("title", "")).strip()
+        if not isinstance(item.get("title", ""), str):
+            raise ValueError(f"Session {index}: title must be a string.")
+        title = item.get("title", "").strip()
         video_value = item.get("video")
 
         if not title:
@@ -121,18 +207,27 @@ def parse_course_config(raw: dict, project_root: Path) -> CourseConfig:
                 raise ValueError(f"Session '{title}': number must be an integer.")
             if number <= 0:
                 raise ValueError(f"Session '{title}': number must be greater than zero.")
-            if number in used_numbers:
-                raise ValueError(f"Duplicate session number: {number}")
-            used_numbers.add(number)
+        effective_number = number if number is not None else index
+        if effective_number in used_numbers:
+            raise ValueError(f"Duplicate session number: {effective_number}")
+        used_numbers.add(effective_number)
 
-        video_path = _resolve_path(project_root, str(video_value))
+        video_path = _resolve_path(project_root, video_value)
         assert video_path is not None
+        if video_path in used_videos:
+            raise ValueError(f"Duplicate session video: {video_path}")
+        used_videos.add(video_path)
 
         sessions.append(
             SessionConfig(
                 title=title,
                 video=video_path,
                 number=number,
+                extra={
+                    key: deepcopy(value)
+                    for key, value in item.items()
+                    if key not in {"number", "title", "video"}
+                },
             )
         )
 
@@ -183,8 +278,8 @@ def parse_course_config(raw: dict, project_root: Path) -> CourseConfig:
     output = _resolve_path(project_root, raw.get("output", "data/compilation/course.mp4"))
     work_dir = _resolve_path(project_root, raw.get("work_dir", "data/compilation"))
 
-    assert output is not None
-    assert work_dir is not None
+    if output is None or work_dir is None:
+        raise ValueError("output and work_dir must be non-empty paths.")
     if output.suffix.lower() != ".mp4":
         raise ValueError("Course output must use the .mp4 extension.")
     if output in {session.video for session in sessions}:
@@ -202,4 +297,5 @@ def parse_course_config(raw: dict, project_root: Path) -> CourseConfig:
         render=render,
         work_dir=work_dir,
         add_chapters=_read_bool(raw, "add_chapters", True, "add_chapters"),
+        raw=deepcopy(raw),
     )

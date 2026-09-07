@@ -14,6 +14,7 @@ from numbers import Integral
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ...artifacts import write_audio, write_text
 from ...events import warn
 
 if TYPE_CHECKING:
@@ -23,9 +24,10 @@ if TYPE_CHECKING:
 from ...config import ProjectPaths, SubtitleSegment, find_project_root
 from ...context import log_context
 from ...events import EventKind, PipelineStage, emit, stage_context
-from ...hardware import get_ffmpeg_exe, resolve_torch_device
+from ...hardware import flash_attention_status, get_ffmpeg_exe, resolve_torch_device
 from ...process_runner import run_ffmpeg
 from ..media import get_media_duration_seconds
+from ..runtime import reuse_model
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +41,8 @@ ALIGNMENT_START_PADDING_SECONDS = 0.04
 ALIGNMENT_END_PADDING_SECONDS = 0.18
 # Half a second is visible relative to subtitle cues; diagnose it instead of dropping speech.
 TIMING_SHIFT_REVIEW_SECONDS = 0.5
-TTS_REVIEW_VERSION = 3
+TTS_REVIEW_VERSION = 4
+SPEEDUP_EPSILON = 1e-6
 
 
 @dataclass(slots=True)
@@ -137,6 +140,7 @@ def build_tts_context_groups(
     return groups
 
 
+@reuse_model("qwen")
 @stage_context(
     PipelineStage.TTS, "Loading Qwen TTS model", operation="load_qwen", completed="Qwen TTS ready"
 )
@@ -146,6 +150,11 @@ def load_qwen_tts_model(tts_model_name: str, device: str, attn_implementation: s
     from qwen_tts import Qwen3TTSModel
 
     device = resolve_torch_device(device, "Qwen TTS")
+    if attn_implementation == "flash_attention_2":
+        supported, detail = flash_attention_status(device)
+        if not supported:
+            warn(logger, "%s", detail)
+            attn_implementation = "sdpa"
     kwargs = {
         "device_map": "cuda:0" if device == "cuda" else "cpu",
         "dtype": torch.float16 if device == "cuda" else torch.float32,
@@ -153,9 +162,50 @@ def load_qwen_tts_model(tts_model_name: str, device: str, attn_implementation: s
     if attn_implementation != "auto":
         kwargs["attn_implementation"] = attn_implementation
     logger.info("Loading Qwen TTS model: %s", tts_model_name)
-    return Qwen3TTSModel.from_pretrained(tts_model_name, **kwargs)
+    try:
+        model = Qwen3TTSModel.from_pretrained(tts_model_name, **kwargs)
+    except (ImportError, OSError, RuntimeError, ValueError) as exc:
+        if attn_implementation != "flash_attention_2" or not any(
+            marker in str(exc).lower() for marker in ("flash", "attention", "undefined symbol")
+        ):
+            raise
+        warn(logger, "FlashAttention 2 model initialization failed: %s; using sdpa", exc)
+        kwargs["attn_implementation"] = "sdpa"
+        model = Qwen3TTSModel.from_pretrained(tts_model_name, **kwargs)
+    pad_token_id = resolve_generation_pad_token_id(model)
+    if pad_token_id is not None:
+        # Qwen 0.1.1 drops pad_token_id before talker.generate(); configure that layer once.
+        generation_config = model.model.talker.generation_config
+        if generation_config.pad_token_id is None:
+            generation_config.pad_token_id = pad_token_id
+    return model
 
 
+def resolve_generation_pad_token_id(model: object) -> int | None:
+    """Resolve PAD for Qwen's talker, using the EOS that Qwen actually forwards."""
+    qwen = getattr(model, "model", None)
+    talker = getattr(qwen, "talker", None)
+    generation_config = getattr(talker, "generation_config", None)
+    if generation_config is None:
+        return None
+    token = getattr(generation_config, "pad_token_id", None)
+    if token is None:
+        # Qwen overrides generation_config.eos_token_id with this codec-vocabulary EOS.
+        config = getattr(getattr(qwen, "config", None), "talker_config", None)
+        token = getattr(config, "codec_eos_token_id", None)
+        if isinstance(token, (list, tuple)):
+            if not token or any(
+                isinstance(item, bool) or not isinstance(item, Integral) or item < 0
+                for item in token
+            ):
+                return None
+            token = token[0]  # Transformers 4.57.3 uses the first EOS as fallback PAD.
+    if isinstance(token, bool) or not isinstance(token, Integral) or token < 0:
+        return None
+    return int(token)
+
+
+@reuse_model("aligner")
 @stage_context(
     PipelineStage.TTS,
     "Loading Whisper aligner",
@@ -178,8 +228,12 @@ def generate_qwen_custom_voice(
     model, text: str, language: str, speaker: str, instruct: str
 ) -> tuple[NDArray[np.float32], int]:
     """Generate one waveform with Qwen CustomVoice."""
+    generation_kwargs = {}
+    pad_token_id = resolve_generation_pad_token_id(model)
+    if pad_token_id is not None:
+        generation_kwargs["pad_token_id"] = pad_token_id
     wavs, sr = model.generate_custom_voice(
-        text=text, language=language, speaker=speaker, instruct=instruct
+        text=text, language=language, speaker=speaker, instruct=instruct, **generation_kwargs
     )
     if wavs is None or len(wavs) == 0:
         raise ValueError("Qwen TTS returned no waveform.")
@@ -633,10 +687,15 @@ def generate_context_group_items(
                     _add_review_reason(entry, "individual_generation_failed")
                     continue
                 try:
+                    speedup_applied = (
+                        len(sentence_wav) > 1 and raw_duration > available and max_speedup > 1
+                    )
                     sentence_wav = fit_wav_to_available_duration(
                         sentence_wav, sample_rate, available, max_speedup
                     )
-                    entry["applied_speedup"] = min(max(1.0, raw_duration / available), max_speedup)
+                    entry["applied_speedup"] = (
+                        min(raw_duration / available, max_speedup) if speedup_applied else 1.0
+                    )
                 except Exception as exc:
                     logger.info(
                         "Could not time-stretch subtitle %d; preserving raw audio: %s",
@@ -649,6 +708,13 @@ def generate_context_group_items(
                     final_audio_duration=final_duration,
                     overflow_duration=max(0.0, final_duration - available),
                 )
+                from .qa import check_tail
+
+                entry.update(check_tail(sentence_wav, sample_rate))
+                if entry["possible_truncated_tail"]:
+                    _add_review_reason(entry, "possible_truncated_tail")
+                if entry["applied_speedup"] > 1.0 + SPEEDUP_EPSILON:
+                    _add_review_reason(entry, "speed_adjusted")
                 if final_duration > available + 1 / sample_rate:
                     _add_review_reason(
                         entry,
@@ -727,12 +793,12 @@ def overlay_tts_items(
 
 def write_tts_review_log(path: Path, entries: list[dict[str, object]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    write_text(
+        path,
         "".join(json.dumps(entry, ensure_ascii=False) + "\n" for entry in entries),
-        encoding="utf-8",
     )
-    path.with_suffix(".pretty.json").write_text(
-        json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    write_text(
+        path.with_suffix(".pretty.json"), json.dumps(entries, ensure_ascii=False, indent=2) + "\n"
     )
 
 
@@ -770,6 +836,9 @@ def tts_review_is_current(path: Path, segments: list[tuple[int, SubtitleSegment]
 
 
 def log_tts_summary(total: int, entries: list[dict[str, object]], review_path: Path) -> None:
+    for entry in entries:
+        if entry.get("applied_speedup", 1.0) > 1.0 + SPEEDUP_EPSILON:
+            _add_review_reason(entry, "speed_adjusted")
     counts = {
         "sentences": total,
         "aligned": sum(entry["action"] == "context_aligned" for entry in entries),
@@ -777,6 +846,9 @@ def log_tts_summary(total: int, entries: list[dict[str, object]], review_path: P
             entry["action"] == "regenerated_individual_sentence" for entry in entries
         ),
         "shifted": sum(entry.get("timing_shift", 0) > 0 for entry in entries),
+        "speed_adjusted": sum(
+            entry.get("applied_speedup", 1.0) > 1.0 + SPEEDUP_EPSILON for entry in entries
+        ),
         "overflow": sum(entry.get("overflow_duration", 0) > 0 for entry in entries),
         "failures": sum(entry["action"] == "generation_failed" for entry in entries),
         "flagged": sum(bool(entry.get("review_reason")) for entry in entries),
@@ -790,7 +862,13 @@ def log_tts_summary(total: int, entries: list[dict[str, object]], review_path: P
                     kind=EventKind.REVIEW,
                     details={
                         key: entry.get(key)
-                        for key in ("action", "timing_shift", "overflow_duration")
+                        for key in (
+                            "action",
+                            "timing_shift",
+                            "overflow_duration",
+                            "applied_speedup",
+                            "required_speedup",
+                        )
                     },
                 )
     emit(
@@ -833,7 +911,6 @@ def synthesize_simple_tts_audio(
 ) -> None:
     """Generate an untimed continuous voice-over."""
     import numpy as np
-    import soundfile as sf
 
     text = " ".join(segment.text.strip() for segment in segments if segment.text.strip())
     chunks = split_text_for_tts(text)
@@ -849,7 +926,7 @@ def synthesize_simple_tts_audio(
         sample_rate = sr
         wav_list.append(np.asarray(wav, dtype=np.float32))
     audio_out.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(audio_out), np.clip(np.concatenate(wav_list), -1.0, 1.0), sample_rate)
+    write_audio(audio_out, np.clip(np.concatenate(wav_list), -1.0, 1.0), sample_rate)
 
 
 def synthesize_timed_tts_audio(
@@ -868,10 +945,9 @@ def synthesize_timed_tts_audio(
     context_max_chars: int = 450,
     context_break_seconds: float = 3.0,
     review_log_path: Path | None = None,
+    verify_final_audio: bool = False,
 ) -> None:
     """Generate contextual TTS and place complete sentences as close to SRT starts as possible."""
-    import soundfile as sf
-
     groups = build_tts_context_groups(
         segments, context_max_sentences, context_max_chars, context_break_seconds
     )
@@ -903,7 +979,14 @@ def synthesize_timed_tts_audio(
     audio_out.parent.mkdir(parents=True, exist_ok=True)
     # A failed WAV write must not leave old ranges authorizing reuse of partial audio.
     invalidate_tts_review_log(review_path)
-    sf.write(str(audio_out), audio, sample_rate)
+    write_audio(audio_out, audio, sample_rate)
+    if verify_final_audio:
+        import soundfile as sf
+
+        from .qa import verify_sentences
+
+        final_audio, final_rate = sf.read(str(audio_out), dtype="float32")
+        verify_sentences(final_audio, final_rate, reviews, aligner, tts_language)
     write_tts_review_log(review_path, reviews)
     total = sum(len(group.segments) for group in groups)
     log_tts_summary(total, reviews, review_path)

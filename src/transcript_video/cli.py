@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import json
 import logging
+import os
 import sys
 import time
 from contextlib import ExitStack
@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Annotated, Any
 from uuid import uuid4
 
-import click
 import typer
 from rich.panel import Panel
 from rich.table import Table
@@ -26,9 +25,14 @@ from .config import (
 )
 from .context import log_context
 from .events import CompositeObserver, JsonEventObserver
-from .ui.console import ConsolePair, make_consoles
+from .ui.console import ConsolePair, help_output, make_consoles
 from .ui.logging import RunLogs, close_logging, configure_logging
 from .ui.progress import RichProgressObserver, format_duration
+
+try:
+    from typer import TyperException
+except ImportError:  # Typer before it vendored Click.
+    from click import ClickException as TyperException
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(
@@ -45,9 +49,8 @@ app.add_typer(config_app, name="config")
 
 class ForceTarget(StrEnum):
     transcription = "transcription"
-    translation = "translation"
     tts = "tts"
-    render = "render"
+    all = "all"
 
 
 class TaskChoice(StrEnum):
@@ -216,6 +219,13 @@ def process_command(
     tts_attn_implementation: Annotated[
         str | None, typer.Option("--tts-attn-implementation")
     ] = None,
+    verify_final_audio: Annotated[
+        bool | None,
+        typer.Option(
+            "--verify-final-audio/--no-verify-final-audio",
+            help="ASR text review of final timed sentences (extra CPU inference).",
+        ),
+    ] = None,
     audio_mode: Annotated[AudioChoice | None, typer.Option("--audio-mode")] = None,
     split_tts_audio: Annotated[
         bool | None, typer.Option("--split-tts-audio/--no-split-tts-audio")
@@ -246,6 +256,8 @@ def process_command(
         raise typer.BadParameter("Use positional VIDEOS or --video, not both.")
     selected_video = legacy_video or (str(videos[0]) if videos and len(videos) == 1 else None)
     force_set = set(force or [])
+    if ForceTarget.all in force_set:
+        force_set.update({ForceTarget.transcription, ForceTarget.tts})
     overrides = {
         "project.root": str(root) if root else None,
         "project.video": selected_video,
@@ -258,7 +270,7 @@ def process_command(
         "transcription.language": language,
         "transcription.translation_batch_size": translation_batch_size,
         "transcription.overwrite_srt": True
-        if force_set & {ForceTarget.transcription, ForceTarget.translation}
+        if ForceTarget.transcription in force_set
         else overwrite_srt,
         "transcription.skip_burn": skip_burn,
         "tts.enabled": enable_tts,
@@ -271,13 +283,29 @@ def process_command(
         "tts.speaker": tts_speaker,
         "tts.instruct": tts_instruct,
         "tts.attn_implementation": tts_attn_implementation,
+        "tts.verify_final_audio": verify_final_audio,
         "tts.audio_mode": audio_mode,
         "tts.split_audio": split_tts_audio,
         "tts.chunk_minutes": tts_chunk_minutes,
         "tts.max_speedup": tts_max_speedup,
         "tts.chunk_tail_seconds": tts_chunk_tail_seconds,
     }
-    resolved = _resolved(config, profile, overrides, explicit=_option_present("--config"))
+    resolved = _resolved(
+        config,
+        profile,
+        overrides,
+        explicit=ctx.get_parameter_source("config").name == "COMMANDLINE",
+    )
+    if (
+        ForceTarget.tts in force_set
+        and ForceTarget.all not in force_set
+        and (not resolved.settings.tts.enabled or resolved.settings.transcription.skip_burn)
+    ):
+        raise typer.BadParameter("--force tts requires --enable-tts and --no-skip-burn.")
+    if ForceTarget.tts in force_set and resolved.settings.tts.rerun_chunk is not None:
+        raise typer.BadParameter("--force tts/all cannot be combined with --rerun-tts-chunk.")
+    if ForceTarget.transcription in force_set and resolved.settings.tts.enabled:
+        resolved.settings.tts.overwrite = True
     if save_config:
         if dry_run:
             state.consoles.out.print(f"[warning]Would save config:[/] {save_config.resolve()}")
@@ -298,7 +326,26 @@ def _run_processing(
 ) -> None:
     from .application.processing import build_process_plan, execute_process_plan
 
-    plan = build_process_plan(settings, videos)
+    try:
+        plan = build_process_plan(settings, videos)
+    except (ValueError, OSError) as exc:
+        if dry_run:
+            raise
+        if events_json:
+            from .events import EventKind, PipelineEvent, PipelineStage
+
+            writer = JsonEventObserver(events_json)
+            try:
+                writer.notify(
+                    PipelineEvent(
+                        PipelineStage.RUN, "Validating execution plan", kind=EventKind.START
+                    )
+                )
+                writer.notify(PipelineEvent(PipelineStage.RUN, str(exc), kind=EventKind.FAILURE))
+            finally:
+                writer.close()
+        _show_error(state, exc)
+        raise typer.Exit(1) from None
     if dry_run:
         table = Table(title="Dry-run execution plan")
         table.add_column("Item", style="info")
@@ -364,7 +411,9 @@ def _run_processing(
 
 
 def _show_error(state: CLIState, exc: Exception) -> None:
-    message = str(exc)
+    from .application.errors import describe_error
+
+    message = describe_error(exc)
     if state.logs:
         message += f"\n\nLog: {state.logs.text}"
     state.consoles.err.print(Panel(Text(message), title="Processing failed", border_style="error"))
@@ -410,8 +459,47 @@ def config_validate(
 ) -> None:
     state = _state(ctx)
     state.logging()
-    resolved = _resolved(config, profile, {}, explicit=True)
-    state.consoles.out.print(f"[success]Valid configuration:[/] {resolved.config_path}")
+    try:
+        resolved = _resolved(config, profile, {}, explicit=True)
+    except (ValueError, OSError) as exc:
+        if state.json_output:
+            state.consoles.out.print_json(
+                data={"valid": False, "config": str(config.resolve()), "error": str(exc)}
+            )
+        else:
+            state.consoles.err.print(
+                Panel(Text(str(exc)), title="Configuration invalid", border_style="error")
+            )
+        raise typer.Exit(1) from None
+    checks = [
+        "TOML syntax",
+        "Known sections",
+        "Known fields",
+        "Enum values",
+        "Hardware settings",
+        "Translation settings",
+        "TTS settings",
+        "Profile resolution",
+    ]
+    if state.json_output:
+        state.consoles.out.print_json(
+            data={
+                "valid": True,
+                "config": str(resolved.config_path),
+                "profile": str(resolved.profile_path) if resolved.profile_path else None,
+                "checks": checks,
+            }
+        )
+    else:
+        table = Table(title="Configuration validation")
+        table.add_column("Status")
+        table.add_column("Check")
+        for check in checks:
+            table.add_row("PASS", check)
+        state.consoles.out.print(table)
+        state.consoles.out.print(
+            Text(f"Valid configuration: {resolved.config_path}", style="success")
+        )
 
 
 @app.command("inspect")
@@ -426,14 +514,17 @@ def inspect_command(
     state = _state(ctx)
     state.logging()
     result = inspect_video(
-        video, _resolved(config, profile, {}, explicit=_option_present("--config")).settings
+        video,
+        _resolved(
+            config, profile, {}, explicit=ctx.get_parameter_source("config").name == "COMMANDLINE"
+        ).settings,
     )
     if state.json_output:
         state.consoles.out.print_json(data=result)
     else:
-        state.consoles.out.print(
-            Panel.fit(json.dumps(result, indent=2, ensure_ascii=False), title="Media inspection")
-        )
+        from .ui.inspection import inspection_table
+
+        state.consoles.out.print(inspection_table(result))
 
 
 @app.command("doctor")
@@ -447,7 +538,9 @@ def doctor_command(
     state = _state(ctx)
     state.logging()
     checks = run_doctor(
-        _resolved(config, profile, {}, explicit=_option_present("--config")).settings
+        _resolved(
+            config, profile, {}, explicit=ctx.get_parameter_source("config").name == "COMMANDLINE"
+        ).settings
     )
     if state.json_output:
         state.consoles.out.print_json(data=[asdict(check) for check in checks])
@@ -458,9 +551,25 @@ def doctor_command(
                 "Environment"
                 if check.name in {"Python", "Free storage"}
                 else "Media"
-                if check.name in {"FFmpeg", "ffprobe", "Subtitle filter", "Video encoder"}
+                if check.name
+                in {
+                    "FFmpeg",
+                    "ffprobe",
+                    "Subtitle filter",
+                    "Configured encoder",
+                    "NVENC encoder availability",
+                    "NVENC runtime usability",
+                    "Fallback encoder",
+                }
                 else "Hardware"
-                if check.name in {"CUDA", "PyTorch"}
+                if check.name
+                in {
+                    "CUDA",
+                    "PyTorch",
+                    "PyTorch version",
+                    "PyTorch CUDA build",
+                    "ASR compute support",
+                }
                 else "Project"
             )
             groups[group].append(check)
@@ -562,14 +671,18 @@ def course_tui(
     _state(ctx).logging(command="course-tui", console_enabled=False)
     from .tui.app import CourseApp
 
-    tui = CourseApp(config_path=config)
+    # Textual installs its monochrome filter during construction, not on attribute assignment.
+    previous_no_color = os.environ.get("NO_COLOR")
     if _state(ctx).consoles.out.no_color:
-        tui.no_color = True
+        os.environ["NO_COLOR"] = "1"
+    try:
+        tui = CourseApp(config_path=config)
+    finally:
+        if previous_no_color is None:
+            os.environ.pop("NO_COLOR", None)
+        else:
+            os.environ["NO_COLOR"] = previous_no_color
     tui.run()
-
-
-def _option_present(option: str) -> bool:
-    return option in sys.argv or any(item.startswith(option + "=") for item in sys.argv)
 
 
 def _normalize_legacy_argv(argv: list[str]) -> list[str]:
@@ -625,18 +738,54 @@ def _option_in(argv: list[str], option: str) -> bool:
     return option in argv or any(item.startswith(option + "=") for item in argv)
 
 
+def legacy_course_main(executable: str, command: str) -> None:
+    """Keep global options before the delegated subcommand in compatibility executables."""
+    make_consoles(no_color="--no-color" in sys.argv).err.print(
+        f"Warning: {executable} is deprecated; use 'transcript-video course {command}'.",
+        style="warning",
+    )
+    global_args, remaining = [], []
+    arguments = iter(sys.argv[1:])
+    for argument in arguments:
+        if argument in {
+            "--no-color",
+            "--plain",
+            "--json",
+            "-q",
+            "--quiet",
+            "-v",
+            "-vv",
+            "--verbose",
+        } or argument.startswith("--log-file="):
+            global_args.append(argument)
+        elif argument == "--log-file":
+            global_args.append(argument)
+            value = next(arguments, None)
+            if value is None:
+                make_consoles(no_color="--no-color" in sys.argv).err.print(
+                    "Error: --log-file requires a path.", style="error"
+                )
+                raise SystemExit(2)
+            global_args.append(value)
+        else:
+            remaining.append(argument)
+    sys.argv[1:] = [*global_args, "course", command, *remaining]
+    main()
+
+
 def main() -> None:
     argv = _normalize_legacy_argv(sys.argv[1:])
     try:
-        result = app(args=argv, prog_name="transcript-video", standalone_mode=False)
+        with help_output("--no-color" in argv):
+            result = app(args=argv, prog_name="transcript-video", standalone_mode=False)
         if isinstance(result, int) and result:
             raise SystemExit(result)
-    except (click.ClickException, ValueError, OSError, RuntimeError) as exc:
+    except (TyperException, ValueError, OSError, RuntimeError) as exc:
         consoles = make_consoles(no_color="--no-color" in argv)
         consoles.err.print(f"[error]Error:[/] {exc}")
         if "-vv" in argv:
             consoles.err.print_exception(show_locals=False)
-        raise SystemExit(2 if isinstance(exc, click.UsageError) else 1) from None
+        raise SystemExit(exc.exit_code if isinstance(exc, TyperException) else 1) from None
     except (KeyboardInterrupt, EOFError):
         make_consoles(no_color="--no-color" in argv).err.print("[warning]Cancelled by user.[/]")
         raise SystemExit(130) from None

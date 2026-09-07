@@ -24,7 +24,7 @@ For example, in the code coverage section, C0 C1 is marked as Yes.
 
 7
 00:00:37,090 --> 00:00:42,680
-MCDC is Yes, and dSD is No.
+MCDC is Yes, and dSD is No
 
 8
 00:00:42,680 --> 00:00:49,510
@@ -76,7 +76,7 @@ Here, I will load the database into this folder.
 
 20
 00:01:59,060 --> 00:02:06,160
-I will use SharCC.
+I will use Shar CC.
 
 21
 00:02:17,160 --> 00:02:22,060
@@ -236,11 +236,11 @@ Next is the Load Rule file.
 
 60
 00:08:36,800 --> 00:08:48,210
-I will go back to the database and find the Load Rule file I'vs loaded from.
+I will go back to the database and find the Load Rule file I've loaded from.
 
 61
 00:08:52,280 --> 00:08:59,130
-To make sure, I open Open File Location.
+To make sure, I'll Open File Location.
 
 62
 00:08:59,130 --> 00:09:05,980

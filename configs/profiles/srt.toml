@@ -1,0 +1,6 @@
+# Inherit ASR/translation language and models from the base configuration.
+[transcription]
+skip_burn = true
+
+[tts]
+enabled = false

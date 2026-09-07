@@ -1,0 +1,13 @@
+# Lightweight mocked/unit/Pilot suite; intentionally excludes local CUDA wheels and model runtimes.
+ruff>=0.12,<1
+pytest>=8.4,<9
+pytest-asyncio>=1.1,<2
+pytest-cov>=6.2,<7
+numpy==2.4.6
+pillow==12.2.0
+soundfile==0.13.1
+imageio-ffmpeg==0.6.0
+rich>=14.1,<15
+typer>=0.16,<1
+questionary==2.1.1
+textual>=6,<7

@@ -5,10 +5,12 @@ import logging
 from math import ceil
 from pathlib import Path
 
+from ...artifacts import write_audio
 from ...config import ProjectPaths, SubtitleSegment, find_project_root
 from ...context import log_context
-from ...events import PipelineStage, emit, stage_context
+from ...events import EventKind, PipelineStage, emit, stage_context
 from ..media import get_media_duration_seconds
+from ..provenance import cache_matches, model_identity, tts_provenance, write_provenance
 from .core import (
     TTSContextGroup,
     build_tts_context_groups,
@@ -73,10 +75,10 @@ def synthesize_one_fixed_time_chunk(
     context_groups: list[TTSContextGroup] | None = None,
     aligner=None,
     review_path: Path | None = None,
+    verify_final_audio: bool = False,
 ) -> int:
     """Generate context groups owned by one fixed cache chunk and overlay their sentences."""
     import numpy as np
-    import soundfile as sf
 
     chunk_audio_out.parent.mkdir(parents=True, exist_ok=True)
     source_segments = all_segments if all_segments is not None else chunk_segments
@@ -111,9 +113,13 @@ def synthesize_one_fixed_time_chunk(
     audio = overlay_tts_items(
         items, final_rate, minimum_duration, offset=chunk_start, reviews=reviews
     )
+    if verify_final_audio:
+        from .qa import verify_sentences
+
+        verify_sentences(audio, final_rate, reviews, aligner, tts_language)
     # Invalidate before replacing the waveform so interrupted writes cannot reuse old ranges.
     invalidate_tts_review_log(review_path)
-    sf.write(str(chunk_audio_out), np.asarray(audio, dtype=np.float32), final_rate)
+    write_audio(chunk_audio_out, np.asarray(audio, dtype=np.float32), final_rate)
     write_tts_review_log(review_path, reviews)
     logger.info(
         "Wrote TTS chunk %03d with %d context group(s): %s",
@@ -176,7 +182,7 @@ def rebuild_full_tts_audio_from_chunks(
 
     audio = overlay_tts_items(items, final_rate, expected_total_duration or 0.0, reviews=reviews)
     audio_out.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(audio_out), audio, final_rate)
+    write_audio(audio_out, audio, final_rate)
     logger.info("Rebuilt full TTS audio from cached sentences: %s", audio_out)
     return sorted(reviews, key=lambda entry: (entry["start"], entry["subtitle_index"]))
 
@@ -224,6 +230,7 @@ def synthesize_tts_audio_by_time_chunks(
     context_max_chars: int = 450,
     context_break_seconds: float = 3.0,
     review_log_path: Path | None = None,
+    verify_final_audio: bool = False,
 ) -> None:
     """Generate contextual TTS while retaining fixed multi-minute cache units."""
     if rerun_chunk is not None and rerun_chunk < 0:
@@ -259,6 +266,26 @@ def synthesize_tts_audio_by_time_chunks(
         audio_out
     )
     chunk_report_dir = final_review.parent / chunks_dir.name
+    generation_config = dict(
+        model=model_identity(tts_model_name),
+        language=tts_language,
+        speaker=tts_speaker,
+        instruct=tts_instruct,
+        device=device,
+        attn_implementation=attn_implementation,
+        generation_mode="chunked",
+        timing_mode="timed",
+        max_speedup=max_speedup,
+        chunk_minutes=chunk_minutes,
+        chunk_tail_seconds=chunk_tail_seconds,
+        context_max_sentences=context_max_sentences,
+        context_max_chars=context_max_chars,
+        context_break_seconds=context_break_seconds,
+        alignment_model=model_identity(alignment_model_name) if alignment_model_name else None,
+        verify_final_audio=verify_final_audio,
+        video_duration=video_duration,
+    )
+    fingerprints = {}
     for chunk_index, chunk_start, chunk_end, chunk_segments in chunks:
         chunk_path = chunks_dir / f"{audio_out.stem}_chunk_{chunk_index:03d}.wav"
         review_path = chunk_report_dir / f"{chunk_path.stem}.review.jsonl"
@@ -269,10 +296,24 @@ def synthesize_tts_audio_by_time_chunks(
             for item in group.segments
         ]
         sentences_by_chunk[chunk_index] = len(owned_segments)
+        # Neighbor timing affects the final owned sentence's available slot.
+        last_start = max((s.start for _, s in owned_segments), default=chunk_start)
+        next_start = next((s.start for s in valid_segments if s.start > last_start), None)
+        fingerprints[chunk_index] = tts_provenance(
+            [s for _, s in owned_segments],
+            {
+                **generation_config,
+                "next_start": next_start,
+                "chunk_start": chunk_start,
+                "chunk_end": chunk_end,
+            },
+        )
+        provenance_current = cache_matches(chunk_path, fingerprints[chunk_index], PipelineStage.TTS)
         should_generate = (
             overwrite_all_chunks
             or chunk_index in rerun_owners
             or not chunk_path.exists()
+            or not provenance_current
             or not tts_review_is_current(review_path, owned_segments)
         )
         if (
@@ -298,6 +339,20 @@ def synthesize_tts_audio_by_time_chunks(
         )
 
     to_generate = [info[0] for info in infos if info[-1]]
+    reused_count = 0
+    for info in infos:
+        if not info[-1]:
+            reused_count += 1
+            with log_context(operation="chunks", chunk=info[0]):
+                emit(
+                    PipelineStage.TTS,
+                    "Reusing cached TTS chunk",
+                    kind=EventKind.REUSED,
+                    artifact=info[4],
+                    current=reused_count,
+                    total=len(infos),
+                    details={"unit": "chunks"},
+                )
     completed_chunks = len(infos) - len(to_generate)
     completed_sentences = sum(sentences_by_chunk[info[0]] for info in infos if not info[-1])
     if to_generate:
@@ -344,7 +399,9 @@ def synthesize_tts_audio_by_time_chunks(
                     chunk_tail_seconds=chunk_tail_seconds,
                     context_groups=groups,
                     review_path=chunk_review,
+                    verify_final_audio=False,  # Verify the assembled, encoded final WAV below.
                 )
+                write_provenance(chunk_path, fingerprints[chunk_index])
             with log_context(operation="chunks", chunk=chunk_index):
                 completed_chunks += 1
                 completed_sentences += sentences_by_chunk[chunk_index]
@@ -382,5 +439,17 @@ def synthesize_tts_audio_by_time_chunks(
         expected_duration,
         review_paths=[info[5] for info in infos],
     )
+    if verify_final_audio:
+        import soundfile as sf
+
+        from .qa import verify_sentences
+
+        if not to_generate:
+            aligner = (
+                load_faster_whisper_aligner(alignment_model_name) if alignment_model_name else None
+            )
+        final_audio, final_rate = sf.read(str(audio_out), dtype="float32")
+        verify_sentences(final_audio, final_rate, reviews, aligner, tts_language)
     write_tts_review_log(final_review, reviews)
+    write_provenance(audio_out, tts_provenance(segments, generation_config))
     log_tts_summary(len(valid_segments), reviews, final_review)
