@@ -33,10 +33,8 @@ def test_shipped_profiles_and_cli_precedence():
     assert srt.settings.transcription.skip_burn and not srt.settings.tts.enabled
     review = resolve_settings(config_path=base, profile="tts-review")
     assert review.settings.tts.verify_final_audio and not review.settings.transcription.skip_burn
-    assert (
-        review.settings.transcription.task == "translate"
-        and review.settings.tts.language == "English"
-    )
+    assert review.settings.transcription.language == "vi"
+    assert review.settings.tts.language == "English"
     overridden = resolve_settings(
         config_path=base,
         profile="tts-review",

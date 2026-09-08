@@ -89,20 +89,18 @@ def inspect_video(
     root = Path(settings.project.root).expanduser().resolve()
     paths = ProjectPaths.from_root(root)
     model = _from_root(root, settings.project.model)
-    translation = (
-        _from_root(root, settings.project.translation_model)
-        if settings.project.translation_model
-        else None
-    )
     try:
-        suffix = get_model_filename_suffix(model, translation)
+        suffix = get_model_filename_suffix(model)
     except (OSError, ValueError):
         suffix = None  # Artifact prediction is deliberately best-effort; media inspection is independent.
     artifacts = {
-        "subtitles": str(paths.subtitle_dir / f"{video.stem}_{suffix}.srt") if suffix else None,
+        "source_subtitles": str(paths.source_subtitle_dir / f"{video.stem}_vi_{suffix}.srt")
+        if suffix
+        else None,
+        "translated_subtitles": str(paths.translated_subtitle_dir / f"{video.stem}_en.srt"),
         "subtitled_video": str(paths.output_dir / f"{video.stem}_vi-dub_en-sub.mp4"),
         "tts_audio": str(paths.audio_dir / f"{video.stem}_tts.wav"),
-        "tts_video": str(paths.output_dir / f"{video.stem}_en-dub_en-sub.mp4"),
+        "final_video": str(paths.output_dir / f"{video.stem}_en-dub_en-sub.mp4"),
     }
     return {
         "video": str(video),
@@ -112,6 +110,11 @@ def inspect_video(
             name: "unresolved" if path is None else "exists" if Path(path).is_file() else "missing"
             for name, path in artifacts.items()
         },
+        "workflow": (
+            "ready_for_render"
+            if Path(artifacts["translated_subtitles"]).is_file()
+            else "translation_handoff"
+        ),
     }
 
 

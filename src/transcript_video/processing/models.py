@@ -4,10 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ..config import (
-    MODEL_FILENAME_SUFFIXES,
-    TRANSLATION_MODEL_FILENAME_SUFFIXES,
-)
+from ..config import MODEL_FILENAME_SUFFIXES
 
 
 def read_transformers_model_config(model_path: Path) -> dict[str, Any]:
@@ -52,25 +49,12 @@ def detect_model_type(model_path: Path) -> str:
     if has_transformers_model_weights(model_path) and config.get("model_type") == "mbart":
         raise ValueError(
             f"The model at {model_path} is a text translation model. "
-            "Pass it through --translation-model and use a Whisper model for --model."
+            "Use a Whisper model for --model; translated subtitles are supplied as SRT input."
         )
 
     raise ValueError(f"Could not detect the model format at: {model_path}")
 
 
-def detect_translation_model_type(model_path: Path) -> str:
-    """Detect a supported local text translation model."""
-    config = read_transformers_model_config(model_path)
-    if has_transformers_model_weights(model_path) and config.get("model_type") == "mbart":
-        return "vinai-translate"
-
-    raise ValueError(f"Could not detect a supported translation model at: {model_path}")
-
-
-def get_model_filename_suffix(model_path: Path, translation_model_path: Path | None = None) -> str:
+def get_model_filename_suffix(model_path: Path) -> str:
     """Return the short model name used as a subtitle filename suffix."""
-    suffix = MODEL_FILENAME_SUFFIXES[detect_model_type(model_path)]
-    if translation_model_path is not None:
-        translation_type = detect_translation_model_type(translation_model_path)
-        suffix += f"_{TRANSLATION_MODEL_FILENAME_SUFFIXES[translation_type]}"
-    return suffix
+    return MODEL_FILENAME_SUFFIXES[detect_model_type(model_path)]

@@ -1,0 +1,632 @@
+1
+00:00:02,900 --> 00:00:11,520
+Hello mọi người, trong section này mình sẽ demo tính năng GenerateTestK dùng GitHub Covalent.
+
+2
+00:00:12,830 --> 00:00:20,990
+Để dùng được tính năng này, đầu tiên thì mình cần phải có TestWorkspaceFounder được tạo cho item mình cần GenerateTestK.
+
+3
+00:00:21,850 --> 00:00:25,050
+Hiện tại giao diện tool này, mình sẽ vào TestTestSupport.
+
+4
+00:00:25,670 --> 00:00:26,890
+Ở đây mình sẽ có 2 option.
+
+5
+00:00:27,090 --> 00:00:31,030
+Option đầu tiên là tạo TestWorkspaceFounder cho một item.
+
+6
+00:00:31,030 --> 00:00:37,450
+Và option thứ 2 là tạo test workspace folder cho 1 list các item
+
+7
+00:00:37,450 --> 00:00:40,520
+Thì mình sẽ demo option đầu tiên trước
+
+8
+00:00:40,520 --> 00:00:44,310
+Thì mình sẽ chọn là one item ở đây
+
+9
+00:00:44,310 --> 00:00:49,490
+Ở đây mình sẽ có 3 trường thông tin cân điểm
+
+10
+00:00:49,490 --> 00:00:53,200
+Thông tin đầu tiên là database part
+
+11
+00:00:53,200 --> 00:00:59,300
+Là part của folder chứa database mình đã load từ streamer snapshot về
+
+12
+00:00:59,300 --> 00:01:02,810
+Thông tin thứ 2 là workspace part
+
+13
+00:01:02,810 --> 00:01:11,450
+là mình sẽ tạo một folder trống và mình sẽ lấy cái part của folder này dùng để chứa các cái output
+
+14
+00:01:11,450 --> 00:01:21,140
+trong quá trình mà tuân chạy. Thông tin thứ ba là item name, là name của item mà mình cần tạo
+
+15
+00:01:21,140 --> 00:01:28,730
+tới buộc SpaceFolder. Sau khi đã đem đầy đủ 3 thông tin ra như hình này thì mình sẽ nhấn qua
+
+16
+00:01:28,730 --> 00:01:41,790
+sau khi đã complete step này
+
+17
+00:01:41,790 --> 00:01:44,370
+thì tool sẽ hiểu một mẫu ước để tham báo cho mình
+
+18
+00:01:44,370 --> 00:01:47,460
+đồng thời
+
+19
+00:01:47,460 --> 00:01:49,820
+thì tool Visual Studio Code
+
+20
+00:01:49,820 --> 00:01:51,740
+sẽ tự động mở và in một
+
+21
+00:01:51,740 --> 00:01:53,960
+textbook space folder của item
+
+22
+00:01:53,960 --> 00:01:55,340
+mình cần tạo
+
+23
+00:01:55,340 --> 00:01:59,640
+ở đây mình sẽ có được là
+
+24
+00:01:59,640 --> 00:02:01,020
+sub file ở đây
+
+25
+00:02:01,020 --> 00:02:03,080
+và đồng thời mình cũng sẽ có 2 file
+
+26
+00:02:03,080 --> 00:02:04,880
+và thứ nhất là test.cpp
+
+27
+00:02:04,880 --> 00:02:06,460
+và thứ hai là test.h
+
+28
+00:02:06,460 --> 00:02:14,760
+bên cạnh đó thì mình có thể dùng
+
+29
+00:02:14,760 --> 00:02:16,900
+tính năng open output
+
+30
+00:02:16,900 --> 00:02:20,020
+thì chúng sẽ giúp mình mở ra chính xác cái folder
+
+31
+00:02:20,020 --> 00:02:23,260
+mà phải chứa test workspace folder của item
+
+32
+00:02:23,260 --> 00:02:26,150
+mình còn tạo ở đây
+
+33
+00:02:26,150 --> 00:02:39,320
+với option thứ 2
+
+34
+00:02:39,320 --> 00:02:41,340
+thì mình sẽ chọn list item
+
+35
+00:02:41,340 --> 00:02:44,420
+và mình cũng có 3 trường thông tin cần điền
+
+36
+00:02:44,420 --> 00:02:46,100
+thứ nhất là database part
+
+37
+00:02:46,100 --> 00:02:48,070
+thứ hai là workspace part
+
+38
+00:02:48,070 --> 00:02:51,070
+thì 2 trường này giống như option đầu tiên
+
+39
+00:02:51,070 --> 00:02:53,970
+và có 1 điểm khác đó chính là
+
+40
+00:02:53,970 --> 00:02:55,910
+thông tin thứ 3 là list item part
+
+41
+00:02:55,910 --> 00:02:58,550
+thì mình sẽ có 1 file excel
+
+42
+00:02:58,550 --> 00:03:01,340
+để điền thông tin
+
+43
+00:03:01,340 --> 00:03:04,380
+các item name và item part
+
+44
+00:03:04,380 --> 00:03:07,120
+mình còn tạo
+
+45
+00:03:07,120 --> 00:03:08,560
+textbook space folder
+
+46
+00:03:08,560 --> 00:03:14,240
+rồi sau đó mình sẽ lấy cái part
+
+47
+00:03:14,240 --> 00:03:15,500
+của file xem này
+
+48
+00:03:15,500 --> 00:03:16,880
+và điền vào tool
+
+49
+00:03:16,880 --> 00:03:18,800
+ở tại ô thứ 3 này
+
+50
+00:03:18,800 --> 00:03:21,500
+sau đó mình sẽ nhấn vào generate environment
+
+51
+00:03:21,500 --> 00:03:58,140
+sau khi xong work này
+
+52
+00:03:58,140 --> 00:04:00,080
+thì mình nhấn tiếp vào
+
+53
+00:04:00,080 --> 00:04:01,840
+open output ở đây
+
+54
+00:04:01,840 --> 00:04:04,420
+thì mình sẽ thấy được
+
+55
+00:04:04,420 --> 00:04:06,830
+các textbook space folder
+
+56
+00:04:06,830 --> 00:04:08,170
+đã tạo cho các item
+
+57
+00:04:08,170 --> 00:04:12,930
+trong item list. Sau khi đã có
+
+58
+00:04:12,930 --> 00:04:16,010
+testbook space folder cho item, mình cần vào
+
+59
+00:04:16,010 --> 00:04:18,750
+testk, thì mình sẽ vào
+
+60
+00:04:18,750 --> 00:04:21,850
+ai copilot, mình chọn generate testk
+
+61
+00:04:21,850 --> 00:04:25,610
+by ai copilot. Ở đây mình có 2
+
+62
+00:04:25,610 --> 00:04:28,360
+trường thông tin cùng điểm. Trường thông tin đầu tiên là
+
+63
+00:04:28,360 --> 00:04:31,760
+item 3. Thì mình sẽ vào
+
+64
+00:04:31,760 --> 00:04:34,970
+testbook space folder của một item
+
+65
+00:04:34,970 --> 00:04:37,990
+đang có generate testk. Ví dụ như item này
+
+66
+00:04:37,990 --> 00:04:41,340
+thì mình sẽ copy part của
+
+67
+00:04:41,340 --> 00:04:54,300
+của số file này sau đó mình sẽ bút vào trong thông tin đầu tiên và tiếp theo là đặt thằng
+
+68
+00:04:54,300 --> 00:05:04,340
+bay bà cũng giống như step lúc trước thì mình cũng sẽ bút thông tin của con đờ chứa tại đây
+
+69
+00:05:04,340 --> 00:05:14,340
+đây nó mình sẽ nhắn là ông tôi đi phát trách ở đây trong quá trình chạy thì mình có thể theo dõi các
+
+70
+00:05:14,340 --> 00:05:16,740
+trong chi tiết, mình có nhấn vào
+
+71
+00:05:16,740 --> 00:05:20,760
+show execution log ở đây, thì có một cửa sổ
+
+72
+00:05:20,760 --> 00:05:24,300
+terminal sẽ hiện ra và sẽ show
+
+73
+00:05:24,300 --> 00:05:27,240
+đi theo thông tin trong lúc mà tôi đang chạy
+
+74
+00:05:27,240 --> 00:09:44,220
+sau khi xong bước auto debug object
+
+75
+00:09:44,220 --> 00:09:47,160
+thì mình sẽ qua bước tiếp theo là repair
+
+76
+00:09:47,160 --> 00:10:05,480
+get suce. Trong thông tin của popup thì mình
+
+77
+00:10:05,480 --> 00:10:11,370
+sẽ thấy là folder và suce function và update
+
+78
+00:10:11,370 --> 00:10:18,400
+thì mình ở đây mình sẽ thấy là có 3 function được list ra ở đây
+
+79
+00:10:18,400 --> 00:10:22,540
+mình sẽ chọn 1 trong 3 function mà mình muốn generate test case
+
+80
+00:10:22,540 --> 00:10:25,870
+thì bước tiếp theo mình sẽ có 2 option
+
+81
+00:10:25,870 --> 00:10:30,870
+option đầu tiên là generate test case cho chỉ function mình đã chọn ở đây
+
+82
+00:10:30,870 --> 00:10:37,200
+và option thứ 2 là generate test case cho tất cả các function trong cái item này
+
+83
+00:10:37,200 --> 00:10:42,170
+thì để tiện cho việc quan sát quá trình chạy
+
+84
+00:10:42,170 --> 00:10:52,470
+Trong khi generate tk thì mình sẽ mở visual studio code lên và import textbook survey folder của item vào trong này
+
+85
+00:10:52,470 --> 00:10:59,790
+Mình sẽ demo option đầu tiên
+
+86
+00:10:59,790 --> 00:11:06,250
+generate tk cho chỉ một function đang chọn ở đây
+
+87
+00:11:06,250 --> 00:11:08,250
+Mình sẽ nhấn vào generate one source
+
+88
+00:11:08,250 --> 00:11:17,580
+Ở đây mình sẽ thấy trigger generate tk đã được gửi đi
+
+89
+00:11:17,580 --> 00:11:24,110
+Thông tin mình sẽ xem ở tool visual studio code này
+
+90
+00:11:24,110 --> 00:11:28,110
+Mình sẽ vào Output và chọn GitHub Cobalt Chart ở đây
+
+91
+00:11:28,110 --> 00:11:29,070
+Thông tin
+
+92
+00:11:29,070 --> 00:11:33,070
+Quá trình generate nó sẽ được show ở trong cái terminal này
+
+93
+00:11:33,070 --> 00:11:37,990
+Sau khi mình thấy thông báo là trên
+
+94
+00:11:37,990 --> 00:11:39,990
+Test Generation Completed
+
+95
+00:11:39,990 --> 00:11:45,290
+Tức là quá trình generate tk đã xong
+
+96
+00:11:45,290 --> 00:11:48,290
+Thì tiếp theo mình sẽ nhấn vào Terminal
+
+97
+00:11:48,290 --> 00:12:06,650
+Mình sẽ build cái test này
+
+98
+00:12:06,650 --> 00:12:08,650
+Ở đây mình có 8 cái tk
+
+99
+00:12:08,650 --> 00:12:10,650
+Và tất cả 8 tk này đã passed
+
+100
+00:12:10,650 --> 00:12:15,940
+Tiếp theo mình sẽ xem cái code coverage nó như thế nào
+
+101
+00:12:15,940 --> 00:12:19,940
+Thì mình sẽ tiến hành build cantata cho cái test này
+
+102
+00:12:19,940 --> 00:12:22,550
+Mình sẽ nhấn vào build cantata ở đây
+
+103
+00:12:22,550 --> 00:12:56,410
+Sau khi bước build cantata đã xong
+
+104
+00:12:56,410 --> 00:13:02,180
+Thì mình sẽ thấy là trong folder test của space folder của item
+
+105
+00:13:02,180 --> 00:13:06,180
+Thì mình sẽ thấy là có folder cantata
+
+106
+00:13:06,180 --> 00:13:10,530
+Nằm trong folder output
+
+107
+00:13:10,530 --> 00:13:12,530
+Mình sẽ mở cantata
+
+108
+00:13:12,530 --> 00:13:13,790
+Chọn tool
+
+109
+00:13:13,790 --> 00:13:15,960
+Thì mình sẽ vào ổ say
+
+110
+00:13:15,960 --> 00:13:20,300
+Chọn tc say
+
+111
+00:13:20,300 --> 00:13:23,420
+Chọn tool
+
+112
+00:13:23,420 --> 00:13:25,070
+Vào cantata
+
+113
+00:13:25,070 --> 00:13:29,020
+mình sẽ mở tool này lên
+
+114
+00:13:29,020 --> 00:13:39,290
+mình sẽ tạo một cái project trong cantata này
+
+115
+00:13:39,290 --> 00:13:55,260
+sử dụng project, mình sẽ đặt tên là project name
+
+116
+00:13:55,260 --> 00:13:57,260
+giống với atom name của mình
+
+117
+00:13:57,260 --> 00:14:10,620
+mình sẽ kéo folder cantata
+
+118
+00:14:10,620 --> 00:14:14,620
+mình sẽ thả vào project mới vừa tạo bên phía tool cantata
+
+119
+00:14:14,620 --> 00:14:23,190
+mình sẽ nhấn vào file .cov này
+
+120
+00:14:23,190 --> 00:14:28,300
+rồi mình sẽ mở cái file này lên
+
+121
+00:14:28,300 --> 00:14:35,180
+ở đây mình thấy là function đầu tiên
+
+122
+00:14:35,180 --> 00:14:38,180
+những dòng like code của nó đã chơi sinh màu xanh
+
+123
+00:14:38,180 --> 00:14:46,040
+màu xanh thì tương đương với việc là những lightbox này đã được Cover rồi những light màu đỏ này thì
+
+124
+00:14:46,040 --> 00:15:03,850
+vẫn chưa được Cover rồi mình sẽ demo cái option thứ hai của mình là Generate TK Onsuit thì trước
+
+125
+00:15:03,850 --> 00:15:15,910
+khi nhấn vào nút Generate này thì mình sẽ Delete những TK vừa mới tạo option đầu tiên để tránh
+
+126
+00:15:15,910 --> 00:15:32,820
+bị Duplicate cho lần chạy tiếp theo rồi mình sẽ nhấn vào Generate TK Onsuit ở đây để tạo TK
+
+127
+00:15:32,820 --> 00:17:32,550
+tất cả các function trong item này. Sau khi generatedK chọn 3 function trong item này đã xong
+
+128
+00:17:32,550 --> 00:17:41,440
+thì mình sẽ build cantata. Thì tại bước này thì mình có thể nhấn vào build cantata ở tool,
+
+129
+00:17:41,440 --> 00:17:52,250
+có thể build cantata. Đến phía resource studio code ở đây, mình vào terminal, chọn print task và
+
+130
+00:17:52,250 --> 00:18:14,120
+chọn cantata plus plus code investment. Tại thông tin ở phần terminal này mình có thể thấy là các
+
+131
+00:18:14,120 --> 00:18:15,780
+và code code break
+
+132
+00:18:15,780 --> 00:18:17,510
+ở đây đã đạt được trăm hoặc trăm
+
+133
+00:18:17,510 --> 00:18:20,060
+thì mình sẽ qua tool cantata
+
+134
+00:18:20,060 --> 00:18:22,720
+mình xem là
+
+135
+00:18:22,720 --> 00:18:24,740
+tự nhiên là code nào đã được cover
+
+136
+00:18:24,740 --> 00:18:27,280
+chắc chắn là nó được cover trăm hoặc trăm
+
+137
+00:18:27,280 --> 00:18:29,470
+thì cũng tương tự
+
+138
+00:18:29,470 --> 00:18:30,770
+mình sẽ kéo phần data
+
+139
+00:18:30,770 --> 00:18:32,250
+cantata mình bỏ
+
+140
+00:18:32,250 --> 00:18:34,780
+mình sẽ bỏ vào project
+
+141
+00:18:34,780 --> 00:18:36,740
+bên phía cantata này
+
+142
+00:18:36,740 --> 00:18:51,910
+thì ở đây mình có thể thấy là
+
+143
+00:18:51,910 --> 00:18:55,520
+những là code của 3 function trong item này đã được cover
+
+144
+00:18:55,520 --> 00:18:57,480
+do đó đây là
+
+145
+00:18:57,480 --> 00:18:59,580
+màu của chúng của những line này
+
+146
+00:18:59,580 --> 00:19:00,840
+Thì đã chuyển sang màu xanh
+
+147
+00:19:00,840 --> 00:19:08,480
+Để vào Andata
+
+148
+00:19:08,480 --> 00:19:09,460
+Chọn View
+
+149
+00:19:09,460 --> 00:19:11,300
+Chọn Report Viewer
+
+150
+00:19:11,300 --> 00:19:14,950
+Để xem Report này
+
+151
+00:19:14,950 --> 00:19:17,220
+Đây
+
+152
+00:19:17,220 --> 00:19:18,620
+Mình có thể xem
+
+153
+00:19:18,620 --> 00:19:19,870
+Test Report
+
+154
+00:19:19,870 --> 00:19:23,340
+Và các cái
+
+155
+00:19:23,340 --> 00:19:25,990
+Covered
+
+156
+00:19:25,990 --> 00:19:27,610
+Đã chia được ở đây
+
+157
+00:19:27,610 --> 00:19:33,970
+Và còn demo của mình đến đây là kết thúc
+
+158
+00:19:33,970 --> 00:19:35,670
+Cảm ơn mọi người đã theo dõi
+

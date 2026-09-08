@@ -121,14 +121,9 @@ def validate_settings(settings: RunSettings) -> None:
             raise ValueError(f"{name} must be a non-empty string.")
     if project.video is not None and not isinstance(project.video, str):
         raise ValueError("project.video must be a string or null.")
-    if project.translation_model is not None and (
-        not isinstance(project.translation_model, str) or not project.translation_model.strip()
-    ):
-        raise ValueError("project.translation_model must be a non-empty string or null.")
     if not isinstance(transcription.language, str):
         raise ValueError("transcription.language must be a string.")
     choices = {
-        "transcription.task": (transcription.task, {"translate", "transcribe"}),
         "hardware.device": (hardware.device, {"cuda", "cpu"}),
         "hardware.compute_type": (hardware.compute_type, FASTER_WHISPER_COMPUTE_TYPES),
         "hardware.video_encoder": (hardware.video_encoder, {"auto", "h264_nvenc", "libx264"}),
@@ -143,12 +138,6 @@ def validate_settings(settings: RunSettings) -> None:
     for name, (value, allowed) in choices.items():
         if not isinstance(value, str) or value not in allowed:
             raise ValueError(f"{name} must be one of: {', '.join(sorted(allowed))}.")
-    if not isinstance(transcription.translation_batch_size, int) or isinstance(
-        transcription.translation_batch_size, bool
-    ):
-        raise ValueError("transcription.translation_batch_size must be an integer.")
-    if transcription.translation_batch_size < 1:
-        raise ValueError("transcription.translation_batch_size must be at least 1.")
     if not isinstance(tts.chunk_minutes, int) or isinstance(tts.chunk_minutes, bool):
         raise ValueError("tts.chunk_minutes must be an integer.")
     if not isinstance(tts.context_max_sentences, int) or isinstance(

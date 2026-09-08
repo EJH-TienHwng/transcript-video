@@ -47,9 +47,9 @@ Ngày kiểm tra: 2026-09-06. Giữ kiến trúc CLI/Wizard/Textual → applicat
 | Option | Behavior |
 | --- | --- |
 | `--force transcription` | Rebuild ASR, configured translation và enabled downstream TTS |
-| `--force tts` | Regenerate TTS, toàn bộ chunks; yêu cầu bật TTS và không skip burn |
-| `--force all` | Rebuild tất cả cached stages đang bật |
-| `--overwrite-srt`, `--overwrite-tts` | Tương thích cũ; force ưu tiên hơn cờ phủ định tương ứng |
+| `--force transcription` | Regenerate riêng Vietnamese source SRT |
+| TTS bình thường | Regenerate TTS và toàn bộ chunks; không dùng artifact cache |
+| `--rerun-tts-chunk` | Rerun chunk chọn lọc theo yêu cầu rõ ràng |
 | `--dry-run` | Validate/print plan; không ghi, kể cả `--save-config` và `--events-json` |
 | `-q` | Warning/error và kết quả; không progress |
 | `-v` | Thêm INFO diagnostics, không traceback |

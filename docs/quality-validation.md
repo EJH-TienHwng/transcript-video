@@ -1,7 +1,7 @@
 # Quality implementation and validation
 
 The existing CLI/Wizard/TUI → application → processing/course architecture is preserved.
-TTS review schema is now v4; cache provenance is v1; semantic events remain v1.
+TTS review schema is v4 and semantic events remain v1. Artifact provenance has been removed.
 No model inference or manual listening acceptance is implied by mocked/unit test results.
 
 ## Local environment, 2026-09-07
@@ -72,8 +72,7 @@ additional implementation, not all changes already staged on `dev`.
 | --- | --- |
 | `src/transcript_video/processing/tts/qa.py` | Text comparison, final PCM verification, acoustic heuristic, duration metrics. |
 | `src/transcript_video/processing/tts/core.py` | Review v4, speed observability, final verifier, atomic WAV/reports, runtime/FA2 hooks. |
-| `src/transcript_video/processing/tts/chunks.py` | Per-chunk provenance, preserved selective reruns, atomic rebuild, final verification. |
-| `src/transcript_video/processing/provenance.py` | Versioned source/config/model manifests and semantic invalidation. |
+| `src/transcript_video/processing/tts/chunks.py` | Regenerated processing chunks, explicit selective reruns, atomic rebuild, final verification. |
 | `src/transcript_video/processing/runtime.py` | Scoped backend reuse, GPU parking/resume and cleanup. |
 | `src/transcript_video/processing/transcription.py` | Reusable Whisper, HF ASR and translation loaders. |
 | `src/transcript_video/processing/pipeline.py` | Provenance decisions, published SRT timestamps, style/QA routing, duration reports. |
@@ -94,5 +93,5 @@ additional implementation, not all changes already staged on `dev`.
 | `configs/transcription.toml`, `configs/profiles/srt.toml`, `configs/profiles/tts-review.toml` | Verifier default and two workflow presets. |
 | `scripts/check_python_version.py`, `.github/workflows/quality.yml` | Canonical-pin consistency script and CI invocation. |
 | `tests/test_artifacts.py`, `test_attention.py`, `test_cache.py`, `test_profiles_version.py`, `test_quality.py`, `test_runtime.py`, `test_style.py` | New focused regression coverage. |
-| `tests/test_observability.py`, `test_qol.py`, `test_tts.py`, `test_tui.py` | Updated schema/provenance fixtures and layout checks. |
+| `tests/test_observability.py`, `test_qol.py`, `test_tts.py`, `test_tui.py` | Updated schema, workflow, and layout checks. |
 | `README.md`, `docs/README.md`, `docs/README.vi.md`, `docs/observability.md`, `docs/todo.md`, this report | Behavior, migration, validation evidence and unchecked acceptance work. |

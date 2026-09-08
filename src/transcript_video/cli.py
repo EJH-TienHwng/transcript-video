@@ -36,7 +36,7 @@ except ImportError:  # Typer before it vendored Click.
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(
-    help="Local video transcription, translation, TTS, and course building.",
+    help="Vietnamese transcription, external English subtitle handoff, TTS, and course building.",
     no_args_is_help=True,
     invoke_without_command=True,
     pretty_exceptions_show_locals=False,
@@ -49,13 +49,6 @@ app.add_typer(config_app, name="config")
 
 class ForceTarget(StrEnum):
     transcription = "transcription"
-    tts = "tts"
-    all = "all"
-
-
-class TaskChoice(StrEnum):
-    translate = "translate"
-    transcribe = "transcribe"
 
 
 class DeviceChoice(StrEnum):
@@ -190,23 +183,22 @@ def process_command(
         str | None, typer.Option("--video", help="Deprecated alias for VIDEO.", hidden=True)
     ] = None,
     model: Annotated[str | None, typer.Option("--model")] = None,
-    translation_model: Annotated[str | None, typer.Option("--translation-model")] = None,
-    task: Annotated[TaskChoice | None, typer.Option("--task")] = None,
+    translated_srt: Annotated[
+        Path | None,
+        typer.Option(
+            "--translated-srt",
+            help="Use an externally translated English SRT for subtitle rendering and English TTS.",
+        ),
+    ] = None,
     language: Annotated[str | None, typer.Option("--language")] = None,
     device: Annotated[DeviceChoice | None, typer.Option("--device")] = None,
     compute_type: Annotated[str | None, typer.Option("--compute-type")] = None,
     video_encoder: Annotated[EncoderChoice | None, typer.Option("--video-encoder")] = None,
-    translation_batch_size: Annotated[
-        int | None, typer.Option("--translation-batch-size", min=1)
-    ] = None,
     overwrite_srt: Annotated[
         bool | None, typer.Option("--overwrite-srt/--no-overwrite-srt")
     ] = None,
     skip_burn: Annotated[bool | None, typer.Option("--skip-burn/--no-skip-burn")] = None,
     enable_tts: Annotated[bool | None, typer.Option("--enable-tts/--no-enable-tts")] = None,
-    overwrite_tts: Annotated[
-        bool | None, typer.Option("--overwrite-tts/--no-overwrite-tts")
-    ] = None,
     tts_mode: Annotated[TTSModeChoice | None, typer.Option("--tts-mode")] = None,
     tts_generation_mode: Annotated[
         GenerationChoice | None, typer.Option("--tts-generation-mode")
@@ -237,7 +229,7 @@ def process_command(
     ] = None,
     force: Annotated[
         list[ForceTarget] | None,
-        typer.Option("--force", help="Rebuild a repeatable pipeline target."),
+        typer.Option("--force", help="Regenerate the Vietnamese source transcription."),
     ] = None,
     events_json: Annotated[
         Path | None,
@@ -256,25 +248,19 @@ def process_command(
         raise typer.BadParameter("Use positional VIDEOS or --video, not both.")
     selected_video = legacy_video or (str(videos[0]) if videos and len(videos) == 1 else None)
     force_set = set(force or [])
-    if ForceTarget.all in force_set:
-        force_set.update({ForceTarget.transcription, ForceTarget.tts})
     overrides = {
         "project.root": str(root) if root else None,
         "project.video": selected_video,
         "project.model": model,
-        "project.translation_model": translation_model,
         "hardware.device": device,
         "hardware.compute_type": compute_type,
         "hardware.video_encoder": video_encoder,
-        "transcription.task": task,
         "transcription.language": language,
-        "transcription.translation_batch_size": translation_batch_size,
         "transcription.overwrite_srt": True
         if ForceTarget.transcription in force_set
         else overwrite_srt,
         "transcription.skip_burn": skip_burn,
         "tts.enabled": enable_tts,
-        "tts.overwrite": True if ForceTarget.tts in force_set else overwrite_tts,
         "tts.mode": tts_mode,
         "tts.generation_mode": tts_generation_mode,
         "tts.rerun_chunk": rerun_tts_chunk,
@@ -296,23 +282,18 @@ def process_command(
         overrides,
         explicit=ctx.get_parameter_source("config").name == "COMMANDLINE",
     )
-    if (
-        ForceTarget.tts in force_set
-        and ForceTarget.all not in force_set
-        and (not resolved.settings.tts.enabled or resolved.settings.transcription.skip_burn)
-    ):
-        raise typer.BadParameter("--force tts requires --enable-tts and --no-skip-burn.")
-    if ForceTarget.tts in force_set and resolved.settings.tts.rerun_chunk is not None:
-        raise typer.BadParameter("--force tts/all cannot be combined with --rerun-tts-chunk.")
-    if ForceTarget.transcription in force_set and resolved.settings.tts.enabled:
-        resolved.settings.tts.overwrite = True
     if save_config:
         if dry_run:
             state.consoles.out.print(f"[warning]Would save config:[/] {save_config.resolve()}")
         else:
             save_run_settings(resolved.settings, save_config)
     _run_processing(
-        state, resolved.settings, dry_run=dry_run, videos=videos, events_json=events_json
+        state,
+        resolved.settings,
+        dry_run=dry_run,
+        videos=videos,
+        translated_srt=translated_srt,
+        events_json=events_json,
     )
 
 
@@ -322,12 +303,13 @@ def _run_processing(
     *,
     dry_run: bool,
     videos: list[Path] | None = None,
+    translated_srt: Path | None = None,
     events_json: Path | None = None,
 ) -> None:
     from .application.processing import build_process_plan, execute_process_plan
 
     try:
-        plan = build_process_plan(settings, videos)
+        plan = build_process_plan(settings, videos, translated_srt)
     except (ValueError, OSError) as exc:
         if dry_run:
             raise
@@ -352,7 +334,28 @@ def _run_processing(
         table.add_column("Resolved value")
         table.add_row("Videos", "\n".join(str(item) for item in plan.videos))
         table.add_row("Model", str(plan.model))
-        table.add_row("Translation model", str(plan.translation_model or "disabled"))
+        table.add_row(
+            "Source subtitles",
+            "\n".join(
+                f"{'exists' if path.is_file() else 'missing'} · {path}"
+                for path in plan.source_srt_paths
+            ),
+        )
+        table.add_row(
+            "Translated subtitles",
+            "\n".join(
+                f"{'exists' if path.is_file() else 'missing'} · {path}"
+                for path in plan.translated_srt_paths
+            ),
+        )
+        table.add_row(
+            "Workflow",
+            "\n".join(
+                f"{video.name}: "
+                + ("render/TTS can proceed" if translated.is_file() else "translation handoff")
+                for video, translated in zip(plan.videos, plan.translated_srt_paths, strict=True)
+            ),
+        )
         table.add_row("Artifacts", "\n".join(str(path) for path in plan.artifacts))
         table.add_row(
             "Device / encoder",

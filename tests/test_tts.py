@@ -422,7 +422,7 @@ def test_review_log_contains_only_given_problems(tmp_path: Path) -> None:
     ) == (2, 1)
 
 
-def test_cache_boundary_group_owner_is_regenerated_with_target_chunk() -> None:
+def test_chunk_boundary_group_owner_is_regenerated_with_target_chunk() -> None:
     groups = build_tts_context_groups(
         [
             SubtitleSegment(299.0, 299.8, "Before boundary."),
@@ -433,7 +433,7 @@ def test_cache_boundary_group_owner_is_regenerated_with_target_chunk() -> None:
     assert _dependent_owner_chunks(groups, 300, 1) == {0, 1}
 
 
-def test_cache_boundary_group_is_written_once_at_original_starts(
+def test_chunk_boundary_group_is_written_once_at_original_starts(
     tmp_path: Path, monkeypatch
 ) -> None:
     import soundfile as sf
@@ -873,7 +873,7 @@ def test_chunk_boundary_rebuild_and_rerun_keep_each_sentence_once(tmp_path, monk
         for line in (tmp_path / "data/report/tts/test_tts_review.jsonl").read_text().splitlines()
     ]
     assert [entry["subtitle_index"] for entry in reviews] == [1, 2, 3, 4]
-    assert reviews[2]["timing_shift"] > 2.0  # Collision crosses cache owners.
+    assert reviews[2]["timing_shift"] > 2.0  # Collision crosses chunk owners.
     assert reviews[3]["timing_shift"] == 0.0
     for entry in reviews:
         index = entry["subtitle_index"]
@@ -882,15 +882,15 @@ def test_chunk_boundary_rebuild_and_rerun_keep_each_sentence_once(tmp_path, monk
         assert first_audio[last - 1] == pytest.approx(index / 10 + 0.01, abs=0.0001)
     calls.clear()
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
-    assert calls == []
-    assert loader.call_count == 1
+    assert calls == [0, 1, 2]
+    assert loader.call_count == 2
     np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], first_audio)
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs, rerun_chunk=1)
-    assert calls == [0, 1, 2]  # Includes boundary group's owner, each group exactly once.
+    assert calls == [0, 1, 2, 0, 1, 2]  # Explicit rerun includes the boundary owner.
     np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], first_audio)
 
 
-def test_old_cache_is_invalidated(tmp_path) -> None:
+def test_outdated_chunk_review_is_rejected(tmp_path) -> None:
     path = tmp_path / "chunk.review.jsonl"
     segment = SubtitleSegment(0, 1, "A")
     path.write_text('{"subtitle_index": 1, "action": "used_proportional_fallback"}\n')
@@ -1157,12 +1157,12 @@ def test_fricative_tail_stays_with_its_sentence_through_rebuild(tmp_path, monkey
     assert "\n  {" in reports.with_suffix(".pretty.json").read_text(encoding="utf-8")
     assert json.loads(reports.with_suffix(".pretty.json").read_text(encoding="utf-8")) == entries
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
-    assert model.generate_custom_voice.call_count == 1
+    assert model.generate_custom_voice.call_count == 2
     np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], audio)
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs, rerun_chunk=1)
-    assert model.generate_custom_voice.call_count == 2
-    chunks.synthesize_tts_audio_by_time_chunks(**kwargs, overwrite_all_chunks=True)
     assert model.generate_custom_voice.call_count == 3
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs, regenerate_all_chunks=True)
+    assert model.generate_custom_voice.call_count == 4
 
 
 @pytest.mark.parametrize("next_word_start", [0.65, 0.48])
@@ -1205,22 +1205,20 @@ def test_release_gap_for_nearby_non_overlapping_sentences():
     assert np.count_nonzero(audio[1000:1120]) == 0
 
 
-def test_legacy_audio_sidecars_regenerate_once_at_new_report_path(tmp_path, monkeypatch, caplog):
+def test_normal_chunk_runs_regenerate_without_provenance(tmp_path, monkeypatch, caplog):
     import soundfile as sf
-
-    from transcript_video.events import EventKind, RecordingObserver, event_scope
 
     paths = ProjectPaths.from_root(tmp_path)
     paths.create_dirs()
     output = paths.audio_dir / "legacy_tts.wav"
-    cache = paths.audio_dir / "legacy_tts_chunks"
-    cache.mkdir()
+    chunk_dir = paths.audio_dir / "legacy_tts_chunks"
+    chunk_dir.mkdir()
     segment = SubtitleSegment(0, 1, "old")
     entry = _entry(1, segment, 1)
     overlay_tts_items([(1, segment, np.full(1000, 0.7))], 1000, 2, reviews=[entry])
     entry["schema_version"] = 2
-    sf.write(cache / "legacy_tts_chunk_000.wav", np.full(1000, 0.7), 1000)
-    write_tts_review_log(cache / "legacy_tts_chunk_000.review.jsonl", [entry])
+    sf.write(chunk_dir / "legacy_tts_chunk_000.wav", np.full(1000, 0.7), 1000)
+    write_tts_review_log(chunk_dir / "legacy_tts_chunk_000.review.jsonl", [entry])
     model = mock.Mock()
     model.generate_custom_voice.return_value = ([np.full(1000, 0.2)], 1000)
     monkeypatch.setattr(chunks, "load_qwen_tts_model", lambda *args: model)
@@ -1228,7 +1226,7 @@ def test_legacy_audio_sidecars_regenerate_once_at_new_report_path(tmp_path, monk
     kwargs = dict(
         segments=[segment],
         audio_out=output,
-        chunks_dir=cache,
+        chunks_dir=chunk_dir,
         video_path=tmp_path / "video.mp4",
         tts_model_name="local",
         tts_language="English",
@@ -1242,14 +1240,9 @@ def test_legacy_audio_sidecars_regenerate_once_at_new_report_path(tmp_path, monk
         chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
     assert "regenerating safely" in caplog.text
     assert model.generate_custom_voice.call_count == 2
-    observer = RecordingObserver()
-    with event_scope(observer):
-        chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
-    assert any(
-        event.kind == EventKind.REUSED and event.context.operation == "chunks"
-        for event in observer.events
-    )
-    assert model.generate_custom_voice.call_count == 2
+    chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+    assert model.generate_custom_voice.call_count == 4
+    assert not list(tmp_path.rglob("*.provenance.json"))
     assert (paths.report_dir / "tts/legacy_tts_chunks/legacy_tts_chunk_000.review.jsonl").exists()
 
 
@@ -1270,14 +1263,10 @@ def test_pipeline_routes_reports_and_preserves_tts_modes(tmp_path, monkeypatch, 
     video.touch()
     (tmp_path / "model").mkdir()
     (tmp_path / "model/model.bin").touch()
-    write_srt([SubtitleSegment(0, 1, "one")], paths.subtitle_dir / "lesson_faster.srt")
-    from transcript_video.processing.provenance import subtitle_provenance, write_provenance
-
-    write_provenance(
-        paths.subtitle_dir / "lesson_faster.srt",
-        subtitle_provenance(video, tmp_path / "model", None, settings),
-    )
-    monkeypatch.setattr(pipeline, "get_model_filename_suffix", lambda *args: "faster")
+    source = paths.source_subtitle_dir / "lesson_vi_faster.srt"
+    translated = paths.translated_subtitle_dir / "lesson_en.srt"
+    write_srt([SubtitleSegment(0, 1, "nguồn")], source)
+    write_srt([SubtitleSegment(0, 1, "one")], translated)
     monkeypatch.setattr(pipeline, "burn_subtitles", mock.Mock())
     monkeypatch.setattr(pipeline, "mux_audio_into_video_replace", mock.Mock())
     generators = {
@@ -1290,7 +1279,7 @@ def test_pipeline_routes_reports_and_preserves_tts_modes(tmp_path, monkeypatch, 
     }
     for name, generator in generators.items():
         monkeypatch.setattr(pipeline, name, generator)
-    pipeline.process_video(video, tmp_path / "model", None, paths, settings)
+    pipeline.process_video(video, tmp_path / "model", source, translated, paths, settings)
     chosen = (
         "synthesize_tts_audio_by_time_chunks"
         if generation == "chunked"

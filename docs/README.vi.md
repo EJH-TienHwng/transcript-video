@@ -2,7 +2,7 @@
 
 [English](README.md) · [Tiếng Việt](README.vi.md)
 
-Transcript Video là pipeline chạy local, ưu tiên GPU để nhận dạng giọng nói, dịch tiếng Việt sang tiếng Anh, render phụ đề, tạo thuyết minh bằng Qwen TTS và ghép nhiều video thành một khóa học.
+Transcript Video là pipeline chạy local, ưu tiên GPU để nhận dạng tiếng Việt, dùng phụ đề tiếng Anh được dịch/chỉnh sửa bên ngoài, tạo thuyết minh bằng Qwen TTS và ghép nhiều video thành một khóa học.
 
 > Bản tiếng Anh là tài liệu chính được ưu tiên hiển thị trên GitHub. Bạn có thể đổi ngôn ngữ bằng liên kết phía trên.
 
@@ -30,14 +30,24 @@ uv run transcript-video process
 uv run transcript-video process lesson.mp4 --profile gpu-tts
 uv run transcript-video process lesson.mp4 --dry-run
 uv run transcript-video process lesson1.mp4 lesson2.mp4 lesson3.mp4
-uv run transcript-video process lesson.mp4 --enable-tts --force all
+uv run transcript-video process lesson.mp4 --translated-srt edits/lesson_en.srt
+uv run transcript-video process lesson.mp4 --force transcription
 uv run transcript-video doctor
 uv run transcript-video inspect data/input/lesson.mp4
 uv run transcript-video config show --sources
 uv run transcript-video config validate --profile gpu-tts
 ```
 
-Dry-run kiểm tra config, input path và kế hoạch thực thi nhưng không tạo folder, lưu config, load model AI hay chạy encode FFmpeg. `--force` nhận `transcription`, `tts`, `all`; force ưu tiên hơn cờ overwrite phủ định cũ. Transcription tạo lại cả translation và TTS downstream đang bật. Force TTS tạo lại mọi chunk, yêu cầu bật TTS và không skip burn; không dùng cùng rerun chunk. Không có cache nguồn ASR riêng nên bỏ target translation; render luôn chạy nên bỏ target render. Dry-run kiểm tra cả thư mục/định dạng model ASR và translation, không dùng suffix giả.
+Dry-run kiểm tra config, input, model ASR, output và riêng từng vai trò subtitle nhưng không tạo folder, lưu config, load model hay chạy FFmpeg. Nó hiển thị source/translated SRT đang tồn tại hay thiếu và video sẽ render hay dừng ở bước handoff. `--force transcription` chỉ tạo lại Vietnamese source SRT.
+
+## Handoff phụ đề bắt buộc
+
+1. Chạy `process VIDEO`. Whisper ghi Vietnamese source SRT do ứng dụng sở hữu tại `data/subtitles/source/<stem>_vi_<backend>.srt` nếu file chưa tồn tại.
+2. Gửi SRT đó cho LLM bên ngoài cùng [`prompts/optimal_prompt.md`](prompts/optimal_prompt.md).
+3. Lưu kết quả tiếng Anh đã chỉnh sửa tại `data/subtitles/translated/<stem>_en.srt`, hoặc dùng `--translated-srt PATH` khi xử lý một video.
+4. Chạy lại `process`. English SRT được dùng cho cả bước burn subtitle và Qwen TTS tiếng Anh, sau đó mux video cuối.
+
+Ứng dụng không tự dịch file này và transcription không bao giờ ghi vào `translated/`. Nếu thiếu English SRT, lệnh kết thúc bình thường sau khi tạo/tái sử dụng Vietnamese source SRT, báo rõ đường dẫn cần tạo và không load Qwen.
 
 Profile là file TOML không cần khai báo đủ mọi field, đặt tại `configs/profiles/<tên>.toml` hoặc truyền đường dẫn trực tiếp. Thứ tự ghi đè là: mặc định, config gốc, profile, rồi option CLI.
 
@@ -115,13 +125,13 @@ Các pytest marker gồm `integration`, `gpu`, `slow`; `just test-fast` loại c
     - [NVENC fallback sang libx264](#nvenc-fallback-sang-libx264)
     - [CUDA hết bộ nhớ](#cuda-hết-bộ-nhớ)
     - [Vẫn thấy CPU hoạt động](#vẫn-thấy-cpu-hoạt-động)
-    - [Artifact cũ bị tái sử dụng ngoài mong muốn](#artifact-cũ-bị-tái-sử-dụng-ngoài-mong-muốn)
+    - [Source subtitle cũ được tái sử dụng ngoài mong muốn](#source-subtitle-cũ-được-tái-sử-dụng-ngoài-mong-muốn)
 
 ## Chức năng
 
 - Nhận dạng giọng nói local bằng faster-whisper hoặc Hugging Face Whisper.
-- Dịch trực tiếp bằng Whisper hoặc dùng riêng VinAI để dịch tiếng Việt sang tiếng Anh.
-- Tạo, kiểm tra, làm sạch và tái sử dụng file SRT.
+- Tạo, kiểm tra, làm sạch và tái sử dụng Vietnamese source SRT theo sự tồn tại của file.
+- Handoff thủ công cho bước dịch/chỉnh sửa English SRT bên ngoài với quyền sở hữu tách biệt.
 - Render hard subtitle bằng FFmpeg.
 - Qwen3-TTS với các chế độ simple, timed, full và fixed chunk để dễ kiểm tra.
 - Thay thế hoặc trộn giọng TTS với audio gốc.
@@ -170,7 +180,7 @@ transcript-video/
 - Windows và Python theo `.python-version`.
 - Rất nên dùng NVIDIA GPU.
 - NVIDIA driver mới, tương thích với PyTorch CUDA 13.2 đã lock.
-- Model Whisper local và model VinAI/Qwen local nếu dùng các tính năng tương ứng.
+- Model Whisper local và model Qwen local nếu dùng TTS.
 
 Cài uv:
 
@@ -209,7 +219,6 @@ video_encoder = "auto"
 | --- | --- | --- |
 | faster-whisper ASR | CUDA INT8/FP16 | `compute_type = "int8_float16"` giữ phần không quantize ở FP16 và giảm bộ nhớ model. |
 | Hugging Face Whisper | CUDA FP16 | Transformers pipeline được đặt trên GPU 0. |
-| VinAI translation | CUDA FP16 | Trọng số model và batch token đều chuyển lên CUDA. |
 | Qwen3-TTS | CUDA FP16 | Model dùng `device_map="cuda:0"`. |
 | Encode H.264 cho subtitle/course | NVIDIA NVENC | `auto` kiểm tra `h264_nvenc` bằng một lần encode thật. |
 | Filter subtitle/libass | CPU | Subtitle renderer chuẩn của FFmpeg chạy CPU; bước encode cuối vẫn dùng NVENC. |
@@ -255,7 +264,6 @@ Lệnh chính tự động đọc [profile mặc định](../configs/transcripti
 root = "."
 model = "models/faster-whisper-large-v3"
 # video = "lesson-01.mp4"
-# translation_model = "models/vinai-translate-vi2en-v2"
 
 [hardware]
 device = "cuda"
@@ -263,15 +271,12 @@ compute_type = "int8_float16"
 video_encoder = "auto"
 
 [transcription]
-task = "transcribe"
 language = "vi"
-translation_batch_size = 8
 overwrite_srt = false
 skip_burn = false
 
 [tts]
 enabled = false
-overwrite = false
 mode = "timed"
 generation_mode = "chunked"
 model = "Qwen3-TTS-12Hz-1.7B-CustomVoice"
@@ -292,15 +297,13 @@ context_break_seconds = 3.0
 Giá trị từ CLI override TOML nhưng không sửa file:
 
 ```powershell
-uv run transcript-video --video lesson-02.mp4 --task translate --enable-tts
+uv run transcript-video process lesson-02.mp4 --translated-srt edits/lesson-02_en.srt --enable-tts
 ```
 
 Lưu profile hiệu lực, bao gồm các override:
 
 ```powershell
-uv run transcript-video `
-  --video lesson-02.mp4 `
-  --task translate `
+uv run transcript-video process lesson-02.mp4 `
   --enable-tts `
   --save-config configs/lesson-02.toml
 ```
@@ -308,7 +311,7 @@ uv run transcript-video `
 Dùng lại ở lần sau:
 
 ```powershell
-uv run transcript-video --config configs/lesson-02.toml
+uv run transcript-video process --config configs/lesson-02.toml
 ```
 
 ## Quy trình transcription
@@ -316,52 +319,49 @@ uv run transcript-video --config configs/lesson-02.toml
 Đặt video vào `data/input`, cấu hình đúng đường dẫn model rồi chạy:
 
 ```powershell
-uv run transcript-video
+uv run transcript-video process
 ```
 
 Chỉ xử lý một video:
 
 ```powershell
-uv run transcript-video --video lesson.mp4
+uv run transcript-video process lesson.mp4
 ```
 
 Chỉ tạo/tái sử dụng SRT, không render video:
 
 ```powershell
-uv run transcript-video --video lesson.mp4 --skip-burn
+uv run transcript-video process lesson.mp4 --skip-burn
 ```
 
 Tạo lại SRT đã tồn tại:
 
 ```powershell
-uv run transcript-video --video lesson.mp4 --overwrite-srt
+uv run transcript-video process lesson.mp4 --force transcription
 ```
 
 Dùng chuỗi language rỗng để Whisper tự nhận diện ngôn ngữ:
 
 ```powershell
-uv run transcript-video --language ""
+uv run transcript-video process lesson.mp4 --language ""
 ```
 
-Khi dùng VinAI riêng, Whisper sẽ transcribe ngôn ngữ nguồn trước, sau đó VinAI dịch từng batch subtitle:
+Hãy dịch và chỉnh sửa Vietnamese SRT bên ngoài bằng [`prompts/optimal_prompt.md`](prompts/optimal_prompt.md), lưu vào English path được báo, rồi chạy lại:
 
 ```powershell
-uv run transcript-video `
-  --video lesson.mp4 `
-  --task translate `
-  --translation-model models/vinai-translate-vi2en-v2
+uv run transcript-video process lesson.mp4
 ```
 
-SRT chỉ được tái sử dụng khi provenance của input/config/model khớp và không bật `overwrite_srt`.
-Cache cũ thiếu provenance sẽ tạo lại một lần. Sửa text thủ công vẫn được giữ nếu provenance
-nguồn/config khớp; fingerprint TTS theo dõi nội dung đã sửa.
+Source SRT đang tồn tại được tái sử dụng chỉ dựa vào sự tồn tại của file. Thay đổi model/config
+không tự invalidate file. `--force transcription` chỉ tạo lại source và giữ nguyên từng byte của
+English SRT. File provenance cũ bị bỏ qua và có thể xóa thủ công.
 
 ## Quy trình TTS
 
 Bật thuyết minh tiếng Anh:
 
 ```powershell
-uv run transcript-video --video lesson.mp4 --task translate --enable-tts
+uv run transcript-video process lesson.mp4 --enable-tts
 ```
 
 Chế độ `chunked` được khuyến nghị. Nó tạo các cửa sổ thời gian cố định để kiểm tra, giữ một khoảng tail an toàn tại biên chunk, rồi dựng lại WAV bằng cách overlay theo timeline. Sau khi nghe kiểm tra, tạo lại một chunk với index bắt đầu từ 0:
@@ -384,18 +384,18 @@ Các option quan trọng:
 - `tts.context_break_seconds`: chỉ khoảng nghỉ lớn hơn mức này mới ngắt ngữ cảnh âm học.
 
 TTS timed align mỗi context bằng model faster-whisper đã cấu hình, rồi đặt từng câu đã tách về
-gần timestamp bắt đầu trong SRT nhất có thể, dịch câu khi cần để tránh chồng giọng. Các lỗi cần kiểm tra thủ công được ghi vào
+gần timestamp bắt đầu trong English SRT nhất có thể, dịch thời điểm câu khi cần để tránh chồng giọng. Các lỗi cần kiểm tra thủ công được ghi vào
 `data/report/tts/<video>_tts_review.jsonl`; lời nói không bị âm thầm cắt ngắn.
 
 JSONL giữ một object trên mỗi dòng. Bản dễ đọc có đuôi `.pretty.json` nằm cùng thư mục.
 Metadata chunk nằm tại `data/report/tts/<video>_tts_chunks/`; WAV vẫn ở `data/audio/`.
-Cache cũ cạnh WAV được giữ nguyên nhưng không tái sử dụng: chương trình log và regenerate an toàn
-một lần. `--force tts` tạo lại toàn bộ; rerun chunk vẫn xử lý cả owner của context vượt biên.
+Sidecar cũ cạnh WAV bị bỏ qua. Lần chạy bình thường tạo lại mọi TTS chunk; rerun chunk rõ ràng
+vẫn xử lý cả owner của context vượt biên và dựng lại từ các chunk còn lại.
 Padding cuối 180 ms có guard bảo vệ onset câu sau; release gap tối thiểu là 120 ms.
 Boundary không an toàn vẫn sinh riêng sentence, không hard-trim speech.
 
 Video list giữ thứ tự nhập, bỏ path trùng lặp sau lần đầu, hỗ trợ filename trong `data/input`
-và absolute path. Hai file khác nhau trùng stem sẽ bị từ chối vì dùng chung tên output/cache.
+và absolute path. Hai file khác nhau trùng stem sẽ bị từ chối vì dùng chung tên output.
 Không truyền video vẫn dùng `project.video` nếu đã cấu hình, nếu không sẽ scan `data/input`.
 Doctor đọc `.python-version`, cảnh báo nếu pin thiếu/sai và kiểm tra quyền ghi `data/report`.
 
@@ -435,7 +435,8 @@ Mọi đường dẫn tương đối trong JSON được resolve từ repository
 
 | Artifact | Vị trí mặc định |
 | --- | --- |
-| SRT | `data/subtitles/<video>_<model>.srt` |
+| Vietnamese source SRT (ứng dụng sở hữu) | `data/subtitles/source/<video>_vi_<backend>.srt` |
+| English translated SRT (người dùng sở hữu) | `data/subtitles/translated/<video>_en.srt` |
 | Video có hard subtitle | `data/output/<video>_vi-dub_en-sub.mp4` |
 | WAV TTS hoàn chỉnh | `data/audio/<video>_tts.wav` |
 | Chunk TTS để kiểm tra | `data/audio/<video>_tts_chunks/` |
@@ -481,7 +482,6 @@ Runtime probe đã thất bại. Nguyên nhân thường gặp gồm NVIDIA driv
 ### CUDA hết bộ nhớ
 
 - Đóng ứng dụng khác đang dùng GPU.
-- Giảm `translation_batch_size`.
 - Giữ `compute_type = "int8_float16"` để giảm VRAM của faster-whisper.
 - Dùng TTS chunked mode.
 - Dùng model nhỏ hơn nếu có.
@@ -494,9 +494,9 @@ và thời gian truyền CPU/GPU. Chưa benchmark offload với model thật.
 
 Đây là hành vi bình thường. Decode media, raster subtitle bằng libass, FFmpeg filter, AAC audio, vẽ card bằng Pillow, file I/O và ghép waveform bằng NumPy vẫn dùng CPU. Phần inference model nặng và encode H.264 được hỗ trợ mới là những phần được đưa sang GPU.
 
-### Artifact cũ bị tái sử dụng ngoài mong muốn
+### Source subtitle cũ được tái sử dụng ngoài mong muốn
 
-Dùng `--overwrite-srt` hoặc `--overwrite-tts`. Với TTS chunked, dùng `--rerun-tts-chunk INDEX` để chỉ tạo lại chunk cần thiết.
+Dùng `--force transcription`. Mỗi lần chạy TTS bình thường sẽ tạo lại TTS; `--rerun-tts-chunk INDEX` chỉ dành cho debug/rerun chọn lọc rõ ràng.
 
 ## Cập nhật QA và an toàn artifact
 
@@ -512,9 +512,9 @@ Review v4 có từ thiếu/thừa, `missing_final_word`, coverage và edit ratio
 Mọi speed-up thực tế có REVIEW và được đếm trong `speed_adjusted`. Report duration ghi nguồn,
 WAV, MP4 và delta; không cắt speech để bằng thời lượng nguồn.
 
-SRT/WAV/MP4 được ghi tạm rồi atomic replace. Manifest cấu hình mới ngăn reuse sai speaker/instruct;
-chunk rerun vẫn giữ owner context vượt biên. `[subtitle_style]` có validation, mặc định vẫn
+SRT/WAV/MP4 được ghi tạm rồi atomic replace. Không còn provenance/fingerprint hay automatic
+cache invalidation; chunk rerun vẫn giữ owner context vượt biên. `[subtitle_style]` có validation, mặc định vẫn
 `MarginV=25`. FA2 là tùy chọn và fallback SDPA khi không hỗ trợ; không thêm SoX.
-Chi tiết schema/cache và cách lọc câu speed-up nằm trong [README](../README.md#tts-review-reports).
+Chi tiết review và cách lọc câu speed-up nằm trong [README](../README.md#tts-review-reports).
 Các mục phát âm/prosody, giọng nhất quán và natural pauses vẫn cần nghe thủ công;
 xem [giới hạn kiểm chứng](quality-validation.md) và [TODO](todo.md).

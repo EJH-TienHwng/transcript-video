@@ -124,7 +124,7 @@ not be validated, and audio quality/output equivalence on that checkpoint is
 not claimed:
 
 ```powershell
-uv run transcript-video -v process test.mp4 --force tts
+uv run transcript-video -v process test.mp4 --enable-tts
 ```
 
 Once the checkpoint/input are available, this remains the final manual check

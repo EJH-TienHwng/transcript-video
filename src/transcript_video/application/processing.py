@@ -26,8 +26,9 @@ class ProcessPlan:
     root: Path
     paths: ProjectPaths
     model: Path
-    translation_model: Path | None
     videos: tuple[Path, ...]
+    source_srt_paths: tuple[Path, ...]
+    translated_srt_paths: tuple[Path, ...]
     artifacts: tuple[Path, ...]
 
 
@@ -41,18 +42,17 @@ class RunSummary:
     errors: tuple[Exception, ...] = ()
 
 
-def build_process_plan(settings: RunSettings, videos: Sequence[Path] | None = None) -> ProcessPlan:
+def build_process_plan(
+    settings: RunSettings,
+    videos: Sequence[Path] | None = None,
+    translated_srt: Path | None = None,
+) -> ProcessPlan:
     from .settings import validate_settings
 
     validate_settings(settings)
     root = Path(settings.project.root).expanduser().resolve()
     paths = ProjectPaths.from_root(root)
     model = _from_root(root, settings.project.model)
-    translation = (
-        _from_root(root, settings.project.translation_model)
-        if settings.project.translation_model
-        else None
-    )
     requested = videos or ([Path(settings.project.video)] if settings.project.video else [])
     selected: list[Path] = []
     for video in requested:
@@ -81,23 +81,48 @@ def build_process_plan(settings: RunSettings, videos: Sequence[Path] | None = No
         stems[video.stem.casefold()] = video
     if not model.is_dir():
         raise FileNotFoundError(f"Model folder not found: {model}")
-    if translation is not None and not translation.is_dir():
-        raise FileNotFoundError(f"Translation model folder not found: {translation}")
-    suffix = get_model_filename_suffix(model, translation)
+    suffix = get_model_filename_suffix(model)
+    if translated_srt is not None and len(resolved_videos) != 1:
+        raise ValueError("--translated-srt can only be used when processing one video.")
+    source_srt_paths = tuple(
+        paths.source_subtitle_dir / f"{video.stem}_vi_{suffix}.srt" for video in resolved_videos
+    )
+    translated_srt_paths = tuple(
+        translated_srt.expanduser().resolve()
+        if translated_srt is not None
+        else paths.translated_subtitle_dir / f"{video.stem}_en.srt"
+        for video in resolved_videos
+    )
+    for source_srt_path, translated_srt_path in zip(
+        source_srt_paths, translated_srt_paths, strict=True
+    ):
+        if source_srt_path.resolve() == translated_srt_path.resolve():
+            raise ValueError("Source and translated subtitle paths must be different.")
     for variable in ("TRANSCRIPT_VIDEO_FFMPEG", "TRANSCRIPT_VIDEO_FFPROBE"):
         configured = os.environ.get(variable)
         if configured and not Path(configured).expanduser().is_file():
             raise FileNotFoundError(f"{variable} does not point to a file: {configured}")
     artifacts = tuple(
         artifact
-        for video in resolved_videos
-        for artifact in _artifacts_for(video, suffix, paths, settings)
+        for video, source_srt_path, translated_srt_path in zip(
+            resolved_videos, source_srt_paths, translated_srt_paths, strict=True
+        )
+        for artifact in _artifacts_for(video, source_srt_path, translated_srt_path, paths, settings)
     )
     for artifact in artifacts:
         parent = next(p for p in artifact.parents if p.exists())
         if artifact.is_dir() or not parent.is_dir():
             raise ValueError(f"Invalid output path: {artifact}")
-    return ProcessPlan(settings, root, paths, model, translation, resolved_videos, artifacts)
+    return ProcessPlan(
+        settings,
+        root,
+        paths,
+        model,
+        resolved_videos,
+        source_srt_paths,
+        translated_srt_paths,
+        artifacts,
+    )
 
 
 def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = None) -> RunSummary:
@@ -113,14 +138,20 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
         configure_binary_path(plan.root)
         if not plan.model.is_dir():
             raise FileNotFoundError(f"Model folder not found: {plan.model}")
-        if plan.translation_model is not None and not plan.translation_model.is_dir():
-            raise FileNotFoundError(f"Translation model folder not found: {plan.translation_model}")
-        for position, video in enumerate(plan.videos, 1):
+        for position, (video, source_srt_path, translated_srt_path) in enumerate(
+            zip(
+                plan.videos,
+                plan.source_srt_paths,
+                plan.translated_srt_paths,
+                strict=True,
+            ),
+            1,
+        ):
             with log_context(
                 video=video.name, stage="video", operation=None, chunk=None, subtitle=None
             ):
-                stages = ["subtitles"]
-                if not plan.settings.transcription.skip_burn:
+                stages = ["source subtitles", "translated subtitles"]
+                if translated_srt_path.is_file() and not plan.settings.transcription.skip_burn:
                     stages += ["render"] + (["tts", "mux"] if plan.settings.tts.enabled else [])
                 video_started = time.perf_counter()
                 emit(
@@ -135,7 +166,8 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
                     process_video(
                         video,
                         plan.model,
-                        plan.translation_model,
+                        source_srt_path,
+                        translated_srt_path,
                         plan.paths,
                         plan.settings,
                         observer,
@@ -172,9 +204,13 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
 
 
 def _artifacts_for(
-    video: Path, suffix: str, paths: ProjectPaths, settings: RunSettings
+    video: Path,
+    source_srt_path: Path,
+    translated_srt_path: Path,
+    paths: ProjectPaths,
+    settings: RunSettings,
 ) -> list[Path]:
-    artifacts = [paths.subtitle_dir / f"{video.stem}_{suffix}.srt"]
+    artifacts = [source_srt_path, translated_srt_path]
     if not settings.transcription.skip_burn:
         artifacts.append(paths.output_dir / f"{video.stem}_vi-dub_en-sub.mp4")
     if settings.tts.enabled and not settings.transcription.skip_burn:

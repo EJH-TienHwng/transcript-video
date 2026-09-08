@@ -26,7 +26,6 @@ DEFAULT_CONFIG_PATH = Path("configs/transcription.toml")
 DEFAULT_MODEL_PATH = "models/faster-whisper-large-v3"
 DEFAULT_TTS_MODEL = "models/Qwen3-TTS-12Hz-1.7B-CustomVoice"
 MODEL_FILENAME_SUFFIXES = {"faster-whisper": "faster", "huggingface": "huggingface"}
-TRANSLATION_MODEL_FILENAME_SUFFIXES = {"vinai-translate": "vinai"}
 
 
 @dataclass(slots=True)
@@ -41,7 +40,6 @@ class ProjectSettings:
     root: str = "."
     video: str | None = None
     model: str = DEFAULT_MODEL_PATH
-    translation_model: str | None = None
 
 
 @dataclass(slots=True)
@@ -53,9 +51,7 @@ class HardwareSettings:
 
 @dataclass(slots=True)
 class TranscriptionSettings:
-    task: str = "transcribe"
     language: str = "vi"
-    translation_batch_size: int = 8
     overwrite_srt: bool = False
     skip_burn: bool = False
 
@@ -63,7 +59,6 @@ class TranscriptionSettings:
 @dataclass(slots=True)
 class TTSSettings:
     enabled: bool = False
-    overwrite: bool = False
     mode: str = "timed"
     generation_mode: str = "chunked"
     rerun_chunk: int | None = None
@@ -165,6 +160,8 @@ class ProjectPaths:
     root: Path
     input_dir: Path
     subtitle_dir: Path
+    source_subtitle_dir: Path
+    translated_subtitle_dir: Path
     audio_dir: Path
     output_dir: Path
     temp_dir: Path
@@ -177,6 +174,8 @@ class ProjectPaths:
             root=root,
             input_dir=data_root / "input",
             subtitle_dir=data_root / "subtitles",
+            source_subtitle_dir=data_root / "subtitles" / "source",
+            translated_subtitle_dir=data_root / "subtitles" / "translated",
             audio_dir=data_root / "audio",
             output_dir=data_root / "output",
             temp_dir=data_root / "temp",
@@ -193,6 +192,8 @@ class ProjectPaths:
         for folder in (
             self.input_dir,
             self.subtitle_dir,
+            self.source_subtitle_dir,
+            self.translated_subtitle_dir,
             self.audio_dir,
             self.output_dir,
             self.temp_dir,

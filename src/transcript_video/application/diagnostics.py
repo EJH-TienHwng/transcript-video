@@ -83,9 +83,6 @@ def run_doctor(settings: RunSettings) -> list[Check]:
         checks.append(Check("ffprobe", False, str(exc)))
     model = _from_root(root, settings.project.model)
     checks.append(Check("Transcription model", model.is_dir(), str(model)))
-    if settings.project.translation_model:
-        translation = _from_root(root, settings.project.translation_model)
-        checks.append(Check("Translation model", translation.is_dir(), str(translation)))
     if settings.tts.enabled:
         supported, detail = flash_attention_status(settings.hardware.device)
         checks.append(Check("FlashAttention 2 (optional)", supported, detail, required=False))
@@ -93,7 +90,7 @@ def run_doctor(settings: RunSettings) -> list[Check]:
         checks.append(Check("TTS model", tts_model.is_dir(), str(tts_model)))
         checks.append(
             Check(
-                "TTS cache",
+                "TTS output directory",
                 _writable(
                     next(p for p in (paths.audio_dir, *paths.audio_dir.parents) if p.exists())
                 ),
@@ -107,7 +104,15 @@ def run_doctor(settings: RunSettings) -> list[Check]:
                 f"{settings.tts.generation_mode} / {settings.tts.mode}; {settings.tts.language}; {settings.tts.speaker}",
             )
         )
-    for name in ("input_dir", "subtitle_dir", "audio_dir", "output_dir", "temp_dir", "report_dir"):
+    for name in (
+        "input_dir",
+        "source_subtitle_dir",
+        "translated_subtitle_dir",
+        "audio_dir",
+        "output_dir",
+        "temp_dir",
+        "report_dir",
+    ):
         folder = getattr(paths, name)
         parent = next((item for item in (folder, *folder.parents) if item.exists()), root)
         checks.append(Check(f"Writable {name}", _writable(parent), str(folder)))

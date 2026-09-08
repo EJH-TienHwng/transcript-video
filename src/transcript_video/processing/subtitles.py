@@ -31,6 +31,24 @@ BAD_PHRASES = [
 # Vietnamese phrases above are matching data, not user-facing interface text.
 
 
+def plan_legacy_translated_subtitle_migration(
+    subtitle_dir: Path,
+) -> list[tuple[Path, Path]]:
+    """Plan non-recursive legacy English SRT moves without overwriting anything."""
+    translated_dir = subtitle_dir / "translated"
+    plan = [
+        (source, translated_dir / f"{source.stem.removesuffix('_faster')}_en.srt")
+        for source in sorted(subtitle_dir.glob("*.srt"))
+    ]
+    destinations = [destination.resolve() for _, destination in plan]
+    if len({str(path).casefold() for path in destinations}) != len(destinations):
+        raise ValueError("Multiple legacy subtitles resolve to the same translated destination.")
+    existing = next((path for path in destinations if path.exists()), None)
+    if existing is not None:
+        raise FileExistsError(f"Translated subtitle destination already exists: {existing}")
+    return plan
+
+
 def format_timestamp(seconds: float | None) -> str:
     if seconds is None or seconds < 0:
         seconds = 0.0

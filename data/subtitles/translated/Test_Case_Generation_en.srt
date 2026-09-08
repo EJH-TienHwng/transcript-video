@@ -1,0 +1,479 @@
+1
+00:00:00,000 --> 00:00:02,500
+Hello everyone.
+
+2
+00:00:02,500 --> 00:00:09,500
+In this session, I will demo how to generate Testcase using GitHub Copilot.
+
+3
+00:00:12,000 --> 00:00:16,500
+To use this feature, I first need a Test Workspace Folder.
+
+4
+00:00:16,500 --> 00:00:21,000
+This folder is for the item for which I need to generate Testcase.
+
+5
+00:00:21,000 --> 00:00:24,000
+I will go to Testing Support.
+
+6
+00:00:24,000 --> 00:00:27,000
+Here, I will have two options.
+
+7
+00:00:27,000 --> 00:00:31,000
+The first option is to create a Test Workspace Folder for an item.
+
+8
+00:00:31,000 --> 00:00:38,000
+The second option is to create a Test Workspace Folder for a list of other items.
+
+9
+00:00:38,000 --> 00:00:41,500
+I will demo the first option first.
+
+10
+00:00:41,500 --> 00:00:45,000
+I will choose One Item here.
+
+11
+00:00:46,000 --> 00:00:50,000
+Here, I will have three types of information.
+
+12
+00:00:50,000 --> 00:00:54,000
+The first information is the database path.
+
+13
+00:00:54,000 --> 00:01:00,000
+This folder path contains the database loaded from the Stream or Snapshot.
+
+14
+00:01:00,000 --> 00:01:03,000
+The second information is the workspace path.
+
+15
+00:01:03,000 --> 00:01:06,000
+I will create a blank folder.
+
+16
+00:01:06,000 --> 00:01:13,000
+I will use this folder path to store the outputs generated while the tool is running.
+
+17
+00:01:15,000 --> 00:01:17,000
+The third information is the item name.
+
+18
+00:01:17,000 --> 00:01:23,000
+This is the item for which I need to create the Test Workspace Folder.
+
+19
+00:01:23,000 --> 00:01:30,000
+After filling in these three fields, I will click Generate Environment.
+
+20
+00:01:39,000 --> 00:01:45,000
+After this step is complete, the tool will show a notification.
+
+21
+00:01:46,000 --> 00:01:51,000
+At the same time, Visual Studio Code will open automatically.
+
+22
+00:01:51,000 --> 00:01:56,000
+It will import the Test Workspace Folder for the item.
+
+23
+00:01:58,000 --> 00:02:01,000
+Here, I will have the source file.
+
+24
+00:02:01,000 --> 00:02:10,000
+I will also have two files: test.cpp and test.h.
+
+25
+00:02:11,000 --> 00:02:17,000
+Besides, I can use the Open output feature.
+
+26
+00:02:17,000 --> 00:02:24,000
+It will open the Test Workspace Folder for the item I need to create.
+
+27
+00:02:38,000 --> 00:02:42,000
+For the second option, I will choose List Item.
+
+28
+00:02:42,000 --> 00:02:45,000
+I also have three important pieces of information.
+
+29
+00:02:45,000 --> 00:02:47,000
+The first is the database path.
+
+30
+00:02:47,000 --> 00:02:51,000
+The second is the workspace path.
+
+31
+00:02:51,000 --> 00:02:56,000
+The third is the List Items path.
+
+32
+00:02:56,000 --> 00:03:03,000
+I will have an Excel file containing the item name and item path information.
+
+33
+00:03:03,000 --> 00:03:09,000
+This identifies the items for which Test Workspace Folders need to be created.
+
+34
+00:03:12,000 --> 00:03:16,000
+Then I will take the path of this file.
+
+35
+00:03:17,000 --> 00:03:23,000
+I will enter it into the List Items path field.
+
+36
+00:03:23,000 --> 00:03:27,000
+Then I will click Generate Environment.
+
+37
+00:03:55,000 --> 00:04:03,000
+After this step is complete, choose Open output.
+
+38
+00:04:03,000 --> 00:04:11,000
+Then we will see the workspace folder created inside Item list.
+
+39
+00:04:12,000 --> 00:04:19,000
+After creating the Test Workspace Folder for the item, we need to create a testcase.
+
+40
+00:04:19,000 --> 00:04:24,000
+We choose Generate Test Case by A.I. Copilot.
+
+41
+00:04:24,000 --> 00:04:27,000
+Here, I have two fields.
+
+42
+00:04:27,000 --> 00:04:29,000
+The first one is the item path.
+
+43
+00:04:29,000 --> 00:04:36,000
+I will go to the Test Workspace Folder for the item that needs test cases generated.
+
+44
+00:04:36,000 --> 00:04:38,000
+For example, this item.
+
+45
+00:04:38,000 --> 00:04:43,000
+I will copy the path of this file.
+
+46
+00:04:43,000 --> 00:04:51,000
+After that, I will enter the first piece of information.
+
+47
+00:04:51,000 --> 00:04:54,000
+The next one is the database path.
+
+48
+00:04:54,000 --> 00:04:57,000
+This is just like the previous step.
+
+49
+00:04:57,000 --> 00:05:05,000
+I will also enter the folder containing the database.
+
+50
+00:05:05,000 --> 00:05:10,000
+Then I will click Auto Define Object.
+
+51
+00:05:10,000 --> 00:05:15,000
+While the tool is running, we can view detailed information.
+
+52
+00:05:15,000 --> 00:05:19,000
+Click Show Execution Log to display it.
+
+53
+00:05:19,000 --> 00:05:22,000
+A Terminal window will appear.
+
+54
+00:05:22,000 --> 00:05:28,000
+It will show detailed information while the tool is running.
+
+55
+00:09:41,360 --> 00:09:44,860
+After Auto Define Object is complete, we will go to the next step.
+
+56
+00:09:44,860 --> 00:09:47,360
+The next step is Prepare Get SUTs.
+
+57
+00:10:02,360 --> 00:10:07,360
+In the pop-up, we will see that it found three SUT functions.
+
+58
+00:10:07,360 --> 00:10:11,360
+The dropdown is also updated.
+
+59
+00:10:11,360 --> 00:10:18,360
+We can see the three functions listed here.
+
+60
+00:10:18,360 --> 00:10:23,360
+We will select one of the three functions for which we want to generate a test case.
+
+61
+00:10:23,360 --> 00:10:25,360
+Next, we will have two options.
+
+62
+00:10:25,360 --> 00:10:31,360
+The first option is to generate a test case for the selected function.
+
+63
+00:10:31,360 --> 00:10:38,360
+The second option is to generate test cases for all functions in this item.
+
+64
+00:10:38,360 --> 00:10:46,360
+To make the running process easier to observe, we will open Visual Studio Code.
+
+65
+00:10:46,360 --> 00:10:52,360
+Then we will import the Test Workspace Folder for the item.
+
+66
+00:10:58,360 --> 00:11:02,360
+Now we will demonstrate the first option.
+
+67
+00:11:03,360 --> 00:11:10,360
+To generate a test case for one function, we choose Generate one SUT.
+
+68
+00:11:11,360 --> 00:11:16,360
+We can see that the trigger to generate the testcase is sent here.
+
+69
+00:11:17,360 --> 00:11:23,360
+We will see the information in Visual Studio Code.
+
+70
+00:11:23,360 --> 00:11:28,360
+We will go to Output and choose GitHub Copilot Chat.
+
+71
+00:11:28,360 --> 00:11:33,360
+The generation process information will be shown in this Terminal.
+
+72
+00:11:35,360 --> 00:11:39,360
+We will see a notification when test generation is complete.
+
+73
+00:11:39,360 --> 00:11:44,360
+At that point, the generation process is done.
+
+74
+00:11:44,360 --> 00:11:48,360
+Next, we will click Terminal.
+
+75
+00:11:48,360 --> 00:11:50,360
+We will build this test.
+
+76
+00:12:06,360 --> 00:12:11,360
+Here, we have eight Testcases, and all eight Testcases have passed.
+
+77
+00:12:11,360 --> 00:12:16,360
+Next, we will check the code coverage.
+
+78
+00:12:16,360 --> 00:12:20,360
+Then we will proceed to build Cantata for this test.
+
+79
+00:12:20,360 --> 00:12:23,360
+We will click Build Cantata here.
+
+80
+00:12:54,360 --> 00:13:01,360
+After Build Cantata is complete, we will check the Test Workspace Folder.
+
+81
+00:13:01,360 --> 00:13:08,360
+Inside the Output folder, there is a Cantata folder.
+
+82
+00:13:10,360 --> 00:13:12,360
+We will open Cantata.
+
+83
+00:13:12,360 --> 00:13:14,360
+Click Tools.
+
+84
+00:13:14,360 --> 00:13:16,360
+Then we will go to the C folder.
+
+85
+00:13:18,360 --> 00:13:21,360
+Choose TCC.
+
+86
+00:13:22,360 --> 00:13:24,360
+Go to Tools.
+
+87
+00:13:24,360 --> 00:13:26,360
+Go to Cantata.
+
+88
+00:13:26,360 --> 00:13:29,360
+Then we will open this tool.
+
+89
+00:13:36,360 --> 00:13:41,360
+We will create a C Project in Cantata.
+
+90
+00:13:53,360 --> 00:13:59,360
+We will name the project after the item name.
+
+91
+00:14:07,860 --> 00:14:14,360
+We will drag the Cantata folder into the new project we just created in Cantata.
+
+92
+00:14:20,360 --> 00:14:26,360
+I will click this .cov file.
+
+93
+00:14:26,360 --> 00:14:30,360
+Then I will open this file.
+
+94
+00:14:33,360 --> 00:14:39,360
+Here, I can see that the code for the first function is green.
+
+95
+00:14:39,360 --> 00:14:43,360
+This means that these lines of code have been covered.
+
+96
+00:14:43,360 --> 00:14:47,360
+These red lines are still not covered.
+
+97
+00:14:55,360 --> 00:15:02,360
+Then I will demonstrate the second option, Generate Testcase All SUT.
+
+98
+00:15:02,360 --> 00:15:09,360
+Before clicking this Generate button, I will delete the newly created Testcases.
+
+99
+00:15:13,360 --> 00:15:17,360
+This prevents duplication in the next run.
+
+100
+00:15:27,360 --> 00:15:30,360
+Then I will click Generate Testcase All SUT.
+
+101
+00:15:30,360 --> 00:15:34,360
+This will create Testcases for all functions in this item.
+
+102
+00:17:27,360 --> 00:17:34,360
+After generating the testcases for all three functions in this item, I will build Cantata.
+
+103
+00:17:34,360 --> 00:17:41,360
+In this step, we can click Build Cantata to build in the tool.
+
+104
+00:17:41,360 --> 00:17:48,360
+Or we can build Cantata from Visual Studio Code.
+
+105
+00:17:48,360 --> 00:17:52,360
+I go to Terminal and select Run Task....
+
+106
+00:17:52,360 --> 00:17:55,360
+Then I select Cantata++ coverage measurement.
+
+107
+00:18:11,360 --> 00:18:14,860
+In the Terminal section, I can see the values.
+
+108
+00:18:14,860 --> 00:18:18,360
+The code coverage has reached 100%.
+
+109
+00:18:18,360 --> 00:18:21,360
+We will go to Cantata.
+
+110
+00:18:21,360 --> 00:18:27,360
+We will see that the code has 100% coverage.
+
+111
+00:18:27,360 --> 00:18:35,360
+I will gradually drag the Cantata folder into the project.
+
+112
+00:18:36,360 --> 00:18:38,360
+This is in the Cantata tool.
+
+113
+00:18:50,280 --> 00:18:54,860
+Here, we can see that the code in all three functions is already covered.
+
+114
+00:18:54,860 --> 00:19:00,860
+Therefore, their color changes to green.
+
+115
+00:19:08,360 --> 00:19:12,360
+Now we click Cantata and choose View.
+
+116
+00:19:12,360 --> 00:19:17,360
+Then choose Report Viewer to view this report.
+
+117
+00:19:17,360 --> 00:19:22,360
+We can view the test report here.
+
+118
+00:19:22,360 --> 00:19:27,360
+We can also see the coverage here.
+
+119
+00:19:32,360 --> 00:19:34,360
+This is the end of my demonstration.
+
+120
+00:19:34,360 --> 00:19:37,360
+Thank you for watching.

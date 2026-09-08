@@ -186,6 +186,14 @@ def test_live_unknown_total_plain_and_no_color(width):
     console = Console(file=stream, theme=THEME, width=width, force_terminal=True, no_color=True)
     with RichProgressObserver(console) as observer:
         observer.notify(PipelineEvent(PipelineStage.RUN, "Start", total=3, kind=EventKind.START))
+        observer.notify(
+            PipelineEvent(
+                PipelineStage.VIDEO,
+                "Video",
+                kind=EventKind.START,
+                details={"stages": ["source subtitles", "translated subtitles", "render"]},
+            )
+        )
         observer.notify(PipelineEvent(PipelineStage.TTS, "Loading Qwen", kind=EventKind.START))
         console.print(observer.render())
         assert observer.progress.tasks[observer.stage_task].total is None

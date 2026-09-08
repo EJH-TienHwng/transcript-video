@@ -318,7 +318,9 @@ class RichProgressObserver:
             "failed": "error",
         }
         order = {stage.value: index for index, stage in enumerate(PipelineStage)}
-        for name, state in sorted(self.state.stages.items(), key=lambda item: order[item[0]]):
+        for name, state in sorted(
+            self.state.stages.items(), key=lambda item: order.get(item[0], len(order))
+        ):
             detail = state.message
             if state.speed:
                 detail += f" · {state.speed}"

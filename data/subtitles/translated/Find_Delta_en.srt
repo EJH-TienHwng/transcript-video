@@ -1,42 +1,42 @@
 1
-00:00:00,000 --> 00:00:11,000
-Hello everyone. In this section, I will guide you on the basic steps to find Delta using the GTest Automation tool.
+00:00:00,000 --> 00:00:01,200
+Hello everyone.
 
 2
+00:00:01,320 --> 00:00:11,000
+In this section, I will guide you on the basic steps to find Delta using the GTest Automation tool.
+
+3
 00:00:11,000 --> 00:00:15,000
 First, I will open this tool.
 
-3
+4
 00:00:21,000 --> 00:00:30,000
 At the main interface, I will navigate to Analysis Support, and select Check Delta from Database, SharePoint.
 
-4
+5
 00:00:30,000 --> 00:00:38,000
 Here, you will see the fields to fill in with the necessary information for the tool to operate.
 
-5
+6
 00:00:38,000 --> 00:00:41,000
 The first is the Analyze path.
 
-6
+7
 00:00:41,000 --> 00:00:48,000
 Here, I will provide the file path of the file that contains the modules I need to analyze.
 
-7
+8
 00:00:48,000 --> 00:00:51,000
 In this step, I will have two options.
 
-8
+9
 00:00:51,000 --> 00:00:55,000
 The first option is to use File Analysis.
 
-9
-00:00:55,000 --> 00:00:59,000
-This File Analysis is the result of
-
 10
-00:00:59,000 --> 00:01:05,000
-the report file generated from the TPA Report Generation tool.
+00:00:55,000 --> 00:01:05,000
+This File Analysis is the result of the report file generated from the TPA Report Generation tool.
 
 11
 00:01:05,000 --> 00:01:08,000
@@ -58,1130 +58,894 @@ Here, I will use a template file to fill in the basic information of the module 
 00:01:24,000 --> 00:01:28,000
 Then, I will input the path of that file into the tool.
 
-17
+16
 00:01:31,000 --> 00:01:34,000
 Now, I will demo the first option.
 
-18
+17
 00:01:34,000 --> 00:01:43,000
 I will input the path of the analysis.
 
-19
+18
 00:01:43,000 --> 00:01:50,000
 Here, I have a File Analysis generated from the TPA Report Generation tool.
 
-20
+19
 00:01:50,000 --> 00:01:56,000
 It contains many modules across various components, including both tested and untested modules.
 
-21
+20
 00:01:56,000 --> 00:02:04,000
 The tool will process the modules whose MTVerdict value is "Undefined".
 
-22
+21
 00:02:04,000 --> 00:02:09,000
 The tool will support us to analyze those modules.
 
-23
+22
 00:02:17,000 --> 00:02:24,500
 Now, I copy the path of this file, then paste it into the first field (Analyze path).
 
-25
+23
 00:02:25,000 --> 00:02:28,000
 The second part is the database path.
 
-26
+24
 00:02:28,000 --> 00:02:32,000
 This is the path of the folder that contains the database.
 
+25
+00:02:32,000 --> 00:02:40,000
+Whether loading using Snapshot or Stream to our local machine using the Shar CC tool.
+
+26
+00:02:40,000 --> 00:02:45,000
+Here is the database, the folder is "DaihatsuCMP".
+
 27
-00:02:32,000 --> 00:02:36,000
-Whether loading using Snapshot or Stream
-
-28
-00:02:36,000 --> 00:02:40,000
-to our local machine using the Shar CC tool.
-
-29
-00:02:40,000 --> 00:02:43,000
-Here is the database,
-
-30
-00:02:43,000 --> 00:02:45,000
-the folder is "DaihatsuCMP".
-
-31
 00:02:46,000 --> 00:02:49,000
 I will copy this path and input it into the tool here.
 
-32
-00:02:51,000 --> 00:02:53,000
-Next, I will create a folder here,
+28
+00:02:51,000 --> 00:02:56,000
+Next, I will create a folder here, and named it "WorkSpace_1".
 
-33
-00:02:53,000 --> 00:02:56,000
-and named it "WorkSpace_1".
-
-34
+29
 00:02:56,000 --> 00:03:03,000
 This folder will contain the files and documents generated during the tool's running process.
 
-36
+30
 00:03:05,000 --> 00:03:09,000
 Here, I have created the "WorkSpace_1" folder.
 
-37
+31
 00:03:09,000 --> 00:03:14,000
 At the same time, I also put the File Analysis into this folder.
 
-38
+32
 00:03:14,000 --> 00:03:18,000
 I will copy the path of this folder.
 
-39
+33
 00:03:21,000 --> 00:03:24,000
 Next is the Switch Setting part.
 
-40
+34
 00:03:24,000 --> 00:03:35,000
 This refers to the CSV file generated in the build config process using the tool Shar CC.
 
-42
-00:03:35,000 --> 00:03:39,000
-I will navigate to the database,
+35
+00:03:35,000 --> 00:03:51,000
+I will navigate to the database, go to Gen, select the corresponding config, then select Build, and I will grab the path of this file, the SwitchSettings CSV file.
 
-43
-00:03:39,000 --> 00:03:41,000
-go to Gen,
-
-44
-00:03:41,000 --> 00:03:43,000
-select the corresponding config,
-
-45
-00:03:43,000 --> 00:03:45,000
-then select Build,
-
-46
-00:03:45,000 --> 00:03:48,000
-and I will grab the path of this file,
-
-47
-00:03:48,000 --> 00:03:51,000
-the SwitchSettings CSV file.
-
-48
+36
 00:03:53,000 --> 00:03:56,000
 Then I will input this path here.
 
-49
+37
 00:03:59,000 --> 00:04:03,000
 Next, I will adjust the parallel threads.
 
-50
+38
 00:04:03,000 --> 00:04:07,000
 Here, I will have a maximum of 8 threads.
 
-51
-00:04:09,000 --> 00:04:12,000
-By choosing the corresponding number,
+39
+00:04:09,000 --> 00:04:17,000
+By choosing the corresponding number, We can help this tool process faster.
 
-52
-00:04:12,000 --> 00:04:17,000
-We can help this tool process faster.
-
-53
+40
 00:04:18,000 --> 00:04:21,000
 It corresponds to the Parallel Threads of this tool.
 
-54
-00:04:21,000 --> 00:04:28,000
-The Tool Development Team, they defined the maximum threads as 8,
+41
+00:04:21,000 --> 00:04:31,000
+The Tool Development Team, they defined the maximum threads as 8, so I will choose the maximum value of 8 here.
 
-56
-00:04:28,000 --> 00:04:31,000
-so I will choose the maximum value of 8 here.
-
-57
+42
 00:04:31,000 --> 00:04:35,000
 Then I will click Create Delta File.
 
-58
+43
 00:04:43,000 --> 00:04:52,000
 This is the result after the first step.
 
-59
-00:04:52,000 --> 00:04:56,000
-Here I have 3 types of modules:
+44
+00:04:52,000 --> 00:05:00,000
+Here I have 3 types of modules: Old, Old and no code, New.
 
-60
-00:04:56,000 --> 00:05:00,000
-Old, Old and no code, New.
-
-61
+45
 00:05:00,000 --> 00:05:03,000
 The result is also shown here.
 
-62
-00:05:03,000 --> 00:05:06,000
-Relative to New, Old, and NoCode,
+46
+00:05:03,000 --> 00:05:12,000
+Relative to New, Old, and NoCode, the number 28 corresponds to New, 16 is Old, and 8 is NoCode.
 
-63
-00:05:06,000 --> 00:05:09,000
-The number 28 corresponds to New,
-
-64
-00:05:09,000 --> 00:05:12,000
-16 is Old, and 8 is NoCode.
-
-65
+47
 00:05:12,000 --> 00:05:15,000
 I can observe the running process of the tool.
 
-66
+48
 00:05:15,000 --> 00:05:22,000
 I can open the Terminal here.
 
-67
+49
 00:05:22,000 --> 00:05:28,000
 To make it easier to observe, I will split the screen into 2 parts.
 
-68
-00:05:28,000 --> 00:05:33,000
-To see the detailed results of the modules,
+50
+00:05:28,000 --> 00:05:46,000
+To see the detailed results of the modules, I will go to the "WorkSpace_1" folder, then I will go to Output, and select Open Module Info.
 
-69
-00:05:33,000 --> 00:05:39,000
-I will go to the "WorkSpace_1" folder,
-
-70
-00:05:39,000 --> 00:05:41,000
-then I will go to Output,
-
-71
-00:05:41,000 --> 00:05:46,000
-and select Open Module Info.
-
-72
+51
 00:05:46,000 --> 00:05:54,000
 Here, I will see all the modules listed.
 
-73
-00:05:54,000 --> 00:05:57,000
-I have New modules,
+52
+00:05:54,000 --> 00:06:04,000
+I have New modules, Old modules, and the rest are Old and no code.
 
-74
-00:05:57,000 --> 00:06:00,000
-Old modules,
+53
+00:06:04,000 --> 00:06:20,000
+The "New" type here refers to the modules that do not have test scripts in the database that we loaded from the Stream.
 
-75
-00:06:00,000 --> 00:06:04,000
-and the rest are Old and no code.
+54
+00:06:20,000 --> 00:06:28,000
+And the "Old" modules here are the ones that have test scripts and have been tested in the previous version.
 
-76
-00:06:04,000 --> 00:06:16,000
-The "New" type here refers to the modules that do not have test scripts in the database
+55
+00:06:28,000 --> 00:06:34,000
+Since they already exist in the current database, the tool will list them as "Old".
 
-78
-00:06:16,000 --> 00:06:20,000
-that we loaded from the Stream.
+56
+00:06:34,000 --> 00:06:42,000
+And the "Old and no code" modules are the ones that have the TPA file, and testing is done.
 
-79
-00:06:20,000 --> 00:06:24,000
-And the "Old" modules here are the ones that have test scripts
-
-80
-00:06:24,000 --> 00:06:28,000
-and have been tested in the previous version.
-
-81
-00:06:28,000 --> 00:06:31,000
-Since they already exist in the current database,
-
-83
-00:06:31,000 --> 00:06:34,000
-the tool will list them as "Old".
-
-84
-00:06:34,000 --> 00:06:40,000
-And the "Old and no code" modules are the ones that have the TPA file,
-
-85
-00:06:40,000 --> 00:06:42,000
-and testing is done.
-
-86
+57
 00:06:42,000 --> 00:06:44,000
 Those are Old and no code.
 
-87
+58
 00:06:44,000 --> 00:06:51,000
 The tool helps me to list these modules as Old and no code.
 
-88
+59
 00:06:51,000 --> 00:06:59,000
 Then, I close this file.
 
-89
+60
 00:06:59,000 --> 00:07:03,000
 First, I will handle the "Old" modules.
 
-90
+61
 00:07:03,000 --> 00:07:05,000
 Here I choose "Old".
 
-91
+62
 00:07:05,000 --> 00:07:09,000
 I have 16 modules that are "Old".
 
-92
+63
 00:07:09,000 --> 00:07:12,000
 Next, I will click Create Folder.
 
-93
+64
 00:07:12,000 --> 00:07:19,000
 This creates the test folder for these modules.
 
-94
+65
 00:08:24,000 --> 00:08:29,220
 After step 1, a notification window will appear.
 
-95
-00:08:29,220 --> 00:08:32,360
-Once the Create Folder step is complete,
+66
+00:08:29,220 --> 00:08:35,440
+Once the Create Folder step is complete, we will move to the next step, which is Build Test.
 
-96
-00:08:32,360 --> 00:08:35,440
-we will move to the next step, which is Build Test.
-
-97
+67
 00:08:35,440 --> 00:08:45,440
 Here, the tool will help build the test folder using the test scripts copied from the database.
 
-98
+68
 00:09:04,000 --> 00:09:08,440
 After completing step 2, the tool will report the result here.
 
-99
+69
 00:09:08,440 --> 00:09:12,440
 "Coverage has been automatically collected for all modules."
 
-100
-00:09:12,440 --> 00:09:16,440
-To see the result,
+70
+00:09:12,440 --> 00:09:18,440
+To see the result, we go to files.
 
-101
-00:09:16,440 --> 00:09:18,440
-we go to files.
-
-102
+71
 00:09:18,440 --> 00:09:22,440
 We go to Module Info.
 
-103
+72
 00:09:22,440 --> 00:09:24,440
 Here is the result.
 
-104
+73
 00:09:24,440 --> 00:09:28,440
 We have data like this.
 
-105
+74
 00:09:28,440 --> 00:09:31,440
 First is Success.
 
-106
+75
 00:09:31,440 --> 00:09:36,440
 The second is Failed.
 
-107
-00:09:36,440 --> 00:09:38,440
-When we check the results,
+76
+00:09:36,440 --> 00:09:45,440
+When we check the results, we will see the successful modules with C0, C1, and MCDC coverage at 100% here.
 
-108
-00:09:38,440 --> 00:09:45,440
-we will see the successful modules with C0, C1, and MCDC coverage at 100% here.
-
-110
+77
 00:09:45,440 --> 00:09:50,940
 And here we have the modules that have Failed.
 
-111
+78
 00:09:50,940 --> 00:09:54,440
 Currently, we have failed modules listed here.
 
-112
+79
 00:09:54,440 --> 00:10:00,440
 These failed modules will be handled in the next steps.
 
-113
+80
 00:10:00,440 --> 00:10:03,440
 We will test these files.
 
-114
+81
 00:10:03,440 --> 00:10:19,440
 For the failed modules, we will use the Auto Define Object feature to resolve them.
 
-115
+82
 00:10:19,440 --> 00:10:24,440
 We will click on this button for the 15 failed modules.
 
-117
-00:10:24,440 --> 00:10:30,440
-In this step, the tool will support us in finding the missing objects
+83
+00:10:24,440 --> 00:10:37,440
+In this step, the tool will support us in finding the missing objects in the header files of the test script copied from the database into the newly created folder.
 
-118
-00:10:30,440 --> 00:10:37,440
-in the header files of the test script copied from the database into the newly created folder.
-
-121
+84
 00:10:50,440 --> 00:10:56,440
 Here we can see the number of failed modules out of the total number of modules.
 
-123
+85
 00:10:56,440 --> 00:10:59,440
 Currently, we have 15 failed modules.
 
-124
+86
 00:10:59,440 --> 00:11:02,440
 In total, there are 16 modules.
 
-125
+87
 00:11:07,440 --> 00:11:11,440
 After complete Auto Define Object, we will check the status.
 
-127
+88
 00:11:11,440 --> 00:11:16,440
 Successful is 14, Fail is 1, Total is 15.
 
-130
+89
 00:11:16,440 --> 00:11:23,440
 After that, we will proceed to Prepair Get SUTs for the failed modules.
 
-132
-00:12:01,440 --> 00:12:25,440
-After this step, the result will appear in this popup. I will have 15 successful, 0 failed, out of a total of 15.
+90
+00:12:01,440 --> 00:12:05,902
+After this step, the result will appear in this popup.
 
-133
+91
+00:12:06,022 --> 00:12:25,440
+I will have 15 successful, 0 failed, out of a total of 15.
+
+92
 00:12:25,440 --> 00:12:45,440
 Then I will go to the review step for the failed modules, to verify the results for the modules I have just fixed.
 
-134
+93
 00:13:34,440 --> 00:13:47,440
 After finishing the review, I now have 11 successful modules and 4 failed modules out of a total of 15.
 
-135
+94
 00:13:47,440 --> 00:13:58,440
 To see the details, I will open the Module Info file here.
 
-136
+95
 00:13:58,440 --> 00:14:04,440
 At the beginning, I only had 1 successful module and 15 failed modules.
 
-137
+96
 00:14:04,440 --> 00:14:17,440
 Currently, I have 12 successful modules with coverage results for C0, C1, and MCDC represented in 3 columns here.
 
-139
+97
 00:14:17,440 --> 00:14:25,440
 But I still have 4 failed modules.
 
-140
+98
 00:14:25,440 --> 00:14:31,440
 Here, the tool have successfully supported the "Old" modules.
 
-141
+99
 00:14:31,440 --> 00:14:35,440
 Now, I will move to the "New" modules here.
 
-142
+100
 00:14:35,440 --> 00:14:47,000
 Currently, these new modules do not have test scripts in my database because they weren't tested in the previous version.
 
-143
+101
 00:14:47,000 --> 00:14:51,440
 So, we will find the test scripts on the SharePoint database.
 
-144
+102
 00:14:51,440 --> 00:15:05,440
 We will search for the test scripts used for these modules in other version, projects, streams, or snapshots.
 
-145
+103
 00:15:05,440 --> 00:15:07,440
 We will find them on the SharePoint.
 
-146
+104
 00:15:07,440 --> 00:15:10,440
 Now, we close this file.
 
-147
+105
 00:15:16,440 --> 00:15:26,440
 Under the information column, you can see the SharePoint Link section.
 
-148
+106
 00:15:26,440 --> 00:15:35,440
 Next, I will paste the SharePoint link that holds the test script sources from our previous tasks into this field.
 
-149
+107
 00:15:44,440 --> 00:15:47,440
 This is the SharePoint of the UT Team.
 
-150
+108
 00:15:47,440 --> 00:15:53,440
 We have the folder for the test.
 
-151
+109
 00:15:53,440 --> 00:16:00,440
 Here we have the regions and the customers.
 
-152
+110
 00:16:00,440 --> 00:16:10,440
 Then we have the inner folder which contains the stream or the snapshot, if there is one.
 
-154
+111
 00:16:10,440 --> 00:16:15,440
 Then we have the build config folder, and the test environment folder.
 
-156
+112
 00:16:15,440 --> 00:16:21,440
 Inside the test environment folder, we have the test scripts for those modules.
 
-157
+113
 00:16:48,480 --> 00:16:54,440
 Then we'll take the SharePoint link which contains the database.
 
-158
+114
 00:16:54,440 --> 00:16:59,440
 Then we will put it into the tool.
 
-159
+115
 00:16:59,440 --> 00:17:08,440
 Then we will load the database.
 
-160
+116
 00:17:08,440 --> 00:17:14,440
 We select China or Japan based on the region you want.
 
-162
+117
 00:17:14,440 --> 00:17:18,440
 Here we have the customer project.
 
-163
-00:17:18,440 --> 00:17:22,440
-Right now I'm demoing the DMC project,
+118
+00:17:18,440 --> 00:17:26,440
+Right now I'm demoing the DMC project, so I'll choose DMC as the root folder.
 
-166
-00:17:22,440 --> 00:17:26,440
-so I'll choose DMC as the root folder.
+119
+00:17:26,440 --> 00:17:36,440
+Then, to analyze the new modules here, I'll choose "New" in the "Type Delta" field.
 
-167
-00:17:26,440 --> 00:17:32,440
-Then, to analyze the new modules here,
-
-170
-00:17:32,440 --> 00:17:36,440
-I'll choose "New" in the "Type Delta" field.
-
-171
+120
 00:17:36,440 --> 00:17:38,440
 Here we have 2 options.
 
-172
-00:17:38,440 --> 00:17:40,440
-The first option:
+121
+00:17:38,440 --> 00:17:44,440
+The first option: I'll search each module separately.
 
-173
-00:17:40,440 --> 00:17:44,440
-I'll search each module separately.
+122
+00:17:44,440 --> 00:17:54,440
+In this section, I have to fill in the information into the Module Name field, so I can find and search for that module.
 
-175
-00:17:44,440 --> 00:17:46,440
-In this section,
-
-176
-00:17:46,440 --> 00:17:50,440
-I have to fill in the information into the Module Name field,
-
-178
-00:17:50,440 --> 00:17:54,440
-so I can find and search for that module.
-
-180
+123
 00:17:54,440 --> 00:17:58,440
 Or I can choose Search New Module (SharePoint).
 
-182
+124
 00:17:58,440 --> 00:18:02,440
 Here I'll choose all the modules that has type New.
 
-184
+125
 00:18:02,440 --> 00:18:06,440
 It will list all the information for me at once.
 
-186
+126
 00:18:06,440 --> 00:18:10,440
 I'll go to select the first module.
 
-188
+127
 00:18:10,440 --> 00:18:14,440
 Here I have the new module.
 
-190
+128
 00:18:14,440 --> 00:18:20,440
 I'll choose the new module here.
 
-193
+129
 00:18:20,440 --> 00:18:28,440
 Then, I'll input the name of that module into Module Name.
 
-197
+130
 00:18:28,440 --> 00:18:32,440
 Then I'll click Search Files.
 
-199
-00:19:08,440 --> 00:19:32,440
-And here, after completing this step,
+131
+00:19:08,440 --> 00:19:39,440
+And here, after completing this step, I see that there are 4 tests completed for that module.
 
-200
-00:19:32,440 --> 00:19:39,440
-I see that there are 4 tests completed for that module.
-
-201
+132
 00:19:39,440 --> 00:19:45,440
 In that module, I have checked the test environment.
 
-202
+133
 00:19:45,440 --> 00:19:51,440
 The name of the stream and the snapshot, as well as the BB number, are displayed in these 3 columns.
 
-203
+134
 00:19:51,440 --> 00:19:59,440
 Now I will choose a test to refer to the current module.
 
-204
+135
 00:19:59,440 --> 00:20:01,440
 I will choose this one.
 
-205
+136
 00:20:01,440 --> 00:20:11,440
 I want to download the test script back, so I will create a folder for downloading.
 
-206
+137
 00:20:11,440 --> 00:20:16,440
 I have created a download sample folder here (SP_Download).
 
-207
+138
 00:20:16,440 --> 00:20:20,440
 In this folder, I will copy the folder path.
 
-208
+139
 00:20:20,440 --> 00:20:28,440
 Then I will right-click on the test that I want to download.
 
-209
+140
 00:20:28,440 --> 00:20:31,440
-Then I will choose the download folder,
+Then I will choose the download folder.
 
-210
+141
 00:20:31,440 --> 00:20:46,440
 I will go to the next step, which is to create a folder for that module.
 
-211
-00:20:55,000 --> 00:20:58,440
-In the workspace folder,
+142
+00:20:55,000 --> 00:21:07,440
+In the workspace folder, we will see the newly created folder for the module we just downloaded.
 
-212
-00:20:58,440 --> 00:21:01,440
-we will see the newly created folder
-
-213
-00:21:01,440 --> 00:21:07,440
-for the module we just downloaded.
-
-214
+143
 00:21:07,440 --> 00:21:12,440
 After that, I will build test for that module.
 
-215
+144
 00:21:28,440 --> 00:21:38,940
 To see the details, I open the Module Info file here.
 
-216
-00:21:38,940 --> 00:21:54,940
-Then I will see the module where I just downloaded the test Delta. The result after running the tool shows the status is Failed.
+145
+00:21:38,940 --> 00:21:44,524
+Then I will see the module where I just downloaded the test Delta.
 
-217
+146
+00:21:44,644 --> 00:21:54,940
+The result after running the tool shows the status is Failed.
+
+147
 00:21:54,940 --> 00:22:18,940
 Then the next step is to define the missing objects in that module.
 
-218
+148
 00:24:08,940 --> 00:24:17,940
 After this step, we will have a result here: successful is 4, failed is 1, and total is 5.
 
-219
+149
 00:24:22,940 --> 00:24:25,940
 Then we will go to the next step, Prepair Get SUTs.
 
-220
+150
 00:24:32,940 --> 00:24:37,940
 The result is successful is 5, total is 5.
 
-221
+151
 00:24:39,940 --> 00:24:44,940
 Then, we will go to another step, which is Rebuild Failed Modules to get the result of that module.
 
-222
+152
 00:24:48,940 --> 00:24:57,940
 After Rebuild Failed Module, we will have a result here.
 
-223
+153
 00:24:58,940 --> 00:25:02,940
 And to view detail info, we will go to the file Module Info here.
 
-224
+154
 00:25:03,940 --> 00:25:07,940
 The module that we selected earlier is here.
 
-225
-00:25:07,940 --> 00:25:13,940
-Now, it has been changed from FAIL to SUCCESS,
+155
+00:25:07,940 --> 00:25:26,940
+Now, it has been changed from FAIL to SUCCESS, correspond to C0, C1, and MCDC coverage, and this one.
 
-226
-00:25:13,940 --> 00:25:17,940
-correspond to C0, C1, and MCDC coverage,
-
-227
-00:25:17,940 --> 00:25:26,940
-and this one.
-
-228
+156
 00:25:26,940 --> 00:25:36,940
 After checking all the steps, I can see that there are still 4 modules that have failed.
 
-229
-00:25:36,940 --> 00:25:45,940
-Then I can choose the Delta or the test item,
+157
+00:25:36,940 --> 00:25:52,940
+Then I can choose the Delta or the test item, or the test module has been tested in this way.
 
-230
-00:25:45,940 --> 00:25:52,940
-or the test module has been tested in this way.
-
-231
+158
 00:25:52,940 --> 00:25:59,940
 Then I will download the test scripts from the previous version for those modules and build them again.
 
-232
+159
 00:25:59,940 --> 00:26:03,940
 And see the results again in this file.
 
-233
+160
 00:26:06,940 --> 00:26:11,940
 Here I have finished the demo for everyone.
 
-234
-00:26:11,940 --> 00:26:15,940
-About the first option in the case of Analyze Path,
+161
+00:26:11,940 --> 00:26:19,940
+About the first option in the case of Analyze Path, I input the information of the Analyze file here.
 
-235
-00:26:15,940 --> 00:26:19,940
-I input the information of the Analyze file here.
-
-236
+162
 00:26:19,940 --> 00:26:23,940
 Then after this step, I will demo another option.
 
-237
+163
 00:26:23,940 --> 00:26:27,940
 I will use a Module List file.
 
-238
+164
 00:26:27,940 --> 00:26:29,940
 What will it be like?
 
-239
+165
 00:26:29,940 --> 00:26:32,940
 I will close this file.
 
-240
+166
 00:26:36,940 --> 00:26:42,940
 To use another file, I will create another workspace folder.
 
-241
+167
 00:26:42,940 --> 00:26:45,940
 I call it "WorkSpace_2".
 
-242
+168
 00:26:45,940 --> 00:26:52,940
 Here I will have a file called Module List.
 
-243
+169
 00:26:52,940 --> 00:26:56,940
 Here I have a sheet called Merge Report.
 
-244
-00:26:56,940 --> 00:27:00,940
-Here I will define the files that contain the information,
+170
+00:26:56,940 --> 00:27:04,940
+Here I will define the files that contain the information, to provide data that the tool can work with.
 
-245
-00:27:00,940 --> 00:27:04,940
-to provide data that the tool can work with.
-
-246
+171
 00:27:04,940 --> 00:27:08,940
 You can see the instructions here.
 
-247
-00:27:08,940 --> 00:27:12,940
-The yellow sections contain the information the tool has to fill,
+172
+00:27:08,940 --> 00:27:16,940
+The yellow sections contain the information the tool has to fill, and the blue sections are the optional parts.
 
-248
-00:27:12,940 --> 00:27:16,940
-and the blue sections are the optional parts.
+173
+00:27:19,940 --> 00:27:30,940
+You can also see the information in the sheet example so that you can see the format of the data that needs to be filled in.
 
-249
-00:27:19,940 --> 00:27:24,940
-You can also see the information in the sheet example
-
-250
-00:27:24,940 --> 00:27:30,940
-so that you can see the format of the data that needs to be filled in.
-
-251
+174
 00:27:30,940 --> 00:27:32,940
 In this file, it is like this.
 
-252
-00:27:32,940 --> 00:27:37,940
-The data that we need to analyze have to be
+175
+00:27:32,940 --> 00:27:40,940
+The data that we need to analyze have to be be in the sheet merge report here.
 
-253
-00:27:37,940 --> 00:27:40,940
-be in the sheet merge report here.
+176
+00:27:40,940 --> 00:27:48,940
+Currently, I have a list of modules of the components listed here.
 
-254
-00:27:40,940 --> 00:27:43,940
-Currently, I have a list of modules
+177
+00:27:48,940 --> 00:27:56,940
+Then I will use this file to analyze the modules that need to find data.
 
-255
-00:27:43,940 --> 00:27:48,940
-of the components listed here.
-
-256
-00:27:48,940 --> 00:27:51,940
-Then I will use this file
-
-257
-00:27:51,940 --> 00:27:56,940
-to analyze the modules that need to find data.
-
-258
+178
 00:27:56,940 --> 00:27:58,940
 I will copy this list.
 
-259
+179
 00:27:58,940 --> 00:28:02,940
 Copy this file path.
 
-260
+180
 00:28:02,940 --> 00:28:08,940
 Then I will input it into the Analyze path.
 
-261
+181
 00:28:08,940 --> 00:28:14,940
 Then I will use the old database here.
 
-262
+182
 00:28:14,940 --> 00:28:22,940
-The workspace I will input here is Workspace 2. 
+The workspace I will input here is Workspace 2.
 
-264
-00:28:22,940 --> 00:28:24,940
-And the switch setting,
+183
+00:28:22,940 --> 00:28:27,940
+And the switch setting, I will use the same switch setting as before.
 
-265
-00:28:24,940 --> 00:28:27,940
-I will use the same switch setting as before.
-
-266
+184
 00:28:28,940 --> 00:28:31,940
 Here I will not change the switch setting.
 
-267
+185
 00:28:31,940 --> 00:28:38,940
 Then I will click on Create Delta File.
 
-268
+186
 00:28:38,940 --> 00:28:51,940
 In here, I will see the information.
 
-269
-00:28:51,940 --> 00:28:55,000
-After running, I will have 2 types of modules:
+187
+00:28:51,940 --> 00:28:57,940
+After running, I will have 2 types of modules: One is New and the other is Old.
 
-270
-00:28:55,000 --> 00:28:57,940
-One is New and the other is Old.
-
-271
+188
 00:28:57,940 --> 00:29:00,000
 You can see it here.
 
-272
+189
 00:29:00,000 --> 00:29:06,940
 Let's see the information here: New is 4, Old is 10.
 
-273
+190
 00:29:10,940 --> 00:29:13,940
 To see the information in detail, I will go to the Output folder.
 
-274
+191
 00:29:15,940 --> 00:29:17,940
 I will open the Module Info file here.
 
-275
+192
 00:29:20,940 --> 00:29:26,940
 Then I will see that there are 4 New modules and the remaining are Old, corresponding to 10 modules here.
 
-276
+193
 00:29:37,940 --> 00:29:42,940
 Here I have one more feature called Run All Steps.
 
-277
+194
 00:29:43,940 --> 00:29:52,940
 In this step, I will combine these 3 steps, I will run them continuously, so I no longer have to press each step separately.
 
-278
+195
 00:29:53,940 --> 00:29:56,940
 Now I will demo the Run All Steps feature.
 
-279
-00:29:57,940 --> 00:29:59,940
-It will include the Create Delta File step,
+196
+00:29:57,940 --> 00:30:02,940
+It will include the Create Delta File step, Create Folder, and Build Test.
 
-280
-00:30:00,940 --> 00:30:02,940
-Create Folder, and Build Test.
-
-281
+197
 00:30:09,940 --> 00:30:12,940
 At the same time, at this step, I will choose Old.
 
-282
+198
 00:30:13,940 --> 00:30:17,940
 To build test, it will build the Old modules for me.
 
-283
+199
 00:30:30,940 --> 00:30:32,940
 It is the same step, I will choose Old modules to be built.
 
-284
-00:33:11,940 --> 00:33:17,940
-After completing Run All Steps,
+200
+00:33:11,940 --> 00:33:21,940
+After completing Run All Steps, I check result in the Module Info file.
 
-285
-00:33:19,940 --> 00:33:21,940
-I check result in the Module Info file.
+201
+00:33:25,940 --> 00:33:42,220
+Here I will have 1 module that has Failed, and 9 successful modules with the results of C0, C1, and MCDC coverage like this.
 
-286
-00:33:25,940 --> 00:33:30,480
-Here I will have 1 module that has Failed,
-
-287
-00:33:33,660 --> 00:33:35,759
-and 9 successful modules
-
-288
-00:33:36,000 --> 00:33:42,220
-with the results of C0, C1, and MCDC coverage like this.
-
-290
+202
 00:33:42,220 --> 00:33:46,820
 The rest, I will have 4 modules that are New here.
 
-292
+203
 00:33:46,820 --> 00:33:50,440
 Next, I will handle these New modules.
 
-293
+204
 00:33:55,940 --> 00:34:00,820
-I will switch to New,
+I will switch to New.
 
-294
-00:34:00,820 --> 00:34:09,059
-At Type Delta field, we'll switch to New. Then I will select the relevant information
+205
+00:34:00,820 --> 00:34:04,446
+At Type Delta field, we'll switch to New.
 
-295
-00:34:09,059 --> 00:34:11,780
-in the SharePoint's information.
+206
+00:34:04,566 --> 00:34:11,780
+Then I will select the relevant information in the SharePoint's information.
 
-296
+207
 00:34:11,780 --> 00:34:18,119
 In this step, I will demo how to search for new modules on the SharePoint.
 
-297
-00:34:18,119 --> 00:34:21,000
-That is, I will search all the modules
+208
+00:34:18,119 --> 00:34:25,940
+That is, I will search all the modules that have the type of New listed in the Excel file just now.
 
-298
-00:34:21,000 --> 00:34:25,940
-that have the type of New listed in the Excel file just now.
-
-300
+209
 00:34:25,940 --> 00:34:31,000
 I have 4 modules that need to be searched for data on the SharePoint.
 
-301
-00:34:42,000 --> 00:34:45,000
-While waiting for the tool to run,
+210
+00:34:42,000 --> 00:34:54,000
+While waiting for the tool to run, I will create a folder for downloading the scripts from the SharePoint.
 
-302
-00:34:45,000 --> 00:34:54,000
-I will create a folder for downloading the scripts from the SharePoint.
+211
+00:34:54,000 --> 00:34:59,940
+I have created a folder like this, then I will copy the folder path.
 
-305
-00:34:54,000 --> 00:34:56,000
-I have created a folder like this,
+212
+00:34:59,940 --> 00:35:05,940
+After running, I will see that there are 4 modules that have been found.
 
-306
-00:34:56,000 --> 00:34:59,940
-then I will copy the folder path.
-
-307
-00:34:59,940 --> 00:35:03,940
-After running, I will see that there are 4 modules
-
-308
-00:35:03,940 --> 00:35:05,940
-that have been found.
-
-309
+213
 00:35:05,940 --> 00:35:09,940
 I found that there are test scripts on the SharePoint.
 
-310
+214
 00:35:13,940 --> 00:35:22,940
 Here, there will be modules tested using the GTest or Cantata environment.
 
-313
-00:35:27,940 --> 00:35:33,940
-Now, we will select the modules that have GTest
+215
+00:35:27,940 --> 00:35:35,940
+Now, we will select the modules that have GTest as their test environment.
 
-316
-00:35:33,940 --> 00:35:35,940
-as their test environment.
-
-317
+216
 00:35:35,940 --> 00:35:37,940
 So, I will choose these.
 
-318
-00:35:37,940 --> 00:35:41,240
-First I choose this one,
+217
+00:35:37,940 --> 00:35:44,139
+First I choose this one, next is this one.
 
-319
-00:35:41,240 --> 00:35:44,139
-next is this one,
-
-320
+218
 00:35:48,940 --> 00:35:51,440
-Now, I'm going to download these 2 modules
+Now, I'm going to download these 2 modules.
 
-321
+219
 00:35:51,440 --> 00:35:54,940
 Again, go back to my existing output.
 
-322
+220
 00:35:54,940 --> 00:36:20,179
 Then I will choose Create Folder for these two modules.
 
-323
+221
 00:36:50,179 --> 00:36:55,179
 Check again.
 
-324
+222
 00:36:55,179 --> 00:37:00,179
 Next is the other module.
 
-325
+223
 00:37:41,179 --> 00:37:44,179
 And then I will build test for this module.
 
-326
+224
 00:38:01,179 --> 00:38:13,179
 After completing the build test, I will check the result.
 
-327
-00:38:15,179 --> 00:38:16,179
-
-
-328
+225
 00:38:16,179 --> 00:38:22,179
 I'm going to Output -> Module Info to check the result of that module.
 
-329
+226
 00:38:28,179 --> 00:38:46,179
 For this Failed module, I can use Auto Define Object, then use Prepair Get SUTs, and then build the module again, like the first demo.
 
-330
+227
 00:39:20,179 --> 00:39:26,179
 After running Auto Define Object, I will have a successful result.
 
-331
-00:39:26,179 --> 00:39:28,179
-The successful result is 1,
+228
+00:39:26,179 --> 00:39:30,179
+The successful result is 1, out of a total of 1 module.
 
-332
-00:39:28,179 --> 00:39:30,179
-out of a total of 1 module.
+229
+00:39:30,179 --> 00:39:38,179
+After that, I will go to the step of Prepair Get SUTs for the failed module.
 
-333
-00:39:30,179 --> 00:39:34,179
-After that, I will go to the step of Prepair Get SUTs.
+230
+00:39:54,179 --> 00:39:59,179
+Then I will go to the next step, which is Rebuild Failed Modules.
 
-334
-00:39:34,179 --> 00:39:38,179
-for the failed module.
-
-335
-00:39:54,179 --> 00:39:57,179
-Then I will go to the next step,
-
-336
-00:39:57,179 --> 00:39:59,179
-which is Rebuild Failed Modules.
-
-337
+231
 00:40:21,179 --> 00:40:26,179
 I will see the detailed results in the Module Info file.
 
-338
-00:40:26,179 --> 00:40:28,179
-Then I will open this file,
+232
+00:40:26,179 --> 00:40:36,179
+Then I will open this file, and I will see that my result is here.
 
-339
-00:40:28,179 --> 00:40:36,179
-and I will see that my result is here.
-
-340
+233
 00:40:36,179 --> 00:40:41,179
 Then it will be successful for this module.
 
-341
+234
 00:40:41,179 --> 00:40:45,179
 The result of C0 and C1 is 100%.
 
-342
+235
 00:40:45,179 --> 00:40:54,179
 The result of MCDC is 88%.
 
-343
+236
 00:40:54,179 --> 00:40:58,179
 That's all.
 
-344
+237
 00:41:05,179 --> 00:41:17,179
-So that completes my demo on finding Delta modules in Unit Testing using the Gtest Automation Tool. 
+So that completes my demo on finding Delta modules in Unit Testing using the Gtest Automation Tool.
 
-346
+238
 00:41:17,179 --> 00:41:21,179
 Thank you for following my demo.

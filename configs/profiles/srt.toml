@@ -1,4 +1,4 @@
-# Inherit ASR/translation language and models from the base configuration.
+# Generate/reuse the Vietnamese source SRT, then stop before rendering.
 [transcription]
 skip_burn = true
 

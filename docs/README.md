@@ -2,7 +2,7 @@
 
 [English](README.md) · [Tiếng Việt](README.vi.md)
 
-Transcript Video is a local, GPU-first pipeline for speech transcription, optional Vietnamese-to-English translation, subtitle rendering, Qwen TTS voice-over, and course-video compilation.
+Transcript Video is a local, GPU-first pipeline for Vietnamese speech transcription, externally translated English subtitles, Qwen TTS voice-over, and course-video compilation.
 
 > This English guide is the canonical documentation. The Vietnamese version is available through the language link above.
 
@@ -30,14 +30,24 @@ uv run transcript-video process
 uv run transcript-video process lesson.mp4 --profile gpu-tts
 uv run transcript-video process lesson.mp4 --dry-run
 uv run transcript-video process lesson1.mp4 lesson2.mp4 lesson3.mp4
-uv run transcript-video process lesson.mp4 --enable-tts --force all
+uv run transcript-video process lesson.mp4 --translated-srt edits/lesson_en.srt
+uv run transcript-video process lesson.mp4 --force transcription
 uv run transcript-video doctor
 uv run transcript-video inspect data/input/lesson.mp4
 uv run transcript-video config show --sources
 uv run transcript-video config validate --profile gpu-tts
 ```
 
-Dry-run performs configuration, input-path, and execution-plan validation, but does not create directories, save config, load AI models, or start FFmpeg encoding. `--force` is repeatable and accepts `transcription`, `tts`, and `all`; force wins over negative overwrite flags. Transcription rebuilds ASR, configured translation and enabled downstream TTS; TTS force regenerates every chunk and requires enabled TTS with rendering. Full force and selective chunk reruns are incompatible. Translation has no independent source cache, and rendering always runs, so neither is exposed as a force target. Dry-run also validates ASR/translation model directories and formats instead of inventing a suffix.
+Dry-run validates configuration, inputs, the ASR model, output paths, and both subtitle roles without creating directories, saving config, loading models, or running FFmpeg. It reports whether each source/translated SRT exists and whether processing can render or will stop at the translation handoff. `--force transcription` rebuilds only the Vietnamese source SRT.
+
+## Required subtitle handoff
+
+1. Run `process VIDEO`. Whisper writes the application-owned Vietnamese SRT to `data/subtitles/source/<stem>_vi_<backend>.srt` when it does not already exist.
+2. Send that SRT to an external LLM with [`prompts/optimal_prompt.md`](prompts/optimal_prompt.md).
+3. Save the edited English SRT as `data/subtitles/translated/<stem>_en.srt`, or supply `--translated-srt PATH` for a single video.
+4. Rerun `process`. The translated English SRT is used for both subtitle burn and English Qwen TTS, then the result is muxed.
+
+The application never translates this file and transcription never writes under `translated/`. If it is missing, the command finishes cleanly after producing/reusing the Vietnamese source SRT and reports the expected path. Qwen is not loaded.
 
 Profiles are partial TOML files in `configs/profiles/<name>.toml` (or an explicit TOML path). Effective values resolve in this order: defaults, base config, profile, then command-line overrides.
 
@@ -119,13 +129,13 @@ Pytest markers are `integration`, `gpu`, and `slow`; `just test-fast` excludes a
     - [NVENC falls back to libx264](#nvenc-falls-back-to-libx264)
     - [CUDA out of memory](#cuda-out-of-memory)
     - [CPU activity is still visible](#cpu-activity-is-still-visible)
-    - [Existing artifacts are unexpectedly reused](#existing-artifacts-are-unexpectedly-reused)
+    - [Existing source subtitles are unexpectedly reused](#existing-source-subtitles-are-unexpectedly-reused)
 
 ## Capabilities
 
 - Local ASR with faster-whisper or Hugging Face Whisper.
-- Direct Whisper translation or a separate VinAI Vietnamese-to-English translation stage.
-- SRT generation, validation, cleanup, and reuse.
+- Vietnamese source SRT generation, validation, cleanup, and file-existence reuse.
+- Manual external English translation/editing handoff with distinct artifact ownership.
 - Hard-subtitle rendering with FFmpeg.
 - Qwen3-TTS simple, timed, full, and reviewable fixed-chunk generation modes.
 - Original-audio replacement or mixing.
@@ -174,7 +184,7 @@ transcript-video/
 - Windows and Python pinned in `.python-version`.
 - An NVIDIA GPU is strongly recommended.
 - A recent NVIDIA driver compatible with the locked CUDA 13.2 PyTorch wheels.
-- Local Whisper model files and, when used, local VinAI/Qwen model files.
+- Local Whisper model files and a local Qwen model when TTS is enabled.
 
 Install uv:
 
@@ -213,7 +223,6 @@ video_encoder = "auto"
 | --- | --- | --- |
 | faster-whisper ASR | CUDA INT8/FP16 | `compute_type = "int8_float16"` keeps non-quantized work in FP16 while reducing model memory. |
 | Hugging Face Whisper | CUDA FP16 | The Transformers pipeline is placed on GPU 0. |
-| VinAI translation | CUDA FP16 | Model weights and token batches are moved to CUDA. |
 | Qwen3-TTS | CUDA FP16 | Model uses `device_map="cuda:0"`. |
 | Subtitle/course H.264 encoding | NVIDIA NVENC | `auto` probes `h264_nvenc` with a real one-frame encode. |
 | Subtitle/libass filter | CPU | FFmpeg's standard subtitle renderer is CPU-only. NVENC still handles final H.264 encoding. |
@@ -259,7 +268,6 @@ The main command automatically loads [the default profile](../configs/transcript
 root = "."
 model = "models/faster-whisper-large-v3"
 # video = "lesson-01.mp4"
-# translation_model = "models/vinai-translate-vi2en-v2"
 
 [hardware]
 device = "cuda"
@@ -267,15 +275,12 @@ compute_type = "int8_float16"
 video_encoder = "auto"
 
 [transcription]
-task = "transcribe"
 language = "vi"
-translation_batch_size = 8
 overwrite_srt = false
 skip_burn = false
 
 [tts]
 enabled = false
-overwrite = false
 mode = "timed"
 generation_mode = "chunked"
 model = "Qwen3-TTS-12Hz-1.7B-CustomVoice"
@@ -296,15 +301,13 @@ context_break_seconds = 3.0
 CLI values override TOML values without modifying the file:
 
 ```powershell
-uv run transcript-video --video lesson-02.mp4 --task translate --enable-tts
+uv run transcript-video process lesson-02.mp4 --translated-srt edits/lesson-02_en.srt --enable-tts
 ```
 
 Save the effective profile, including overrides:
 
 ```powershell
-uv run transcript-video `
-  --video lesson-02.mp4 `
-  --task translate `
+uv run transcript-video process lesson-02.mp4 `
   --enable-tts `
   --save-config configs/lesson-02.toml
 ```
@@ -312,7 +315,7 @@ uv run transcript-video `
 Reuse it later:
 
 ```powershell
-uv run transcript-video --config configs/lesson-02.toml
+uv run transcript-video process --config configs/lesson-02.toml
 ```
 
 ## Transcription workflow
@@ -320,52 +323,49 @@ uv run transcript-video --config configs/lesson-02.toml
 Place videos in `data/input`, set a valid model path, then run:
 
 ```powershell
-uv run transcript-video
+uv run transcript-video process
 ```
 
 Process only one input video:
 
 ```powershell
-uv run transcript-video --video lesson.mp4
+uv run transcript-video process lesson.mp4
 ```
 
 Generate/reuse the SRT without rendering video:
 
 ```powershell
-uv run transcript-video --video lesson.mp4 --skip-burn
+uv run transcript-video process lesson.mp4 --skip-burn
 ```
 
 Regenerate an existing SRT:
 
 ```powershell
-uv run transcript-video --video lesson.mp4 --overwrite-srt
+uv run transcript-video process lesson.mp4 --force transcription
 ```
 
 Use an empty language string for Whisper auto-detection:
 
 ```powershell
-uv run transcript-video --language ""
+uv run transcript-video process lesson.mp4 --language ""
 ```
 
-For separate VinAI translation, Whisper first transcribes the source language, then VinAI translates subtitle batches:
+Translate and edit the generated Vietnamese SRT externally with [`prompts/optimal_prompt.md`](prompts/optimal_prompt.md), save it at the reported English path, then rerun:
 
 ```powershell
-uv run transcript-video `
-  --video lesson.mp4 `
-  --task translate `
-  --translation-model models/vinai-translate-vi2en-v2
+uv run transcript-video process lesson.mp4
 ```
 
-Existing SRT files are reused only when input/config/model provenance matches and `overwrite_srt`
-is disabled. Legacy files without provenance regenerate once. Manual text edits remain usable
-when the source/config provenance matches; TTS fingerprints track the edited content.
+An existing source SRT is reused solely because it exists. Model/config changes do not invalidate
+it. `--force transcription` regenerates only that source file and leaves translated English bytes
+untouched. Old provenance files are ignored and may be manually removed.
 
 ## TTS workflow
 
 Enable English voice-over:
 
 ```powershell
-uv run transcript-video --video lesson.mp4 --task translate --enable-tts
+uv run transcript-video process lesson.mp4 --enable-tts
 ```
 
 The recommended `chunked` mode creates fixed review windows, preserves a configurable safety tail at chunk boundaries, and reconstructs the final WAV by timeline overlay. Regenerate one zero-based chunk after reviewing it:
@@ -378,7 +378,7 @@ Relevant options:
 
 - `tts.mode = "timed"`: place each generated line at its subtitle time.
 - `tts.mode = "simple"`: generate a continuous voice-over.
-- `tts.generation_mode = "chunked"`: generate reusable review chunks.
+- `tts.generation_mode = "chunked"`: generate fixed processing/review chunks.
 - `tts.generation_mode = "full"`: generate the complete track in one pass.
 - `tts.audio_mode = "replace"`: replace source audio.
 - `tts.audio_mode = "mix"`: mix source and TTS audio.
@@ -393,14 +393,14 @@ are written to `data/report/tts/<video>_tts_review.jsonl`; speech is never silen
 
 JSONL keeps one object per line; an indented `.pretty.json` sits beside each report.
 Chunk metadata lives in `data/report/tts/<video>_tts_chunks/`, separate from the WAVs.
-Old sidecars beside audio are left untouched and cause one logged, safe regeneration.
-`--force tts` regenerates everything; a chunk rerun also regenerates its cross-boundary context owner.
+Old sidecars beside audio are ignored. Normal runs regenerate all TTS chunks; an explicit chunk
+rerun also regenerates its cross-boundary context owner and rebuilds from the remaining chunks.
 The 180 ms tail budget protects the next onset, with a 120 ms minimum release gap at placement.
 Unsafe boundaries still regenerate individual sentences; speech is never hard-trimmed.
 
 Explicit video lists preserve input order, deduplicate paths at first occurrence, and accept
 names in `data/input` or absolute paths. Distinct inputs with the same stem are rejected because
-outputs/caches share that name. No positional inputs still use `project.video` or scan `data/input`.
+outputs share that name. No positional inputs still use `project.video` or scan `data/input`.
 Doctor reads `.python-version`, warns for a missing/malformed pin, and checks `data/report` writability.
 
 Run the isolated manual TTS check:
@@ -439,7 +439,8 @@ All relative JSON paths are resolved from the repository root. The default `auto
 
 | Artifact | Default location |
 | --- | --- |
-| SRT | `data/subtitles/<video>_<model>.srt` |
+| Vietnamese source SRT (application-owned) | `data/subtitles/source/<video>_vi_<backend>.srt` |
+| English translated SRT (user-owned) | `data/subtitles/translated/<video>_en.srt` |
 | Hard-subtitled video | `data/output/<video>_vi-dub_en-sub.mp4` |
 | Full TTS WAV | `data/audio/<video>_tts.wav` |
 | TTS review chunks | `data/audio/<video>_tts_chunks/` |
@@ -485,7 +486,6 @@ The runtime probe failed. Common causes are an old NVIDIA driver, an FFmpeg buil
 ### CUDA out of memory
 
 - Close other GPU-heavy programs.
-- Reduce `translation_batch_size`.
 - Keep `compute_type = "int8_float16"` for lower faster-whisper VRAM use.
 - Generate TTS in chunked mode.
 - Use a smaller model when available.
@@ -498,9 +498,9 @@ reusable. Host RAM and transfer time are still required. Real-model offload benc
 
 This is expected. Media decoding, libass subtitle rasterization, FFmpeg filters, AAC audio, Pillow card drawing, file I/O, and NumPy waveform assembly still use CPU. The expensive model inference and supported H.264 encoding paths are the parts assigned to GPU.
 
-### Existing artifacts are unexpectedly reused
+### Existing source subtitles are unexpectedly reused
 
-Use `--overwrite-srt` or `--overwrite-tts`. For chunked TTS, use `--rerun-tts-chunk INDEX` to regenerate only the required chunk.
+Use `--force transcription`. Normal TTS runs regenerate TTS; `--rerun-tts-chunk INDEX` is only an explicit selective debugging run.
 
 ## Quality and safety update
 
@@ -508,6 +508,6 @@ Use `process VIDEO --profile srt` for subtitles only, or `--profile tts-review` 
 verification of final persisted WAV sentence ranges. CLI flags override profiles. Review v4
 adds missing/added/final-word checks, coverage, an explicit SequenceMatcher edit ratio and a
 tail-energy review heuristic. Speed-adjusted sentences emit REVIEW even when they fit.
-Duration reports, cache provenance, atomic output, subtitle style configuration and FA2 fallback
+Duration reports, explicit artifact ownership, atomic output, subtitle style configuration and FA2 fallback
 are described in the [README](../README.md#tts-review-reports). No ASR score establishes correct
 pronunciation/prosody. See [validation and remaining acceptance](quality-validation.md).

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict
 from pathlib import Path
 
 from ..artifacts import write_text
@@ -26,52 +25,46 @@ from .media import (
     mux_audio_into_video_replace,
     split_audio_into_chunks,
 )
-from .models import get_model_filename_suffix
-from .provenance import (
-    cache_matches,
-    manifest_path,
-    model_identity,
-    subtitle_provenance,
-    tts_provenance,
-    write_provenance,
-)
 from .subtitles import post_process_segments, read_srt, write_srt
-from .transcription import transcribe_video, translate_segments_with_vinai
+from .transcription import transcribe_video
 from .tts import (
     synthesize_simple_tts_audio,
     synthesize_timed_tts_audio,
     synthesize_tts_audio_by_time_chunks,
 )
-from .tts.chunks import _read_reviews
-from .tts.core import log_tts_summary, tts_review_is_current
 
 
 def process_video(
     video_path: Path,
     model_path: Path,
-    translation_model_path: Path | None,
+    source_srt_path: Path,
+    translated_srt_path: Path,
     paths: ProjectPaths,
     settings: RunSettings,
     observer: PipelineObserver | None = None,
 ) -> None:
     """Generate subtitles, optionally generate TTS, and render the output video."""
     with event_scope(observer, video=video_path.name):
-        return _process_video(video_path, model_path, translation_model_path, paths, settings)
+        return _process_video(
+            video_path, model_path, source_srt_path, translated_srt_path, paths, settings
+        )
 
 
 def _process_video(
     video_path: Path,
     model_path: Path,
-    translation_model_path: Path | None,
+    source_srt_path: Path,
+    translated_srt_path: Path,
     paths: ProjectPaths,
     settings: RunSettings,
 ) -> None:
     transcription = settings.transcription
     hardware = settings.hardware
     tts = settings.tts
-    model_suffix = get_model_filename_suffix(model_path, translation_model_path)
-    srt_path = paths.subtitle_dir / f"{video_path.stem}_{model_suffix}.srt"
-
+    if source_srt_path.resolve().parent != paths.source_subtitle_dir.resolve():
+        raise ValueError("Vietnamese source subtitles must be written under data/subtitles/source.")
+    if source_srt_path.resolve() == translated_srt_path.resolve():
+        raise ValueError("Source and translated subtitle paths must be different.")
     subtitled_output_path = paths.output_dir / f"{video_path.stem}_vi-dub_en-sub.mp4"
     tts_audio_path = paths.audio_dir / f"{video_path.stem}_tts.wav"
     tts_chunks_dir = paths.audio_dir / f"{video_path.stem}_tts_chunks"
@@ -80,58 +73,71 @@ def _process_video(
 
     logger = logging.getLogger(__name__)
 
-    subtitle_fingerprint = subtitle_provenance(
-        video_path, model_path, translation_model_path, settings
-    )
-    subtitles_reused = not transcription.overwrite_srt and cache_matches(
-        srt_path, subtitle_fingerprint, PipelineStage.SUBTITLES
-    )
-    if subtitles_reused:
-        with stage_context(PipelineStage.SUBTITLES, "Reusing cached subtitles", reused=True):
-            segments = read_srt(srt_path)
-            if not segments:
-                raise ValueError(f"SRT contains no valid subtitles: {srt_path}")
+    if source_srt_path.is_file() and not transcription.overwrite_srt:
+        with stage_context(
+            PipelineStage.SUBTITLES,
+            "Using existing Vietnamese source subtitles",
+            reused=True,
+        ):
+            source_segments = read_srt(source_srt_path)
+            if not source_segments:
+                raise ValueError(f"SRT contains no valid subtitles: {source_srt_path}")
     else:
-        # A separate text translation model needs source-language transcription first.
-        transcription_task = (
-            "transcribe" if translation_model_path is not None else transcription.task
-        )
-        with stage_context(PipelineStage.TRANSCRIBE, "Transcribing audio"):
-            segments = transcribe_video(
+        with stage_context(PipelineStage.TRANSCRIBE, "Generating Vietnamese source subtitles"):
+            source_segments = transcribe_video(
                 video_path=video_path,
                 model_path=model_path,
                 paths=paths,
-                task=transcription_task,
                 language=transcription.language.strip() or None,
                 device=hardware.device,
                 compute_type=hardware.compute_type,
             )
 
-        if translation_model_path is not None:
-            with stage_context(PipelineStage.TRANSLATE, "Translating subtitles"):
-                segments = translate_segments_with_vinai(
-                    segments=segments,
-                    model_path=translation_model_path,
-                    device=hardware.device,
-                    batch_size=transcription.translation_batch_size,
-                )
-
-        segments = post_process_segments(segments)
-        if not segments:
+        source_segments = post_process_segments(source_segments)
+        if not source_segments:
             raise ValueError(f"No valid subtitles were generated for: {video_path.name}")
 
-        with stage_context(PipelineStage.SUBTITLES, "Writing subtitles"):
-            manifest_path(srt_path).unlink(missing_ok=True)
-            write_srt(segments, srt_path)
-            write_provenance(srt_path, subtitle_fingerprint)
+        with stage_context(PipelineStage.SUBTITLES, "Writing Vietnamese source subtitles"):
+            write_srt(source_segments, source_srt_path)
             # Use the exact published millisecond timestamps on every run.
-            segments = read_srt(srt_path)
+            source_segments = read_srt(source_srt_path)
     emit(
         PipelineStage.SUBTITLES,
-        "Subtitles ready",
+        "Vietnamese source subtitles ready",
         kind=EventKind.ARTIFACT,
-        artifact=srt_path,
-        details={"category": "Subtitles"},
+        artifact=source_srt_path,
+        details={"category": "Source subtitles"},
+    )
+
+    if not translated_srt_path.is_file():
+        emit(
+            PipelineStage.TRANSLATE,
+            "Waiting for translated English subtitles\n\n"
+            f"Source SRT:\n{source_srt_path}\n\n"
+            "Create the English translated subtitle using:\n"
+            f"{paths.root / 'docs/prompts/optimal_prompt.md'}\n\n"
+            f"Expected English SRT:\n{translated_srt_path}\n\n"
+            "After creating the English SRT, rerun the process command.",
+            kind=EventKind.WARNING,
+            artifact=translated_srt_path,
+            details={
+                "category": "Translated subtitles",
+                "status": "translation_handoff",
+                "source_srt": str(source_srt_path),
+                "prompt": str(paths.root / "docs/prompts/optimal_prompt.md"),
+            },
+        )
+        return
+
+    translated_segments = read_srt(translated_srt_path)
+    if not translated_segments:
+        raise ValueError(f"SRT contains no valid subtitles: {translated_srt_path}")
+    emit(
+        PipelineStage.TRANSLATE,
+        "Using translated English subtitles",
+        kind=EventKind.REUSED,
+        artifact=translated_srt_path,
+        details={"category": "Translated subtitles"},
     )
 
     if transcription.skip_burn:
@@ -139,14 +145,14 @@ def _process_video(
 
     duration = get_media_duration_seconds(video_path)
     with (
-        stage_context(PipelineStage.RENDER, "Rendering subtitles"),
+        stage_context(PipelineStage.RENDER, "Burning English subtitles"),
         ffmpeg_progress_handler(
-            ffmpeg_events(PipelineStage.RENDER, "Rendering subtitles", duration)
+            ffmpeg_events(PipelineStage.RENDER, "Burning English subtitles", duration)
         ),
     ):
         burn_subtitles(
             video_path,
-            srt_path,
+            translated_srt_path,
             subtitled_output_path,
             video_encoder=hardware.video_encoder,
             subtitle_style=settings.subtitle_style,
@@ -168,22 +174,11 @@ def _process_video(
         else str(tts_model_path)
     )
 
-    tts_fingerprint = tts_provenance(
-        segments,
-        {
-            **asdict(tts),
-            "model": model_identity(tts_model_name),
-            "alignment_model": model_identity(model_path),
-            "input": subtitle_fingerprint["input"],
-            "device": hardware.device,
-        },
-    )
-
-    with stage_context(PipelineStage.TTS, "Generating voice-over"):
+    with stage_context(PipelineStage.TTS, "Generating English voice-over"):
         if tts.generation_mode == "chunked":
             logger.info("Generating/rebuilding chunked Qwen TTS audio: %s", tts_audio_path)
             synthesize_tts_audio_by_time_chunks(
-                segments=segments,
+                segments=translated_segments,
                 audio_out=tts_audio_path,
                 chunks_dir=tts_chunks_dir,
                 video_path=video_path,
@@ -195,7 +190,7 @@ def _process_video(
                 attn_implementation=tts.attn_implementation,
                 chunk_minutes=tts.chunk_minutes,
                 rerun_chunk=tts.rerun_chunk,
-                overwrite_all_chunks=tts.overwrite or not subtitles_reused,
+                regenerate_all_chunks=tts.rerun_chunk is None,
                 max_speedup=tts.max_speedup,
                 chunk_tail_seconds=tts.chunk_tail_seconds,
                 alignment_model_name=model_path,
@@ -206,74 +201,41 @@ def _process_video(
                 verify_final_audio=tts.verify_final_audio,
             )
         else:
-            can_reuse_tts = (
-                tts_audio_path.exists()
-                and cache_matches(tts_audio_path, tts_fingerprint, PipelineStage.TTS)
-                and subtitles_reused
-                and not tts.overwrite
-                and tts.rerun_chunk is None
-                and (
-                    tts.mode == "simple"
-                    or tts_review_is_current(
-                        tts_review_path,
-                        [
-                            (index, segment)
-                            for index, segment in enumerate(segments, 1)
-                            if segment.text.strip()
-                        ],
-                    )
+            if tts.rerun_chunk is not None:
+                warn(
+                    logger,
+                    "tts.rerun_chunk only applies to chunked generation and will be ignored.",
                 )
-            )
-            if can_reuse_tts:
-                logger.info("Reusing existing TTS audio: %s", tts_audio_path)
-                emit(
-                    PipelineStage.TTS,
-                    "Reusing existing TTS audio",
-                    kind=EventKind.REUSED,
-                    artifact=tts_audio_path,
+            if tts.mode == "simple":
+                synthesize_simple_tts_audio(
+                    segments=translated_segments,
+                    audio_out=tts_audio_path,
+                    tts_model_name=tts_model_name,
+                    tts_language=tts.language,
+                    tts_speaker=tts.speaker,
+                    tts_instruct=tts.instruct,
+                    device=hardware.device,
+                    attn_implementation=tts.attn_implementation,
                 )
-                if tts.mode == "timed":
-                    log_tts_summary(
-                        len(segments), _read_reviews([tts_review_path]), tts_review_path
-                    )
             else:
-                if tts.rerun_chunk is not None:
-                    warn(
-                        logger,
-                        "tts.rerun_chunk only applies to chunked generation and will be ignored.",
-                    )
-                if tts.mode == "simple":
-                    synthesize_simple_tts_audio(
-                        segments=segments,
-                        audio_out=tts_audio_path,
-                        tts_model_name=tts_model_name,
-                        tts_language=tts.language,
-                        tts_speaker=tts.speaker,
-                        tts_instruct=tts.instruct,
-                        device=hardware.device,
-                        attn_implementation=tts.attn_implementation,
-                    )
-                else:
-                    synthesize_timed_tts_audio(
-                        segments=segments,
-                        audio_out=tts_audio_path,
-                        video_path=video_path,
-                        tts_model_name=tts_model_name,
-                        tts_language=tts.language,
-                        tts_speaker=tts.speaker,
-                        tts_instruct=tts.instruct,
-                        device=hardware.device,
-                        attn_implementation=tts.attn_implementation,
-                        alignment_model_name=model_path,
-                        max_speedup=tts.max_speedup,
-                        context_max_sentences=tts.context_max_sentences,
-                        context_max_chars=tts.context_max_chars,
-                        context_break_seconds=tts.context_break_seconds,
-                        review_log_path=tts_review_path,
-                        verify_final_audio=tts.verify_final_audio,
-                    )
-
-                write_provenance(tts_audio_path, tts_fingerprint)
+                synthesize_timed_tts_audio(
+                    segments=translated_segments,
+                    audio_out=tts_audio_path,
+                    video_path=video_path,
+                    tts_model_name=tts_model_name,
+                    tts_language=tts.language,
+                    tts_speaker=tts.speaker,
+                    tts_instruct=tts.instruct,
+                    device=hardware.device,
+                    attn_implementation=tts.attn_implementation,
+                    alignment_model_name=model_path,
+                    max_speedup=tts.max_speedup,
+                    context_max_sentences=tts.context_max_sentences,
+                    context_max_chars=tts.context_max_chars,
+                    context_break_seconds=tts.context_break_seconds,
+                    review_log_path=tts_review_path,
+                    verify_final_audio=tts.verify_final_audio,
+                )
 
             if tts.split_audio:
                 logger.info(

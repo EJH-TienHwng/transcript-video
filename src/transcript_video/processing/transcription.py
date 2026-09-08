@@ -4,14 +4,14 @@ import logging
 from pathlib import Path
 
 from ..config import ProjectPaths, SubtitleSegment
-from ..events import PipelineStage, emit, stage_context, warn
+from ..events import PipelineStage, stage_context, warn
 from ..hardware import resolve_torch_device
 from .media import (
     ensure_ffmpeg_available_for_transformers,
     extract_audio,
     read_wav_as_float32_array,
 )
-from .models import detect_model_type, detect_translation_model_type
+from .models import detect_model_type
 from .runtime import reuse_model
 
 logger = logging.getLogger(__name__)
@@ -57,35 +57,14 @@ def load_huggingface(model_path, device):
     )
 
 
-@reuse_model("translation")
-@stage_context(
-    PipelineStage.TRANSLATE,
-    "Loading translation model",
-    operation="load_translation",
-    completed="Translation model ready",
-)
-def load_translation(model_path, device):
-    import torch
-    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-
-    tokenizer = AutoTokenizer.from_pretrained(str(model_path), src_lang="vi_VN")
-    model = AutoModelForSeq2SeqLM.from_pretrained(
-        str(model_path), dtype=torch.float16 if device == "cuda" else torch.float32
-    )
-    model.to(device)
-    model.eval()
-    return tokenizer, model
-
-
 def transcribe_with_faster_whisper(
     video_path: Path,
     model_path: Path,
-    task: str,
     language: str | None,
     device: str,
     compute_type: str,
 ) -> list[SubtitleSegment]:
-    """Transcribe/translate using faster-whisper."""
+    """Transcribe source speech using faster-whisper."""
     device = resolve_torch_device(device, "faster-whisper")
     if device == "cpu" and compute_type == "float16":
         warn(logger, "float16 is not suitable for CPU inference; using int8 instead.")
@@ -95,7 +74,7 @@ def transcribe_with_faster_whisper(
 
     segments, _info = model.transcribe(
         str(video_path),
-        task=task,
+        task="transcribe",
         language=language,
         beam_size=5,
         # Anti-hallucination settings:
@@ -120,11 +99,10 @@ def transcribe_with_huggingface(
     video_path: Path,
     model_path: Path,
     temp_dir: Path,
-    task: str,
     language: str | None,
     device: str,
 ) -> list[SubtitleSegment]:
-    """Transcribe/translate using the standard Hugging Face Whisper model."""
+    """Transcribe source speech using the standard Hugging Face Whisper model."""
     # Must run before importing Transformers because it caches ffmpeg availability.
     ensure_ffmpeg_available_for_transformers()
 
@@ -141,7 +119,7 @@ def transcribe_with_huggingface(
         # Passing a filename makes Transformers call its own ffmpeg loader again,
         # which is exactly what caused: "ffmpeg was not found".
         audio_input = read_wav_as_float32_array(audio_path)
-        generate_kwargs = {"task": task}
+        generate_kwargs = {"task": "transcribe"}
         if language:
             generate_kwargs["language"] = language
 
@@ -169,88 +147,21 @@ def transcribe_with_huggingface(
             audio_path.unlink()
 
 
-def translate_segments_with_vinai(
-    segments: list[SubtitleSegment],
-    model_path: Path,
-    device: str,
-    batch_size: int,
-) -> list[SubtitleSegment]:
-    """Translate Vietnamese subtitle segments to English with VinAI Translate."""
-    if batch_size < 1:
-        raise ValueError("translation batch size must be greater than zero.")
-
-    detect_translation_model_type(model_path)
-
-    import torch
-
-    device = resolve_torch_device(device, "VinAI Translate")
-
-    torch_device = torch.device(device)
-    logger.info("Translation engine: VinAI Translate (%s)", torch_device)
-
-    tokenizer, model = load_translation(model_path, device)
-
-    source_segments = [segment for segment in segments if (segment.text or "").strip()]
-    translated_segments: list[SubtitleSegment] = []
-
-    for start in range(0, len(source_segments), batch_size):
-        batch = source_segments[start : start + batch_size]
-        texts = [segment.text.strip() for segment in batch]
-        inputs = tokenizer(
-            texts,
-            padding=True,
-            truncation=True,
-            max_length=1024,
-            return_tensors="pt",
-        ).to(torch_device)
-
-        with torch.inference_mode():
-            output_ids = model.generate(
-                **inputs,
-                decoder_start_token_id=tokenizer.lang_code_to_id["en_XX"],
-                num_return_sequences=1,
-                num_beams=5,
-                early_stopping=True,
-            )
-
-        translations = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
-        translated_segments.extend(
-            SubtitleSegment(segment.start, segment.end, translation)
-            for segment, translation in zip(batch, translations, strict=True)
-        )
-        logger.info(
-            "Translated %d/%d subtitle segment(s).",
-            min(start + batch_size, len(source_segments)),
-            len(source_segments),
-        )
-
-        emit(
-            PipelineStage.TRANSLATE,
-            "Translating subtitles",
-            current=len(translated_segments),
-            total=len(source_segments),
-        )
-
-    return translated_segments
-
-
 def transcribe_video(
     video_path: Path,
     model_path: Path,
     paths: ProjectPaths,
-    task: str,
     language: str | None,
     device: str,
     compute_type: str,
 ) -> list[SubtitleSegment]:
-    """Choose the correct engine and transcribe/translate video."""
+    """Choose the correct engine and transcribe source speech."""
     model_type = detect_model_type(model_path)
 
     if model_type == "faster-whisper":
         return transcribe_with_faster_whisper(
             video_path=video_path,
             model_path=model_path,
-            task=task,
             language=language,
             device=device,
             compute_type=compute_type,
@@ -260,7 +171,6 @@ def transcribe_video(
         video_path=video_path,
         model_path=model_path,
         temp_dir=paths.temp_dir,
-        task=task,
         language=language,
         device=device,
     )

@@ -1,6 +1,5 @@
 [transcription]
 skip_burn = false
-task = "translate"
 
 [tts]
 enabled = true

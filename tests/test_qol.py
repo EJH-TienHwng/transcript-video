@@ -39,7 +39,7 @@ def test_course_roundtrip_preserves_unknown_fields(tmp_path):
 
 
 @pytest.mark.parametrize("source", ["config", "profile"])
-def test_legacy_provenance_is_normalized(tmp_path, source):
+def test_legacy_hardware_settings_are_normalized(tmp_path, source):
     path = tmp_path / "old.toml"
     path.write_text('[transcription]\ndevice="cpu"\ncompute_type="float32"\n')
     resolved = resolve_settings(
@@ -51,7 +51,7 @@ def test_legacy_provenance_is_normalized(tmp_path, source):
 
 
 @pytest.mark.parametrize("target", ["transcription", "tts", "all", "translation", "render"])
-def test_force_targets_and_legacy_precedence(tmp_path, monkeypatch, target):
+def test_only_transcription_is_a_force_target(tmp_path, monkeypatch, target):
     from transcript_video import cli
 
     captured = Mock()
@@ -64,38 +64,30 @@ def test_force_targets_and_legacy_precedence(tmp_path, monkeypatch, target):
             "--dry-run",
             "--force",
             target,
-            "--enable-tts",
             "--no-overwrite-srt",
-            "--no-overwrite-tts",
         ],
     )
-    if target in {"translation", "render"}:
+    if target != "transcription":
         assert result.exit_code == 2
         assert not captured.called
     else:
         assert result.exit_code == 0, result.exception
         settings = captured.call_args.args[1]
-        assert settings.transcription.overwrite_srt == (target in {"transcription", "all"})
-        assert settings.tts.overwrite
+        assert settings.transcription.overwrite_srt
 
 
-@pytest.mark.parametrize("missing", [None, "video", "model", "translation"])
+@pytest.mark.parametrize("missing", [None, "video", "model"])
 def test_dry_run_validates_without_side_effects(tmp_path, monkeypatch, missing):
     from transcript_video.application import processing
 
     monkeypatch.chdir(tmp_path)
     video = tmp_path / "a.mp4"
     model = tmp_path / "asr"
-    translation = tmp_path / "translation"
     if missing != "video":
         video.touch()
     if missing != "model":
         model.mkdir()
         (model / "model.bin").touch()
-    if missing != "translation":
-        translation.mkdir()
-        (translation / "config.json").write_text('{"model_type":"mbart"}')
-        (translation / "model.safetensors").touch()
     execute = Mock(side_effect=AssertionError("must not execute"))
     monkeypatch.setattr(processing, "execute_process_plan", execute)
     before = set(tmp_path.rglob("*"))
@@ -106,8 +98,6 @@ def test_dry_run_validates_without_side_effects(tmp_path, monkeypatch, missing):
             str(video),
             "--model",
             str(model),
-            "--translation-model",
-            str(translation),
             "--dry-run",
             "--events-json",
             "events/e.jsonl",
@@ -132,7 +122,9 @@ def test_inspection_independent_of_models(tmp_path, monkeypatch):
     settings.project.root = str(tmp_path)
     result = inspection.inspect_video(video, settings)
     assert result["metadata"]["format"]["duration"] == "10"
-    assert result["artifact_states"]["subtitles"] == "unresolved"
+    assert result["artifact_states"]["source_subtitles"] == "unresolved"
+    assert result["artifact_states"]["translated_subtitles"] == "missing"
+    assert result["workflow"] == "translation_handoff"
     assert result["artifact_states"]["tts_audio"] == "missing"
 
 
@@ -282,44 +274,6 @@ def test_doctor_reports_configured_encoder_separately(tmp_path, monkeypatch):
     assert not (tmp_path / "data").exists()
 
 
-@pytest.mark.parametrize("force", ["transcription", "tts", "all"])
-def test_force_rebuilds_real_pipeline_targets(tmp_path, monkeypatch, force):
-    from transcript_video.config import ProjectPaths, SubtitleSegment
-    from transcript_video.processing import pipeline
-    from transcript_video.processing.subtitles import write_srt
-
-    monkeypatch.chdir(tmp_path)
-    paths = ProjectPaths.from_root(tmp_path)
-    paths.create_dirs()
-    model = tmp_path / "asr"
-    model.mkdir()
-    (model / "model.bin").touch()
-    video = tmp_path / "a.mp4"
-    video.touch()
-    write_srt([SubtitleSegment(0, 1, "old")], paths.subtitle_dir / "a_faster.srt")
-    from transcript_video.config import RunSettings
-    from transcript_video.processing.provenance import subtitle_provenance, write_provenance
-
-    write_provenance(
-        paths.subtitle_dir / "a_faster.srt",
-        subtitle_provenance(video, model, None, RunSettings.defaults()),
-    )
-    asr = Mock(return_value=[SubtitleSegment(0, 1, "new")])
-    tts = Mock()
-    monkeypatch.setattr(pipeline, "transcribe_video", asr)
-    monkeypatch.setattr(pipeline, "synthesize_tts_audio_by_time_chunks", tts)
-    monkeypatch.setattr(pipeline, "get_media_duration_seconds", lambda *a: 10)
-    monkeypatch.setattr(pipeline, "burn_subtitles", Mock())
-    monkeypatch.setattr(pipeline, "mux_audio_into_video_replace", Mock())
-    result = CliRunner().invoke(
-        app, ["process", str(video), "--model", str(model), "--enable-tts", "--force", force]
-    )
-    assert result.exit_code == 0, result.exception
-    assert asr.call_count == (1 if force in {"transcription", "all"} else 0)
-    assert tts.call_args.kwargs["overwrite_all_chunks"] is True
-    assert tts.call_args.kwargs["segments"][0].text == ("old" if force == "tts" else "new")
-
-
 @pytest.mark.parametrize("json_mode", [False, True])
 def test_inspect_cli_human_and_json_without_models(tmp_path, monkeypatch, json_mode):
     from transcript_video.application import inspection
@@ -347,7 +301,9 @@ def test_inspect_cli_human_and_json_without_models(tmp_path, monkeypatch, json_m
     result = CliRunner().invoke(app, (["--json"] if json_mode else []) + ["inspect", str(video)])
     assert result.exit_code == 0, result.exception
     if json_mode:
-        assert json.loads(result.stdout)["artifact_states"]["subtitles"] == "unresolved"
+        payload = json.loads(result.stdout)
+        assert payload["artifact_states"]["source_subtitles"] == "unresolved"
+        assert payload["artifact_states"]["translated_subtitles"] == "missing"
     else:
         assert "01:30" in result.stdout and "Resolution" in result.stdout
         assert '"streams"' not in result.stdout

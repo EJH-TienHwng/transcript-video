@@ -1,6 +1,6 @@
 # Transcript Video
 
-Local, GPU-first tools for transcription, subtitle rendering, Qwen TTS voice-over, and compiling processed sessions into a training course.
+Local, GPU-first tools for Vietnamese transcription, externally translated English subtitles, Qwen TTS voice-over, and compiling processed sessions into a training course.
 
 **Documentation:** [English](docs/README.md) · [Tiếng Việt](docs/README.vi.md)
 
@@ -24,20 +24,29 @@ uv run transcript-video doctor
 
 Place source videos in `data/input` and local model files under `models`, or configure absolute paths.
 
+## Subtitle workflow
+
+1. Run `uv run transcript-video process VIDEO`. Whisper creates or reuses the application-owned Vietnamese source SRT at `data/subtitles/source/<stem>_vi_<backend>.srt`.
+2. Send that SRT to an external LLM with [`docs/prompts/optimal_prompt.md`](docs/prompts/optimal_prompt.md).
+3. Save the edited English result as `data/subtitles/translated/<stem>_en.srt`, or pass it with `--translated-srt PATH`.
+4. Rerun `process`. The tool burns the English subtitles, generates English TTS when enabled, and muxes the final video.
+
+Files under `translated/` are user-owned and are never overwritten by transcription. If the English SRT is missing, processing stops cleanly after the source SRT and prints the handoff paths without loading Qwen.
+
 ## Basic CLI
 
 ```powershell
 # Process every configured video
 uv run transcript-video process
 
-# SRT only, using the configured ASR/translation settings
+# Generate/reuse the Vietnamese source SRT only
 uv run transcript-video process lesson.mp4 --profile srt
 
 # Generate and verify final sentence audio with the CPU Whisper verifier
 uv run transcript-video process lesson.mp4 --profile tts-review
 
-# Process one video and translate its speech
-uv run transcript-video process lesson.mp4 --task translate
+# Use an English SRT stored outside the canonical translated directory
+uv run transcript-video process lesson.mp4 --translated-srt edits/lesson_en.srt
 
 # Process an explicit list in the given order
 uv run transcript-video process lesson1.mp4 lesson2.mp4 lesson3.mp4
@@ -53,7 +62,7 @@ uv run transcript-video config show --sources
 uv run transcript-video process lesson.mp4 --dry-run
 ```
 
-Positional inputs accept names inside `data/input/` or absolute paths. Repeated paths are processed once, keeping the first occurrence. Distinct inputs with the same filename stem are rejected to prevent output/cache collisions. With no positional inputs, `project.video` is used when configured; otherwise `data/input/` is scanned.
+Positional inputs accept names inside `data/input/` or absolute paths. Repeated paths are processed once, keeping the first occurrence. Distinct inputs with the same filename stem are rejected to prevent output collisions. With no positional inputs, `project.video` is used when configured; otherwise `data/input/` is scanned. `--translated-srt` is limited to single-video runs; batches resolve each canonical English SRT independently.
 
 The pre-0.3 form (`transcript-video --video lesson.mp4 ...`) remains accepted. The old `transcript-course` and `transcript-course-config` executables are deprecated wrappers.
 
@@ -122,20 +131,19 @@ The default settings live in [`configs/transcription.toml`](configs/transcriptio
 
 ```powershell
 uv run transcript-video process lesson.mp4 --profile tts-review --tts-speaker Ryan
-uv run transcript-video process lesson.mp4 --force all
+uv run transcript-video process lesson.mp4 --force transcription
 ```
 
-`--force` accepts `transcription`, `tts`, and `all` (repeatable). Transcription rebuilds
-ASR plus any configured translation, then invalidates enabled downstream TTS, including chunks.
-`tts` requires enabled TTS and rendering; it regenerates every chunk. `all` rebuilds every enabled
-cached stage. Force wins over `--no-overwrite-srt` / `--no-overwrite-tts`; old overwrite flags remain
-supported. Full TTS force cannot be combined with a selective chunk rerun. There is no independent
-source-transcription cache, so `translation` is not exposed; render always runs, so `render` is not exposed.
+`--force transcription` regenerates only the Vietnamese source SRT. It never modifies the
+translated English SRT. Existing source SRTs are otherwise reused solely by file existence;
+model/config changes do not invalidate them. TTS generation reached by a normal run regenerates
+its output and chunks. `--rerun-tts-chunk INDEX` remains an explicit selective debugging control.
 
-Dry-run checks video paths/extensions, stem collisions, local ASR/translation model format and
+Dry-run checks video paths/extensions, stem collisions, the local ASR model format and
 paths, settings, explicit binary paths and output path conflicts without loading weights or running
-FFmpeg. It creates no artifacts, directories, logs or event files, including with `--save-config`.
-Inspection works without model folders; unresolved subtitle predictions are labeled explicitly.
+FFmpeg. It separately reports source/translated subtitle existence and whether each video reaches
+the translation handoff. It creates no artifacts, directories, logs or event files, including with
+`--save-config`. Inspection works without model folders; unresolved predictions are labeled explicitly.
 Human inspection and configuration validation use tables; `--json` also works for `config validate`.
 Doctor separates configured encoder, NVENC listing/runtime and software fallback checks, reports
 Python/PyTorch/CUDA/ASR compute support, model paths, storage and directory usability as PASS/WARN/FAIL.
@@ -185,10 +193,9 @@ data/report/tts/<video>_tts_chunks/<video>_tts_chunk_000.review.jsonl
 data/report/tts/<video>_tts_chunks/<video>_tts_chunk_000.review.pretty.json
 ```
 
-JSONL keeps one object per line; read `.pretty.json` for manual inspection. Chunk cache validation,
-rebuild and reruns use the JSONL in the report directory. Old metadata alongside audio is left
-untouched and triggers one safe regeneration; new caches are reused normally. `--force tts`
-regenerates every chunk. Direct Python TTS calls default to the current project report directory;
+JSONL keeps one object per line; read `.pretty.json` for manual inspection. Normal runs regenerate
+TTS chunks; review metadata retains sentence ranges for assembly and explicit selective reruns.
+Old provenance metadata is ignored and may be removed manually. Direct Python TTS calls default to the current project report directory;
 pass `review_log_path` (or `review_path` for a single chunk) for a different project.
 
 TTS protects a 180 ms tail budget and the next sentence's onset, regenerating unsafe boundaries.
@@ -207,11 +214,10 @@ only a manual-review hint. It can flag valid unpadded fricatives. No pronunciati
 prosody or voice-consistency score is inferred from ASR agreement.
 
 Use `--profile tts-review` or `tts.verify_final_audio = true`; CLI overrides include
-`--verify-final-audio` / `--no-verify-final-audio`. The review profile requests English translation
-and English TTS; voice/instruction remain inherited from the base config. Override task/language
-for another workflow. Verification reads each sentence's sample
+`--verify-final-audio` / `--no-verify-final-audio`. The review profile uses the user-owned English
+SRT and English TTS; voice/instruction remain inherited from the base config. Verification reads each sentence's sample
 range from the published final WAV without an expected-text ASR prompt. Timed full generation
-verifies once; chunked runs verify the rebuilt WAV, including cached sentences. The existing
+verifies once; chunked runs verify the rebuilt WAV. The existing
 faster-whisper CPU aligner is reused. Missing/failed verification is explicitly flagged;
 it never counts as a text pass. Full simple/untimed generation cannot enable this option.
 
@@ -231,29 +237,18 @@ with null output duration. Speech longer than the source is preserved; no `-shor
 Listen to flagged sentence ranges and compare adjacent sentences for pronunciation, register,
 technical terms, pauses and naturalness. Mocked tests do not establish real speech quality.
 
-## Cache provenance and artifact safety
+## Artifact ownership and safety
 
-Subtitle manifests (`*.srt.provenance.json`) bind input resolved path/size/mtime_ns, model files,
-translation settings, task/language and inference settings. Local model identity records file
-metadata rather than reading multi-GB weights. TTS manifests include content/timestamps, voice,
-instruction, model/alignment identity, device, attention, timing/context/chunk settings and QA
-mode. WAV manifests also bind the published file identity. They live under
-`data/report/tts/provenance/`; custom standalone WAV paths use a sibling `.provenance/` folder.
+Vietnamese ASR writes only under `data/subtitles/source/`. English SRTs under
+`data/subtitles/translated/` are external, user-owned inputs: the pipeline only resolves, reads,
+validates, and reports them. There is no artifact provenance/fingerprint cache and no automatic
+invalidation. Old `*.provenance.json` files are ignored and may be removed manually.
 
-Legacy subtitles lacking provenance regenerate once. Old TTS review versions and missing or
-mismatched manifests regenerate safely; changing speaker/instruction cannot reuse another
-voice. Matching artifacts emit REUSED; invalidation emits a short WARNING with
-`operation=cache` and `details.decision=invalidated`. Full provenance remains in the manifest.
-Manual edits to an SRT with matching source/config provenance are retained and invalidate only
-affected chunk content/context/timing. The subtitle millisecond timestamps are used consistently.
-Selective reruns still include the owner of a context group crossing a chunk boundary.
-
-SRT, generated/rebuilt WAV, rendered/muxed/course MP4 and manifests/reports use unique
+SRT, generated/rebuilt WAV, rendered/muxed/course MP4 and reports use unique
 same-directory `.<name>.<id>.partial.<extension>` files, then `os.replace`. Writers close the
 temporary file before replacement on Windows. Failure/Ctrl+C keeps the previous final file;
 temporary files are cleaned in `finally`. Hard-killed orphan partials are excluded from media
-discovery/cache lookup; they are not swept automatically because another process may own them.
-Disposable split audio review copies are not generation cache artifacts.
+discovery; they are not swept automatically because another process may own them.
 
 Batch execution owns a scoped model runtime. Each backend loads once per unchanged
 configuration; previous GPU weights are parked on CPU before another GPU workload loads,

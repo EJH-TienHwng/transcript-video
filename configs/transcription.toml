@@ -8,15 +8,12 @@ compute_type = "int8_float16"
 video_encoder = "auto"
 
 [transcription]
-task = "transcribe"
 language = "vi"
-translation_batch_size = 8
 overwrite_srt = false
 skip_burn = false
 
 [tts]
 enabled = true
-overwrite = false
 mode = "timed"
 generation_mode = "chunked"
 model = "models/Qwen3-TTS-12Hz-1.7B-CustomVoice"
