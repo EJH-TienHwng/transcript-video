@@ -169,10 +169,13 @@ def post_process_segments(segments: Iterable[SubtitleSegment]) -> list[SubtitleS
     return fix_too_short_or_invalid_timing(remove_repeated_hallucination_segments(filtered))
 
 
-def write_srt(segments: Iterable[SubtitleSegment], srt_path: Path) -> None:
+def write_srt(
+    segments: Iterable[SubtitleSegment], srt_path: Path, *, post_process: bool = True
+) -> None:
     srt_path.parent.mkdir(parents=True, exist_ok=True)
+    prepared = post_process_segments(segments) if post_process else segments
     with atomic_output(srt_path) as temporary, temporary.open("w", encoding="utf-8") as file:
-        for index, segment in enumerate(post_process_segments(segments), start=1):
+        for index, segment in enumerate(prepared, start=1):
             file.write(
                 f"{index}\n{format_timestamp(segment.start)} --> {format_timestamp(segment.end)}\n{segment.text.strip()}\n\n"
             )

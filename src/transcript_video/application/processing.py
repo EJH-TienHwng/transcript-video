@@ -152,7 +152,9 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
             ):
                 stages = ["source subtitles", "translated subtitles"]
                 if translated_srt_path.is_file() and not plan.settings.transcription.skip_burn:
-                    stages += ["render"] + (["tts", "mux"] if plan.settings.tts.enabled else [])
+                    stages += (
+                        ["tts", "render", "mux"] if plan.settings.tts.enabled else ["render"]
+                    )
                 video_started = time.perf_counter()
                 emit(
                     PipelineStage.VIDEO,
@@ -220,6 +222,8 @@ def _artifacts_for(
                 paths.output_dir / f"{video.stem}_en-dub_en-sub.mp4",
             ]
         )
+        if settings.tts.generation_mode == "chunked" or settings.tts.mode == "timed":
+            artifacts.append(paths.timed_subtitle_dir / f"{video.stem}_en_timed.srt")
         if settings.tts.generation_mode == "chunked" or settings.tts.mode == "timed":
             review = paths.tts_review_path(paths.audio_dir / f"{video.stem}_tts.wav")
             artifacts.extend([review, review.with_suffix(".pretty.json")])

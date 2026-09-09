@@ -15,7 +15,7 @@
 ### TTS — timing, boundary và review
 
 - [x] Sửa cơ chế TTS để không cắt waveform chỉ vì câu dài hơn slot subtitle. `fit_wav_to_available_duration()` chỉ speed-up trong giới hạn và giữ nguyên speech nếu không thể fit.
-- [x] Thêm bounded pitch-preserving speed-up bằng FFmpeg `atempo`; mặc định giới hạn bởi `tts.max_speedup = 1.15`.
+- [x] Thêm bounded pitch-preserving speed-up bằng FFmpeg `atempo`; mặc định giới hạn bởi `tts.max_speedup = 1.25`.
 - [x] Bảo vệ phần đầu/cuối câu khi cắt audio từ context bằng alignment padding.
 - [x] Khi alignment không đủ an toàn, regenerate riêng sentence thay vì cắt theo tỷ lệ.
 - [x] Có retry/fallback cho câu bị thiếu từ; giữ candidate có coverage tốt hơn.

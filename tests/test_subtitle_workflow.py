@@ -119,13 +119,16 @@ def test_force_transcription_only_rewrites_source_and_english_drives_burn_and_tt
     settings = RunSettings.defaults()
     settings.transcription.overwrite_srt = True
     settings.tts.enabled = True
+    tts.return_value = [SubtitleSegment(0.25, 1.5, "Manual English edit.")]
 
     pipeline.process_video(video, model, source, translated, paths, settings)
 
     asr.assert_called_once()
     assert read_srt(source)[0].text == "Mới"
     assert translated.read_bytes() == translated_bytes
-    assert burn.call_args.args[1] == translated
+    timed = paths.timed_subtitle_dir / "lesson_en_timed.srt"
+    assert burn.call_args.args[1] == timed
+    assert read_srt(timed) == [SubtitleSegment(0.25, 1.5, "Manual English edit.")]
     assert tts.call_args.kwargs["segments"][0].text == "Manual English edit."
     assert tts.call_args.kwargs["regenerate_all_chunks"] is True
     assert mux.called

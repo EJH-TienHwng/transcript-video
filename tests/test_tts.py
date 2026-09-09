@@ -8,7 +8,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from transcript_video.config import ProjectPaths, SubtitleSegment
+from transcript_video.config import ProjectPaths, SubtitleSegment, TTSSettings
 from transcript_video.processing.tts import chunks, core
 from transcript_video.processing.tts.chunks import _dependent_owner_chunks
 from transcript_video.processing.tts.core import (
@@ -16,9 +16,11 @@ from transcript_video.processing.tts.core import (
     WordTiming,
     align_context_group,
     build_tts_context_groups,
+    find_safe_inter_sentence_boundary,
     fit_wav_to_available_duration,
     generate_context_group_items,
     overlay_tts_items,
+    timed_segments_from_reviews,
     tts_review_counts,
     write_tts_review_log,
 )
@@ -291,7 +293,7 @@ def test_group_generation_places_extracted_sentences_on_original_timeline(
     segments = _segments()
     groups = build_tts_context_groups(segments)
     model = _qwen_model()
-    model.generate_custom_voice.return_value = ([np.ones(5000, dtype=np.float32)], 1000)
+    waveform = np.zeros(5000, dtype=np.float32)
     timings = [
         WordTiming(
             text,
@@ -316,6 +318,9 @@ def test_group_generation_places_extracted_sentences_on_original_timeline(
             ]
         )
     ]
+    for timing in timings:
+        waveform[round(timing.start * 1000) : round(timing.end * 1000)] = 0.2
+    model.generate_custom_voice.return_value = ([waveform], 1000)
     monkeypatch.setattr(core, "transcribe_word_timings", lambda *args: timings)
 
     items, sample_rate, reviews = generate_context_group_items(
@@ -326,7 +331,7 @@ def test_group_generation_places_extracted_sentences_on_original_timeline(
         language="English",
         speaker="Aiden",
         instruct="steady",
-        max_speedup=1.15,
+        max_speedup=1.25,
         video_duration=20.0,
     )
     audio = overlay_tts_items(items, sample_rate, 20.0)
@@ -347,8 +352,9 @@ def test_duration_fit_is_bounded_pitch_preserving_and_never_truncates(monkeypatc
         return audio[: round(len(audio) / speed)]
 
     monkeypatch.setattr(core, "_pitch_preserving_speedup", stretch)
-    fitted = fit_wav_to_available_duration(wav, 1000, 1.0, max_speedup=1.15)
-    assert called == {"speed": 1.15}
+    assert TTSSettings().max_speedup == 1.25
+    fitted = fit_wav_to_available_duration(wav, 1000, 1.0)
+    assert called == {"speed": 1.25}
     assert len(fitted) > 1000
 
 
@@ -375,11 +381,14 @@ def test_alignment_failure_and_overflow_create_complete_review_entries(monkeypat
         language="English",
         speaker="Aiden",
         instruct="steady",
-        max_speedup=1.15,
+        max_speedup=1.25,
         video_duration=2.0,
     )
     reasons = {reason for entry in reviews for reason in entry["review_reason"].split(";")}
     assert {"alignment_failed", "exceeds_max_speedup"} <= reasons
+    assert reviews[0]["required_speedup"] > 1.25
+    assert reviews[0]["applied_speedup"] == 1.25
+    assert reviews[0]["overflow_duration"] > 0
     required = {
         "subtitle_index",
         "text",
@@ -397,6 +406,18 @@ def test_alignment_failure_and_overflow_create_complete_review_entries(monkeypat
         "context_group_index",
         "alignment_source_start",
         "alignment_source_end",
+        "asr_last_word_end",
+        "detected_acoustic_end",
+        "tail_extension_seconds",
+        "next_asr_word_start",
+        "detected_next_onset",
+        "boundary_safe",
+        "boundary_reason",
+        "original_start",
+        "original_end",
+        "actual_start",
+        "actual_end",
+        "timing_shift",
         "action",
         "review_reason",
     }
@@ -497,7 +518,7 @@ def _entry(index: int, segment: SubtitleSegment, duration: float) -> dict[str, o
         next_start=None,
         available_duration=max(0.001, segment.end - segment.start),
         generated_duration=duration,
-        max_speedup=1.15,
+        max_speedup=1.25,
         group_index=0,
         source_start=None,
         source_end=None,
@@ -541,7 +562,7 @@ def test_shorter_audio_never_slows_down_and_logs_actual_speed(monkeypatch) -> No
         language="English",
         speaker="Aiden",
         instruct="steady",
-        max_speedup=1.15,
+        max_speedup=1.25,
         video_duration=3.0,
     )
     assert reviews[0]["required_speedup"] == pytest.approx(2 / 3)
@@ -555,15 +576,15 @@ def test_bounded_speedup_preserves_tail_marker(monkeypatch) -> None:
     wav[-100:] = 0.9
 
     def stretch(audio, sample_rate, speed):
-        assert speed == 1.15
+        assert speed == 1.25
         # Resample the entire synthetic marker, rather than mock a destructive crop.
         return np.interp(
             np.linspace(0, len(audio) - 1, round(len(audio) / speed)), np.arange(len(audio)), audio
         )
 
     monkeypatch.setattr(core, "_pitch_preserving_speedup", stretch)
-    fitted = fit_wav_to_available_duration(wav, 1000, 3.0, 1.15)
-    assert len(fitted) == round(4000 / 1.15)
+    fitted = fit_wav_to_available_duration(wav, 1000, 3.0, 1.25)
+    assert len(fitted) == round(4000 / 1.25)
     assert fitted[-1] == pytest.approx(0.9)
     assert np.count_nonzero(fitted == wav[-1]) > 50
 
@@ -762,15 +783,16 @@ def test_alignment_padding_preserves_late_tail_without_next_sentence(monkeypatch
         lambda *args: [WordTiming("first", 0.1, 0.5), WordTiming("second", 1.0, 1.5)],
     )
     items, _, reviews = _generate(model, segments, aligner=object())
-    assert reviews[0]["alignment_source_end"] == pytest.approx(
-        0.5 + core.ALIGNMENT_END_PADDING_SECONDS
-    )
+    assert reviews[0]["alignment_source_end"] == pytest.approx(0.63)
+    assert reviews[0]["asr_last_word_end"] == 0.5
+    assert reviews[0]["detected_acoustic_end"] == 0.6
+    assert reviews[0]["boundary_safe"] is True
     assert np.count_nonzero(items[0][2] == np.float32(0.9)) == 100
     assert not np.any(items[0][2] == np.float32(0.4))
-    assert len(items[1][2]) == 1040  # Preserve the entire last sentence tail.
+    assert len(items[1][2]) == 530  # Speech plus release guard; trailing silence is excluded.
 
 
-def test_alignment_rejects_missing_middle_words_and_unsafe_padding() -> None:
+def test_alignment_rejects_missing_middle_words_and_acoustic_check_rejects_no_gap() -> None:
     group = build_tts_context_groups([SubtitleSegment(0, 1, "one two three four")])[0]
     _, failures = align_context_group(
         group,
@@ -781,10 +803,13 @@ def test_alignment_rejects_missing_middle_words_and_unsafe_padding() -> None:
     group = build_tts_context_groups([SubtitleSegment(0, 1, "one"), SubtitleSegment(1, 2, "two")])[
         0
     ]
-    _, failures = align_context_group(
+    aligned, failures = align_context_group(
         group, [WordTiming("one", 0, 0.5), WordTiming("two", 0.55, 0.9)], 1.0
     )
-    assert failures[1] == "invalid_audio_range"
+    assert not failures and len(aligned) == 2
+    boundary = find_safe_inter_sentence_boundary(np.ones(1000), 1000, 0.5, 0.55)
+    assert boundary.safe is False
+    assert boundary.reason == "no_safe_acoustic_gap"
 
 
 def test_collision_placement_preserves_samples_logs_shift_and_recovers_gap(caplog) -> None:
@@ -815,6 +840,8 @@ def test_collision_placement_preserves_samples_logs_shift_and_recovers_gap(caplo
     np.testing.assert_array_equal(audio[14120:15120], waves[1])
     assert reviews[1]["original_start"] == 13
     assert reviews[1]["actual_start"] == 14.12
+    assert reviews[1]["actual_end"] == 15.12
+    assert timed_segments_from_reviews(reviews)[1] == SubtitleSegment(14.12, 15.12, "B")
     assert reviews[1]["timing_shift"] == 1.12
     assert "timing_shift_exceeds_threshold" in reviews[1]["review_reason"]
     assert reviews[2]["timing_shift"] == 0
@@ -930,7 +957,9 @@ def test_unrecognized_neighbor_never_leaks_into_aligned_sentence(recognized) -> 
 
 def test_only_low_coverage_member_is_regenerated(monkeypatch) -> None:
     segments = [SubtitleSegment(0, 1, "one two"), SubtitleSegment(3, 4, "three four five")]
-    context = np.full(2000, 0.1, dtype=np.float32)
+    context = np.zeros(2000, dtype=np.float32)
+    context[:500] = 0.1
+    context[1000:1600] = 0.1
     individual = np.full(1500, 0.4, dtype=np.float32)
     model = mock.Mock()
     model.generate_custom_voice.side_effect = [([context], 1000), ([individual], 1000)]
@@ -1006,7 +1035,7 @@ def test_failed_stretch_keeps_full_waveform_and_applied_speed_one(monkeypatch) -
     monkeypatch.setattr(
         core, "_pitch_preserving_speedup", mock.Mock(side_effect=RuntimeError("ffmpeg failed"))
     )
-    items, _, reviews = _generate(model, [segment, following], max_speedup=1.15)
+    items, _, reviews = _generate(model, [segment, following], max_speedup=1.25)
     assert len(items[0][2]) == 4000
     assert reviews[0]["applied_speedup"] == 1.0
     assert "time_stretch_failed" in reviews[0]["review_reason"]
@@ -1018,8 +1047,8 @@ def test_real_ffmpeg_speedup_preserves_pitch_and_final_marker() -> None:
     time = np.arange(4 * sr) / sr
     wav = (0.1 * np.sin(2 * np.pi * 440 * time)).astype(np.float32)
     wav[-2400:] = 0.8 * np.sin(2 * np.pi * 880 * time[-2400:])
-    fitted = fit_wav_to_available_duration(wav, sr, 3.0, 1.15)
-    assert len(fitted) / sr == pytest.approx(4 / 1.15, abs=0.05)
+    fitted = fit_wav_to_available_duration(wav, sr, 3.0, 1.25)
+    assert len(fitted) / sr == pytest.approx(4 / 1.25, abs=0.05)
     assert np.max(np.abs(fitted[-2000:])) > 0.7
     frequencies = np.fft.rfftfreq(sr, 1 / sr)
     assert frequencies[np.argmax(np.abs(np.fft.rfft(fitted[:sr])))] == pytest.approx(440, abs=2)
@@ -1094,22 +1123,40 @@ def test_interrupted_chunk_write_invalidates_old_sentence_ranges(tmp_path, monke
     assert not core.tts_review_is_current(review_path, [(1, segment)])
 
 
-@pytest.mark.parametrize("tail_ms", [100, 150])
-def test_fricative_tail_stays_with_its_sentence_through_rebuild(tmp_path, monkeypatch, tail_ms):
+@pytest.mark.parametrize("tail_ms", [100, 150, 200, 250, 300])
+def test_information_tail_and_this_onset_stay_separate_through_rebuild(
+    tmp_path, monkeypatch, tail_ms
+):
     import soundfile as sf
 
-    segments = [SubtitleSegment(299.5, 300, "testcases"), SubtitleSegment(300.01, 301, "Here")]
+    segments = [
+        SubtitleSegment(299.5, 300, "I have this information."),
+        SubtitleSegment(300.01, 301, "This information belongs to this topic."),
+    ]
     wav = np.zeros(1800, dtype=np.float32)
     wav[100:500] = 0.2
     tail = np.random.default_rng(42).uniform(-0.08, 0.08, tail_ms).astype(np.float32)
     wav[500 : 500 + tail_ms] = tail
-    wav[1000:1500] = 0.6
+    wav[500 + tail_ms : 1000] = 0.003
+    wav[1000:1060] = 0.6
+    wav[1060:1600] = 0.4
     model = mock.Mock()
     model.generate_custom_voice.return_value = ([wav], 1000)
     monkeypatch.setattr(
         core,
         "transcribe_word_timings",
-        lambda *args: [WordTiming("testcases", 0.1, 0.5), WordTiming("Here", 1, 1.5)],
+        lambda *args: [
+            WordTiming("I", 0.1, 0.16),
+            WordTiming("have", 0.18, 0.26),
+            WordTiming("this", 0.28, 0.36),
+            WordTiming("information", 0.38, 0.5),
+            WordTiming("This", 1.02, 1.08),
+            WordTiming("information", 1.1, 1.2),
+            WordTiming("belongs", 1.22, 1.3),
+            WordTiming("to", 1.32, 1.36),
+            WordTiming("this", 1.38, 1.44),
+            WordTiming("topic", 1.46, 1.55),
+        ],
     )
     monkeypatch.setattr(chunks, "load_qwen_tts_model", lambda *args: model)
     monkeypatch.setattr(chunks, "load_faster_whisper_aligner", lambda *args: object())
@@ -1136,7 +1183,7 @@ def test_fricative_tail_stays_with_its_sentence_through_rebuild(tmp_path, monkey
 
     record = RecordingObserver()
     with event_scope(record, run_id="test", video="test.mp4"):
-        chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+        timed_segments = chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
     progress = [event for event in record.events if event.context.operation == "chunks"]
     assert progress[-1].current == progress[-1].total == 2
     assert progress[-1].details["sentences"] == progress[-1].details["total_sentences"] == 2
@@ -1144,11 +1191,16 @@ def test_fricative_tail_stays_with_its_sentence_through_rebuild(tmp_path, monkey
     assert all(event.context.run_id == "test" for event in record.events)
     entries = [json.loads(line) for line in reports.read_text(encoding="utf-8").splitlines()]
     assert all(entry["action"] == "context_aligned" for entry in entries)
+    assert timed_segments == [
+        SubtitleSegment(entry["actual_start"], entry["actual_end"], entry["text"])
+        for entry in entries
+    ]
     audio, sr = sf.read(output, dtype="float32")
     start, end = entries[0]["cache_start_sample"], entries[0]["cache_end_sample"]
     np.testing.assert_allclose(audio[start + 500 : start + 500 + tail_ms], tail, atol=1 / 32768)
     assert not np.any(np.isclose(audio[start:end], 0.6, atol=0.001))
     next_start = entries[1]["cache_start_sample"]
+    assert np.all(np.isclose(audio[next_start : next_start + 60], 0.6, atol=0.001))
     assert next_start - end >= round(core.MIN_GAP_SECONDS * sr)
     assert np.all(audio[end:next_start] == 0)
     assert not list(paths.audio_dir.rglob("*.json*"))
@@ -1165,9 +1217,11 @@ def test_fricative_tail_stays_with_its_sentence_through_rebuild(tmp_path, monkey
     assert model.generate_custom_voice.call_count == 4
 
 
-@pytest.mark.parametrize("next_word_start", [0.65, 0.48])
-def test_unsafe_tail_and_onset_regenerate_both_sentences(monkeypatch, next_word_start):
-    segments = [SubtitleSegment(0, 1, "testcases"), SubtitleSegment(1.01, 2, "Here")]
+def test_information_this_without_acoustic_gap_regenerates_both_sentences(monkeypatch):
+    segments = [
+        SubtitleSegment(0, 1, "I have this information."),
+        SubtitleSegment(1.01, 2, "This information belongs to this topic."),
+    ]
     context = np.full(2000, 0.8, dtype=np.float32)
     first = np.full(900, 0.2, dtype=np.float32)
     first[-150:] = 0.09
@@ -1179,17 +1233,65 @@ def test_unsafe_tail_and_onset_regenerate_both_sentences(monkeypatch, next_word_
         "transcribe_word_timings",
         mock.Mock(
             side_effect=[
-                [WordTiming("testcases", 0.1, 0.5), WordTiming("Here", next_word_start, 1.1)],
-                [WordTiming("testcases", 0.1, 0.5)],
-                [WordTiming("Here", 0.1, 0.5)],
+                [
+                    WordTiming(word, start, end)
+                    for word, start, end in (
+                        ("I", 0.1, 0.16),
+                        ("have", 0.18, 0.26),
+                        ("this", 0.28, 0.36),
+                        ("information", 0.38, 0.5),
+                        ("This", 0.65, 0.72),
+                        ("information", 0.74, 0.84),
+                        ("belongs", 0.86, 0.94),
+                        ("to", 0.96, 1.0),
+                        ("this", 1.02, 1.08),
+                        ("topic", 1.1, 1.2),
+                    )
+                ],
+                [
+                    WordTiming(word, i * 0.1, i * 0.1 + 0.08)
+                    for i, word in enumerate(("I", "have", "this", "information"))
+                ],
+                [
+                    WordTiming(word, i * 0.1, i * 0.1 + 0.08)
+                    for i, word in enumerate(
+                        ("This", "information", "belongs", "to", "this", "topic")
+                    )
+                ],
             ]
         ),
     )
     items, _, reviews = _generate(model, segments, object())
     assert model.generate_custom_voice.call_count == 3
     assert all(entry["action"] == "regenerated_individual_sentence" for entry in reviews)
+    assert reviews[0]["boundary_safe"] is False
+    assert reviews[0]["boundary_reason"] == "no_safe_acoustic_gap"
     np.testing.assert_array_equal(items[0][2], first)
     np.testing.assert_array_equal(items[1][2], second)
+
+
+def test_context_slice_with_active_waveform_end_falls_back_without_cropping(monkeypatch):
+    segment = SubtitleSegment(0, 1, "information")
+    context = np.full(1000, 0.2, dtype=np.float32)
+    individual = np.full(1200, 0.4, dtype=np.float32)
+    model = mock.Mock()
+    model.generate_custom_voice.side_effect = [([context], 1000), ([individual], 1000)]
+    monkeypatch.setattr(
+        core,
+        "transcribe_word_timings",
+        mock.Mock(
+            side_effect=[
+                [WordTiming("information", 0.1, 0.5)],
+                [WordTiming("information", 0.1, 0.5)],
+            ]
+        ),
+    )
+
+    items, _, reviews = _generate(model, [segment], object())
+
+    assert reviews[0]["action"] == "regenerated_individual_sentence"
+    assert reviews[0]["boundary_reason"] == "no_safe_trailing_silence"
+    np.testing.assert_array_equal(items[0][2], individual)
 
 
 def test_release_gap_for_nearby_non_overlapping_sentences():

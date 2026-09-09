@@ -29,9 +29,9 @@ Place source videos in `data/input` and local model files under `models`, or con
 1. Run `uv run transcript-video process VIDEO`. Whisper creates or reuses the application-owned Vietnamese source SRT at `data/subtitles/source/<stem>_vi_<backend>.srt`.
 2. Send that SRT to an external LLM with [`docs/prompts/optimal_prompt.md`](docs/prompts/optimal_prompt.md).
 3. Save the edited English result as `data/subtitles/translated/<stem>_en.srt`, or pass it with `--translated-srt PATH`.
-4. Rerun `process`. The tool burns the English subtitles, generates English TTS when enabled, and muxes the final video.
+4. Rerun `process`. Timed TTS is placed first, then a generated `data/subtitles/timed/<stem>_en_timed.srt` is burned before the final mux.
 
-Files under `translated/` are user-owned and are never overwritten by transcription. If the English SRT is missing, processing stops cleanly after the source SRT and prints the handoff paths without loading Qwen.
+Files under `translated/` are user-owned and are never overwritten. If the English SRT is missing, processing stops cleanly after the source SRT and prints the handoff paths without loading Qwen.
 
 ## Basic CLI
 

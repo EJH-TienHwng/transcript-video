@@ -45,7 +45,7 @@ Dry-run kiểm tra config, input, model ASR, output và riêng từng vai trò s
 1. Chạy `process VIDEO`. Whisper ghi Vietnamese source SRT do ứng dụng sở hữu tại `data/subtitles/source/<stem>_vi_<backend>.srt` nếu file chưa tồn tại.
 2. Gửi SRT đó cho LLM bên ngoài cùng [`prompts/optimal_prompt.md`](prompts/optimal_prompt.md).
 3. Lưu kết quả tiếng Anh đã chỉnh sửa tại `data/subtitles/translated/<stem>_en.srt`, hoặc dùng `--translated-srt PATH` khi xử lý một video.
-4. Chạy lại `process`. English SRT được dùng cho cả bước burn subtitle và Qwen TTS tiếng Anh, sau đó mux video cuối.
+4. Chạy lại `process`. Timed/chunked Qwen TTS tạo `data/subtitles/timed/<stem>_en_timed.srt` từ placement thực tế; SRT generated này được burn trước khi mux. TTS disabled/simple giữ timing đã dịch.
 
 Ứng dụng không tự dịch file này và transcription không bao giờ ghi vào `translated/`. Nếu thiếu English SRT, lệnh kết thúc bình thường sau khi tạo/tái sử dụng Vietnamese source SRT, báo rõ đường dẫn cần tạo và không load Qwen.
 
@@ -287,7 +287,7 @@ attn_implementation = "auto"
 audio_mode = "replace"
 split_audio = true
 chunk_minutes = 5
-max_speedup = 1.15
+max_speedup = 1.25
 chunk_tail_seconds = 10.0
 context_max_sentences = 4
 context_max_chars = 450
@@ -437,6 +437,7 @@ Mọi đường dẫn tương đối trong JSON được resolve từ repository
 | --- | --- |
 | Vietnamese source SRT (ứng dụng sở hữu) | `data/subtitles/source/<video>_vi_<backend>.srt` |
 | English translated SRT (người dùng sở hữu) | `data/subtitles/translated/<video>_en.srt` |
+| English timed SRT (generated) | `data/subtitles/timed/<video>_en_timed.srt` |
 | Video có hard subtitle | `data/output/<video>_vi-dub_en-sub.mp4` |
 | WAV TTS hoàn chỉnh | `data/audio/<video>_tts.wav` |
 | Chunk TTS để kiểm tra | `data/audio/<video>_tts_chunks/` |

@@ -144,28 +144,27 @@ def _process_video(
         return
 
     duration = get_media_duration_seconds(video_path)
-    with (
-        stage_context(PipelineStage.RENDER, "Burning English subtitles"),
-        ffmpeg_progress_handler(
-            ffmpeg_events(PipelineStage.RENDER, "Burning English subtitles", duration)
-        ),
-    ):
-        burn_subtitles(
-            video_path,
-            translated_srt_path,
-            subtitled_output_path,
-            video_encoder=hardware.video_encoder,
-            subtitle_style=settings.subtitle_style,
-        )
-
-    emit(
-        PipelineStage.RENDER,
-        "Subtitled video ready",
-        kind=EventKind.ARTIFACT,
-        artifact=subtitled_output_path,
-        details={"category": "Video"},
-    )
     if not tts.enabled:
+        with (
+            stage_context(PipelineStage.RENDER, "Burning English subtitles"),
+            ffmpeg_progress_handler(
+                ffmpeg_events(PipelineStage.RENDER, "Burning English subtitles", duration)
+            ),
+        ):
+            burn_subtitles(
+                video_path,
+                translated_srt_path,
+                subtitled_output_path,
+                video_encoder=hardware.video_encoder,
+                subtitle_style=settings.subtitle_style,
+            )
+        emit(
+            PipelineStage.RENDER,
+            "Subtitled video ready",
+            kind=EventKind.ARTIFACT,
+            artifact=subtitled_output_path,
+            details={"category": "Video"},
+        )
         return
     tts_model_path = Path(tts.model).expanduser()
     tts_model_name = (
@@ -174,10 +173,11 @@ def _process_video(
         else str(tts_model_path)
     )
 
+    timed_segments = None
     with stage_context(PipelineStage.TTS, "Generating English voice-over"):
         if tts.generation_mode == "chunked":
             logger.info("Generating/rebuilding chunked Qwen TTS audio: %s", tts_audio_path)
-            synthesize_tts_audio_by_time_chunks(
+            timed_segments = synthesize_tts_audio_by_time_chunks(
                 segments=translated_segments,
                 audio_out=tts_audio_path,
                 chunks_dir=tts_chunks_dir,
@@ -218,7 +218,7 @@ def _process_video(
                     attn_implementation=tts.attn_implementation,
                 )
             else:
-                synthesize_timed_tts_audio(
+                timed_segments = synthesize_timed_tts_audio(
                     segments=translated_segments,
                     audio_out=tts_audio_path,
                     video_path=video_path,
@@ -263,6 +263,37 @@ def _process_video(
         kind=EventKind.ARTIFACT,
         artifact=tts_audio_path,
         details={"category": "Audio"},
+    )
+    subtitle_path = translated_srt_path
+    if isinstance(timed_segments, list):
+        subtitle_path = paths.timed_subtitle_dir / f"{video_path.stem}_en_timed.srt"
+        write_srt(timed_segments, subtitle_path, post_process=False)
+        emit(
+            PipelineStage.SUBTITLES,
+            "Timed English subtitles ready",
+            kind=EventKind.ARTIFACT,
+            artifact=subtitle_path,
+            details={"category": "Generated subtitles"},
+        )
+    with (
+        stage_context(PipelineStage.RENDER, "Burning English subtitles"),
+        ffmpeg_progress_handler(
+            ffmpeg_events(PipelineStage.RENDER, "Burning English subtitles", duration)
+        ),
+    ):
+        burn_subtitles(
+            video_path,
+            subtitle_path,
+            subtitled_output_path,
+            video_encoder=hardware.video_encoder,
+            subtitle_style=settings.subtitle_style,
+        )
+    emit(
+        PipelineStage.RENDER,
+        "Subtitled video ready",
+        kind=EventKind.ARTIFACT,
+        artifact=subtitled_output_path,
+        details={"category": "Video"},
     )
     if tts_review_path.exists() and (tts.generation_mode == "chunked" or tts.mode == "timed"):
         emit(

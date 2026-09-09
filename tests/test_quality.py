@@ -46,7 +46,7 @@ def test_acoustic_tail_is_only_a_review_hint():
 def test_every_speedup_has_semantic_review_and_summary(tmp_path):
     entries = [
         dict(subtitle_index=i, action="context_aligned", applied_speedup=speed, review_reason="")
-        for i, speed in enumerate([1.0, 1.01, 1.15])
+        for i, speed in enumerate([1.0, 1.01, 1.25])
     ]
     observer = RecordingObserver()
     with event_scope(observer):

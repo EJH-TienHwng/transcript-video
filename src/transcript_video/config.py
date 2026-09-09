@@ -75,7 +75,7 @@ class TTSSettings:
     audio_mode: str = "replace"
     split_audio: bool = True
     chunk_minutes: int = 5
-    max_speedup: float = 1.15
+    max_speedup: float = 1.25
     chunk_tail_seconds: float = 10.0
     context_max_sentences: int = 4
     context_max_chars: int = 450
@@ -162,6 +162,7 @@ class ProjectPaths:
     subtitle_dir: Path
     source_subtitle_dir: Path
     translated_subtitle_dir: Path
+    timed_subtitle_dir: Path
     audio_dir: Path
     output_dir: Path
     temp_dir: Path
@@ -176,6 +177,7 @@ class ProjectPaths:
             subtitle_dir=data_root / "subtitles",
             source_subtitle_dir=data_root / "subtitles" / "source",
             translated_subtitle_dir=data_root / "subtitles" / "translated",
+            timed_subtitle_dir=data_root / "subtitles" / "timed",
             audio_dir=data_root / "audio",
             output_dir=data_root / "output",
             temp_dir=data_root / "temp",
@@ -194,6 +196,7 @@ class ProjectPaths:
             self.subtitle_dir,
             self.source_subtitle_dir,
             self.translated_subtitle_dir,
+            self.timed_subtitle_dir,
             self.audio_dir,
             self.output_dir,
             self.temp_dir,

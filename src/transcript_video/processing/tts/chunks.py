@@ -19,6 +19,7 @@ from .core import (
     load_qwen_tts_model,
     log_tts_summary,
     overlay_tts_items,
+    timed_segments_from_reviews,
     tts_review_is_current,
     write_tts_review_log,
 )
@@ -67,7 +68,7 @@ def synthesize_one_fixed_time_chunk(
     tts_speaker: str,
     tts_instruct: str,
     sample_rate: int | None = None,
-    max_speedup: float = 1.15,
+    max_speedup: float = 1.25,
     all_segments: list[SubtitleSegment] | None = None,
     video_duration: float | None = None,
     chunk_tail_seconds: float = 10.0,
@@ -222,7 +223,7 @@ def synthesize_tts_audio_by_time_chunks(
     chunk_minutes: int = 5,
     rerun_chunk: int | None = None,
     regenerate_all_chunks: bool = True,
-    max_speedup: float = 1.15,
+    max_speedup: float = 1.25,
     chunk_tail_seconds: float = 10.0,
     alignment_model_name: str | Path | None = None,
     context_max_sentences: int = 4,
@@ -230,7 +231,7 @@ def synthesize_tts_audio_by_time_chunks(
     context_break_seconds: float = 3.0,
     review_log_path: Path | None = None,
     verify_final_audio: bool = False,
-) -> None:
+) -> list[SubtitleSegment]:
     """Generate contextual TTS in fixed multi-minute processing units."""
     if rerun_chunk is not None and rerun_chunk < 0:
         raise ValueError("rerun_chunk must be zero or greater.")
@@ -416,3 +417,4 @@ def synthesize_tts_audio_by_time_chunks(
         verify_sentences(final_audio, final_rate, reviews, aligner, tts_language)
     write_tts_review_log(final_review, reviews)
     log_tts_summary(len(valid_segments), reviews, final_review)
+    return timed_segments_from_reviews(reviews)

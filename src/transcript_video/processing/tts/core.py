@@ -36,12 +36,13 @@ MIN_GAP_SECONDS = 0.12
 MIN_AVAILABLE_SECONDS = 0.001
 ALIGNMENT_MIN_CONFIDENCE = 1.0
 ALIGNMENT_START_PADDING_SECONDS = 0.04
-# Regression budget: a 150 ms final fricative plus a 30 ms guard.
-# If this budget reaches another word, regenerate instead of shortening the tail.
-ALIGNMENT_END_PADDING_SECONDS = 0.18
+ACOUSTIC_FRAME_SECONDS = 0.01
+ACOUSTIC_MIN_SILENCE_SECONDS = 0.05
+ACOUSTIC_RELEASE_SECONDS = 0.03
+ACOUSTIC_ONSET_CONFIRM_SECONDS = 0.06
 # Half a second is visible relative to subtitle cues; diagnose it instead of dropping speech.
 TIMING_SHIFT_REVIEW_SECONDS = 0.5
-TTS_REVIEW_VERSION = 4
+TTS_REVIEW_VERSION = 5
 SPEEDUP_EPSILON = 1e-6
 
 
@@ -62,6 +63,18 @@ class AlignedTTSSegment:
     source_start: float
     source_end: float
     confidence: float
+    asr_first_word_start: float
+    asr_last_word_end: float
+    next_asr_word_start: float | None
+
+
+@dataclass(slots=True)
+class SentenceBoundary:
+    current_end: float | None
+    next_start: float | None
+    cut_point: float | None
+    safe: bool
+    reason: str
 
 
 @dataclass(slots=True)
@@ -308,7 +321,7 @@ def align_context_group(
         first_rec = recognized_positions[matches[0][0]]
         last_rec = recognized_positions[matches[-1][0]]
         source_start = max(0.0, first_word.start - ALIGNMENT_START_PADDING_SECONDS)
-        source_end = min(audio_duration, last_word.end + ALIGNMENT_END_PADDING_SECONDS)
+        source_end = min(audio_duration, last_word.end)
         # Use transcript order: filtering by time would hide overlapping ASR word ranges.
         preceding = valid_words[:first_rec]
         following = valid_words[last_rec + 1 :]
@@ -328,22 +341,137 @@ def align_context_group(
             or last_rec - first_rec + 1 != len(matches)
             or source_start < previous_end
             or any(word.end > source_start for word in preceding)
-            or any(word.start - ALIGNMENT_START_PADDING_SECONDS < source_end for word in following)
+            or any(word.start < source_end for word in following)
             # The previous tail needs protection even if that sentence was regenerated.
-            or (
-                position > 0
-                and preceding
-                and preceding[-1].end + ALIGNMENT_END_PADDING_SECONDS > source_start
-            )
+            or (position > 0 and preceding and preceding[-1].end > source_start)
             or any(left[1].end > right[1].start for left, right in pairwise(matches))
         ):
             failures[subtitle_index] = "invalid_audio_range"
             continue
         aligned.append(
-            AlignedTTSSegment(subtitle_index, segment, source_start, source_end, confidence)
+            AlignedTTSSegment(
+                subtitle_index,
+                segment,
+                source_start,
+                source_end,
+                confidence,
+                first_word.start,
+                last_word.end,
+                following[0].start if following else None,
+            )
         )
         previous_end = source_end
     return aligned, failures
+
+
+def _frame_rms(audio, frame_samples: int):
+    import numpy as np
+
+    return np.asarray(
+        [
+            np.sqrt(np.mean(audio[first : first + frame_samples] ** 2))
+            for first in range(0, len(audio), frame_samples)
+            if len(audio[first : first + frame_samples])
+        ],
+        dtype=np.float64,
+    )
+
+
+def _low_energy_threshold(energies, speech_reference: float) -> float:
+    import numpy as np
+
+    threshold = max(1e-4, speech_reference * 0.06)
+    noise_floor = float(np.quantile(energies, 0.1)) if len(energies) else 0.0
+    if noise_floor < speech_reference * 0.5:
+        threshold = max(threshold, noise_floor * 2.5)
+    return threshold
+
+
+def find_safe_inter_sentence_boundary(
+    wav,
+    sample_rate: int,
+    current_word_end: float,
+    next_word_start: float | None,
+) -> SentenceBoundary:
+    """Find a proven low-energy gap after one word and before the next onset."""
+    import numpy as np
+
+    audio = np.asarray(wav, dtype=np.float64).reshape(-1)
+    if sample_rate <= 0 or not len(audio) or not np.isfinite(audio).all():
+        return SentenceBoundary(None, None, None, False, "invalid_waveform")
+    frame = max(1, round(sample_rate * ACOUSTIC_FRAME_SECONDS))
+    minimum_low_frames = max(1, ceil(ACOUSTIC_MIN_SILENCE_SECONDS * sample_rate / frame))
+    anchor = min(len(audio), max(0, round(current_word_end * sample_rate)))
+    search_start = anchor - anchor % frame
+
+    current_reference = audio[max(0, anchor - round(0.2 * sample_rate)) : anchor]
+    current_levels = _frame_rms(current_reference, frame)
+    references = [float(np.quantile(current_levels, 0.9))] if len(current_levels) else []
+    if next_word_start is not None:
+        next_anchor = min(len(audio), max(0, round(next_word_start * sample_rate)))
+        next_reference = audio[
+            max(0, next_anchor - round(0.02 * sample_rate)) : min(
+                len(audio), next_anchor + round(ACOUSTIC_ONSET_CONFIRM_SECONDS * sample_rate)
+            )
+        ]
+        if len(next_reference):
+            references.append(float(np.quantile(_frame_rms(next_reference, frame), 0.9)))
+    speech_reference = min((value for value in references if value > 0), default=0.0)
+
+    if next_word_start is None:
+        energies = _frame_rms(audio[search_start:], frame)
+        threshold = _low_energy_threshold(energies, speech_reference)
+        low = energies <= threshold
+        trailing = 0
+        for value in reversed(low):
+            if not value:
+                break
+            trailing += 1
+        if trailing < minimum_low_frames:
+            return SentenceBoundary(None, None, None, False, "no_safe_trailing_silence")
+        low_start = search_start + (len(low) - trailing) * frame
+        acoustic_end = min(len(audio), low_start)
+        cut = min(len(audio), acoustic_end + round(ACOUSTIC_RELEASE_SECONDS * sample_rate))
+        return SentenceBoundary(
+            acoustic_end / sample_rate, None, cut / sample_rate, True, "stable_low_energy_gap"
+        )
+
+    next_anchor = min(len(audio), max(0, round(next_word_start * sample_rate)))
+    if next_anchor <= anchor:
+        return SentenceBoundary(None, None, None, False, "overlapping_asr_boundaries")
+    search_stop = min(len(audio), next_anchor + round(ACOUSTIC_ONSET_CONFIRM_SECONDS * sample_rate))
+    energies = _frame_rms(audio[search_start:search_stop], frame)
+    threshold = _low_energy_threshold(energies, speech_reference)
+    active = energies > threshold
+    if not len(active):
+        return SentenceBoundary(None, None, None, False, "next_onset_not_found")
+    anchor_frame = min(len(active) - 1, max(0, (next_anchor - search_start) // frame))
+    onset_frame = next((index for index in range(anchor_frame, len(active)) if active[index]), None)
+    if onset_frame is None:
+        return SentenceBoundary(None, None, None, False, "next_onset_not_found")
+    while onset_frame > 0 and active[onset_frame - 1]:
+        onset_frame -= 1
+    low_end = onset_frame
+    low_start = low_end
+    while low_start > 0 and not active[low_start - 1]:
+        low_start -= 1
+    if low_end - low_start < minimum_low_frames:
+        return SentenceBoundary(None, None, None, False, "no_safe_acoustic_gap")
+    acoustic_end = search_start + low_start * frame
+    detected_onset = min(len(audio), search_start + onset_frame * frame)
+    if acoustic_end < anchor or detected_onset > next_anchor:
+        return SentenceBoundary(None, None, None, False, "gap_outside_asr_anchors")
+    cut = min(
+        detected_onset,
+        acoustic_end + round(ACOUSTIC_RELEASE_SECONDS * sample_rate),
+    )
+    return SentenceBoundary(
+        acoustic_end / sample_rate,
+        detected_onset / sample_rate,
+        cut / sample_rate,
+        True,
+        "stable_low_energy_gap",
+    )
 
 
 def _alignment_language(language: str) -> str | None:
@@ -429,7 +557,7 @@ def fit_wav_to_available_duration(
     wav,
     sample_rate: int,
     available_duration: float,
-    max_speedup: float = 1.15,
+    max_speedup: float = 1.25,
     fade_out_seconds: float = 0.04,
 ):
     """Pitch-preserving speed-up bounded by max_speedup; never truncate speech."""
@@ -544,12 +672,21 @@ def _review_entry(
         "overflow_duration": max(0.0, generated_duration - available_duration),
         "max_speedup": max_speedup,
         "original_start": segment.start,
+        "original_end": segment.end,
         "actual_start": segment.start,
+        "actual_end": segment.end,
         "timing_shift": 0.0,
         "context_group_index": group_index,
         "alignment_confidence": confidence,
         "alignment_source_start": source_start,
         "alignment_source_end": source_end,
+        "asr_last_word_end": None,
+        "detected_acoustic_end": None,
+        "tail_extension_seconds": None,
+        "next_asr_word_start": None,
+        "detected_next_onset": None,
+        "boundary_safe": False,
+        "boundary_reason": "individual_generation",
         "action": action,
         "review_reason": reason,
         "generation_failures": 0,
@@ -613,10 +750,84 @@ def generate_context_group_items(
                 )
             except Exception as exc:
                 logger.info("Alignment failed for context group %d: %s", group.index, exc)
-        aligned_by_index = {item.subtitle_index: item for item in aligned}
+        aligned_items_by_index = {item.subtitle_index: item for item in aligned}
+        aligned_by_index = dict(aligned_items_by_index)
+        boundary_metadata: dict[int, dict[str, object]] = {}
+        for position, (subtitle_index, _segment) in enumerate(group.segments):
+            item = aligned_items_by_index.get(subtitle_index)
+            if item is None:
+                if position + 1 < len(group.segments):
+                    next_index = group.segments[position + 1][0]
+                    if next_index in aligned_by_index:
+                        failures[next_index] = "unsafe_acoustic_boundary"
+                        aligned_by_index.pop(next_index)
+                        boundary_metadata[next_index] = {
+                            "boundary_safe": False,
+                            "boundary_reason": "preceding_alignment_unsafe",
+                        }
+                continue
+            next_index = (
+                group.segments[position + 1][0] if position + 1 < len(group.segments) else None
+            )
+            boundary = find_safe_inter_sentence_boundary(
+                group_wav,
+                sr,
+                item.asr_last_word_end,
+                item.next_asr_word_start,
+            )
+            boundary_details = {
+                "asr_last_word_end": item.asr_last_word_end,
+                "detected_acoustic_end": boundary.current_end,
+                "tail_extension_seconds": (
+                    boundary.current_end - item.asr_last_word_end
+                    if boundary.current_end is not None
+                    else None
+                ),
+                "next_asr_word_start": item.next_asr_word_start,
+                "detected_next_onset": boundary.next_start,
+                "boundary_safe": boundary.safe,
+                "boundary_reason": boundary.reason,
+            }
+            if subtitle_index in aligned_by_index:
+                boundary_metadata[subtitle_index] = boundary_details
+            if not boundary.safe or boundary.cut_point is None:
+                logger.debug(
+                    "TTS subtitle #%d: no safe acoustic gap before next onset; "
+                    "regenerating boundary sentences individually (%s)",
+                    subtitle_index,
+                    boundary.reason,
+                )
+                failures[subtitle_index] = "unsafe_acoustic_boundary"
+                aligned_by_index.pop(subtitle_index, None)
+                boundary_metadata[subtitle_index] = boundary_details
+                if next_index is not None:
+                    failures[next_index] = "unsafe_acoustic_boundary"
+                    aligned_by_index.pop(next_index, None)
+                    boundary_metadata[next_index] = {
+                        "boundary_safe": False,
+                        "boundary_reason": f"preceding_{boundary.reason}",
+                    }
+                continue
+            item.source_end = boundary.cut_point
+            if (
+                next_index is not None
+                and boundary.next_start is not None
+                and (next_item := aligned_items_by_index.get(next_index))
+            ):
+                next_item.source_start = boundary.next_start
+            logger.debug(
+                "TTS subtitle #%d: ASR end=%.3f acoustic end=%.3f tail extension=%+.3f "
+                "next onset=%s boundary=safe",
+                subtitle_index,
+                item.asr_last_word_end,
+                boundary.current_end,
+                boundary.current_end - item.asr_last_word_end,
+                f"{boundary.next_start:.3f}" if boundary.next_start is not None else "none",
+            )
         for subtitle_index, segment in group.segments:
             with log_context(subtitle=subtitle_index):
                 item = aligned_by_index.get(subtitle_index)
+                aligned_item = aligned_items_by_index.get(subtitle_index)
                 reason = failures.get(subtitle_index, "")
                 sentence_wav = None
                 metadata: dict[str, object] = {}
@@ -624,6 +835,16 @@ def generate_context_group_items(
                     first, last = round(item.source_start * sr), round(item.source_end * sr)
                     if 0 <= first < last <= len(group_wav):
                         sentence_wav = group_wav[first:last].copy()
+                        from .qa import check_tail
+
+                        if check_tail(sentence_wav, sr)["possible_truncated_tail"]:
+                            sentence_wav = None
+                            reason = "unsafe_acoustic_boundary"
+                            boundary_metadata[subtitle_index] = {
+                                **boundary_metadata.get(subtitle_index, {}),
+                                "boundary_safe": False,
+                                "boundary_reason": "candidate_end_still_active",
+                            }
                     else:
                         reason = "invalid_audio_range"
                 action = "context_aligned"
@@ -668,13 +889,14 @@ def generate_context_group_items(
                     generated_duration=raw_duration,
                     max_speedup=max_speedup,
                     group_index=group.index,
-                    source_start=item.source_start if item else None,
-                    source_end=item.source_end if item else None,
+                    source_start=aligned_item.source_start if aligned_item else None,
+                    source_end=aligned_item.source_end if aligned_item else None,
                     action=action,
                     reason=reason,
                     confidence=confidences.get(subtitle_index),
                 )
                 entry.update(metadata)
+                entry.update(boundary_metadata.get(subtitle_index, {}))
                 if group_error:
                     entry["context_generation_error"] = group_error
                     _add_review_reason(entry, "context_generation_failed")
@@ -768,6 +990,7 @@ def overlay_tts_items(
                 cache_end_sample=end,
                 original_start=segment.start,
                 actual_start=offset + start / sample_rate,
+                actual_end=offset + end / sample_rate,
                 timing_shift=shift,
             )
             reasons = str(entry.get("review_reason", "")).split(";")
@@ -789,6 +1012,19 @@ def overlay_tts_items(
         logger.info("TTS peak %.3f exceeds full scale; applying uniform gain", peak)
         audio /= peak
     return audio
+
+
+def timed_segments_from_reviews(entries: list[dict[str, object]]) -> list[SubtitleSegment]:
+    """Build subtitle cues from the exact placed sample ranges recorded in reviews."""
+    return [
+        SubtitleSegment(
+            float(entry["actual_start"]), float(entry["actual_end"]), str(entry["text"])
+        )
+        for entry in sorted(
+            entries, key=lambda value: (value["actual_start"], value["subtitle_index"])
+        )
+        if entry.get("action") != "generation_failed"
+    ]
 
 
 def write_tts_review_log(path: Path, entries: list[dict[str, object]]) -> None:
@@ -940,13 +1176,13 @@ def synthesize_timed_tts_audio(
     device: str,
     attn_implementation: str,
     alignment_model_name: str | Path | None = None,
-    max_speedup: float = 1.15,
+    max_speedup: float = 1.25,
     context_max_sentences: int = 4,
     context_max_chars: int = 450,
     context_break_seconds: float = 3.0,
     review_log_path: Path | None = None,
     verify_final_audio: bool = False,
-) -> None:
+) -> list[SubtitleSegment]:
     """Generate contextual TTS and place complete sentences as close to SRT starts as possible."""
     groups = build_tts_context_groups(
         segments, context_max_sentences, context_max_chars, context_break_seconds
@@ -990,3 +1226,4 @@ def synthesize_timed_tts_audio(
     write_tts_review_log(review_path, reviews)
     total = sum(len(group.segments) for group in groups)
     log_tts_summary(total, reviews, review_path)
+    return timed_segments_from_reviews(reviews)
