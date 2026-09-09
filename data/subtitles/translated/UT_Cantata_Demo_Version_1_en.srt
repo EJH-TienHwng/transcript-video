@@ -20,11 +20,11 @@ and the Cantata folders corresponding to the C files that require UT.
 
 6
 00:00:27,700 --> 00:00:32,700
-To perform UT for a specific module, copy the header folder
+To perform UT for a specific module, copy the header folder,
 
 7
 00:00:33,700 --> 00:00:38,190
-And the Cantata folder corresponding to the target C file into the workspace.
+and the Cantata folder corresponding to the target C file into the workspace.
 
 8
 00:00:38,980 --> 00:00:46,610

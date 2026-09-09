@@ -25,7 +25,7 @@ from .media import (
     mux_audio_into_video_replace,
     split_audio_into_chunks,
 )
-from .speedup import process_speedup_video
+from .speedup import process_speedup_outputs
 from .subtitles import post_process_segments, read_srt, write_srt
 from .transcription import transcribe_video
 from .tts import (
@@ -76,7 +76,6 @@ def _process_video(
     tts_chunks_dir = paths.audio_dir / f"{video_path.stem}_tts_chunks"
     tts_review_path = paths.tts_review_path(tts_audio_path)
     final_tts_output_path = paths.normal_video_path(video_path, tts_enabled=True)
-    final_output_path = paths.normal_video_path(video_path, tts_enabled=tts.enabled)
     speedup_spec_path = paths.speedup_spec_path(video_path, settings.speedup.spec)
 
     logger = logging.getLogger(__name__)
@@ -149,8 +148,11 @@ def _process_video(
     )
 
     if transcription.skip_burn:
-        _process_speedup_if_enabled(
-            final_output_path, speedup_spec_path, video_path.stem, paths, settings
+        _process_speedup_outputs_if_enabled(
+            paths.normal_video_paths(video_path, tts_enabled=tts.enabled),
+            speedup_spec_path,
+            video_path.stem,
+            settings,
         )
         return
 
@@ -176,8 +178,8 @@ def _process_video(
             artifact=subtitled_output_path,
             details={"category": "Video"},
         )
-        _process_speedup_if_enabled(
-            final_output_path, speedup_spec_path, video_path.stem, paths, settings
+        _process_speedup_outputs_if_enabled(
+            (subtitled_output_path,), speedup_spec_path, video_path.stem, settings
         )
         return
     tts_model_path = Path(tts.model).expanduser()
@@ -187,11 +189,11 @@ def _process_video(
         else str(tts_model_path)
     )
 
-    timed_segments = None
+    retimed_segments = None
     with stage_context(PipelineStage.TTS, "Generating English voice-over"):
         if tts.generation_mode == "chunked":
             logger.info("Generating/rebuilding chunked Qwen TTS audio: %s", tts_audio_path)
-            timed_segments = synthesize_tts_audio_by_time_chunks(
+            retimed_segments = synthesize_tts_audio_by_time_chunks(
                 segments=translated_segments,
                 audio_out=tts_audio_path,
                 chunks_dir=tts_chunks_dir,
@@ -232,7 +234,7 @@ def _process_video(
                     attn_implementation=tts.attn_implementation,
                 )
             else:
-                timed_segments = synthesize_timed_tts_audio(
+                retimed_segments = synthesize_timed_tts_audio(
                     segments=translated_segments,
                     audio_out=tts_audio_path,
                     video_path=video_path,
@@ -279,12 +281,12 @@ def _process_video(
         details={"category": "Audio"},
     )
     subtitle_path = translated_srt_path
-    if isinstance(timed_segments, list):
-        subtitle_path = paths.timed_subtitle_dir / f"{video_path.stem}_en_timed.srt"
-        write_srt(timed_segments, subtitle_path, post_process=False)
+    if isinstance(retimed_segments, list):
+        subtitle_path = paths.retimed_subtitle_dir / f"{video_path.stem}_en_retimed.srt"
+        write_srt(retimed_segments, subtitle_path, post_process=False)
         emit(
             PipelineStage.SUBTITLES,
-            "Timed English subtitles ready",
+            "Retimed English subtitles ready",
             kind=EventKind.ARTIFACT,
             artifact=subtitle_path,
             details={"category": "Generated subtitles"},
@@ -367,24 +369,25 @@ def _process_video(
             details=report,
             artifact=report_path,
         )
-    _process_speedup_if_enabled(
-        final_output_path, speedup_spec_path, video_path.stem, paths, settings
+    _process_speedup_outputs_if_enabled(
+        (subtitled_output_path, final_tts_output_path),
+        speedup_spec_path,
+        video_path.stem,
+        settings,
     )
 
 
-def _process_speedup_if_enabled(
-    final_output_path: Path,
+def _process_speedup_outputs_if_enabled(
+    normal_output_paths: tuple[Path, ...],
     spec_path: Path,
     video_stem: str,
-    paths: ProjectPaths,
     settings: RunSettings,
 ) -> None:
     if not settings.speedup.enabled:
         return
-    process_speedup_video(
-        final_output_path,
+    process_speedup_outputs(
+        normal_output_paths,
         spec_path,
-        paths.speedup_output_path(final_output_path),
         video_encoder=settings.hardware.video_encoder,
         video_stem=video_stem,
     )

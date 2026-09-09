@@ -1,25 +1,21 @@
 1
-00:00:00,000 --> 00:00:02,500
+00:00:00,000 --> 00:00:03,000
 Hello everyone.
 
 2
-00:00:02,500 --> 00:00:09,500
+00:00:03,000 --> 00:00:12,000
 In this session, I will demo how to generate Testcase using GitHub Copilot.
 
 3
-00:00:12,000 --> 00:00:16,500
-To use this feature, I first need a Test Workspace Folder.
-
-4
-00:00:16,500 --> 00:00:21,000
-This folder is for the item for which I need to generate Testcase.
+00:00:12,000 --> 00:00:21,000
+To use this feature, I need a Test Workspace Folder for the item I want to generate test cases for.
 
 5
-00:00:21,000 --> 00:00:24,000
-I will go to Testing Support.
+00:00:21,000 --> 00:00:25,000
+At this tool interface, I will go to Testing Support.
 
 6
-00:00:24,000 --> 00:00:27,000
+00:00:25,000 --> 00:00:27,000
 Here, I will have two options.
 
 7
@@ -31,20 +27,20 @@ The first option is to create a Test Workspace Folder for an item.
 The second option is to create a Test Workspace Folder for a list of other items.
 
 9
-00:00:38,000 --> 00:00:41,500
+00:00:38,000 --> 00:00:42,000
 I will demo the first option first.
 
 10
-00:00:41,500 --> 00:00:45,000
+00:00:42,000 --> 00:00:45,000
 I will choose One Item here.
 
 11
-00:00:46,000 --> 00:00:50,000
-Here, I will have three types of information.
+00:00:45,000 --> 00:00:50,000
+Here, we have three fields that need to be filled in.
 
 12
 00:00:50,000 --> 00:00:54,000
-The first information is the database path.
+The first one is the database path.
 
 13
 00:00:54,000 --> 00:01:00,000
@@ -52,19 +48,19 @@ This folder path contains the database loaded from the Stream or Snapshot.
 
 14
 00:01:00,000 --> 00:01:03,000
-The second information is the workspace path.
+The second field is the workspace path.
 
 15
 00:01:03,000 --> 00:01:06,000
 I will create a blank folder.
 
 16
-00:01:06,000 --> 00:01:13,000
+00:01:06,000 --> 00:01:14,000
 I will use this folder path to store the outputs generated while the tool is running.
 
 17
-00:01:15,000 --> 00:01:17,000
-The third information is the item name.
+00:01:14,000 --> 00:01:17,000
+The third field is the item name.
 
 18
 00:01:17,000 --> 00:01:23,000
@@ -75,7 +71,7 @@ This is the item for which I need to create the Test Workspace Folder.
 After filling in these three fields, I will click Generate Environment.
 
 20
-00:01:39,000 --> 00:01:45,000
+00:01:39,000 --> 00:01:46,000
 After this step is complete, the tool will show a notification.
 
 21
@@ -83,23 +79,23 @@ After this step is complete, the tool will show a notification.
 At the same time, Visual Studio Code will open automatically.
 
 22
-00:01:51,000 --> 00:01:56,000
-It will import the Test Workspace Folder for the item.
+00:01:51,000 --> 00:01:57,500
+It will import the Test Workspace Folder for the item we want to create.
 
 23
-00:01:58,000 --> 00:02:01,000
+00:01:57,500 --> 00:02:01,000
 Here, I will have the source file.
 
 24
 00:02:01,000 --> 00:02:10,000
-I will also have two files: test.cpp and test.h.
+I will also have two files: test.cpp and test.h here.
 
 25
 00:02:11,000 --> 00:02:17,000
 Besides, I can use the Open output feature.
 
 26
-00:02:17,000 --> 00:02:24,000
+00:02:17,000 --> 00:02:27,000
 It will open the Test Workspace Folder for the item I need to create.
 
 27
@@ -111,23 +107,27 @@ For the second option, I will choose List Item.
 I also have three important pieces of information.
 
 29
-00:02:45,000 --> 00:02:47,000
-The first is the database path.
+00:02:45,000 --> 00:02:47,500
+The first one is the database path.
 
 30
-00:02:47,000 --> 00:02:51,000
-The second is the workspace path.
+00:02:47,500 --> 00:02:50,000
+The second one is the workspace path.
+
+30
+00:02:50,000 --> 00:02:53,000
+These two fields are the same as in the first option.
 
 31
-00:02:51,000 --> 00:02:56,000
-The third is the List Items path.
+00:02:53,000 --> 00:02:57,000
+The only difference is the third field, which is the List Items path.
 
 32
-00:02:56,000 --> 00:03:03,000
+00:02:57,000 --> 00:03:05,000
 I will have an Excel file containing the item name and item path information.
 
 33
-00:03:03,000 --> 00:03:09,000
+00:03:05,000 --> 00:03:11,500
 This identifies the items for which Test Workspace Folders need to be created.
 
 34
@@ -135,11 +135,11 @@ This identifies the items for which Test Workspace Folders need to be created.
 Then I will take the path of this file.
 
 35
-00:03:17,000 --> 00:03:23,000
+00:03:16,000 --> 00:03:21,000
 I will enter it into the List Items path field.
 
 36
-00:03:23,000 --> 00:03:27,000
+00:03:21,000 --> 00:03:26,000
 Then I will click Generate Environment.
 
 37
@@ -156,7 +156,7 @@ After creating the Test Workspace Folder for the item, we need to create a testc
 
 40
 00:04:19,000 --> 00:04:24,000
-We choose Generate Test Case by A.I. Copilot.
+We choose AI Copilot then Generate Test Case by AI Copilot.
 
 41
 00:04:24,000 --> 00:04:27,000
@@ -179,7 +179,7 @@ For example, this item.
 I will copy the path of this file.
 
 46
-00:04:43,000 --> 00:04:51,000
+00:04:45,000 --> 00:04:51,000
 After that, I will enter the first piece of information.
 
 47
@@ -215,27 +215,27 @@ A Terminal window will appear.
 It will show detailed information while the tool is running.
 
 55
-00:09:41,360 --> 00:09:44,860
+00:09:41,360 --> 00:09:45,500
 After Auto Define Object is complete, we will go to the next step.
 
 56
-00:09:44,860 --> 00:09:47,360
+00:09:45,500 --> 00:09:50,000
 The next step is Prepare Get SUTs.
 
 57
-00:10:02,360 --> 00:10:07,360
+00:10:01,500 --> 00:10:08,000
 In the pop-up, we will see that it found three SUT functions.
 
 58
-00:10:07,360 --> 00:10:11,360
+00:10:08,000 --> 00:10:12,000
 The dropdown is also updated.
 
 59
-00:10:11,360 --> 00:10:18,360
+00:10:12,000 --> 00:10:18,000
 We can see the three functions listed here.
 
 60
-00:10:18,360 --> 00:10:23,360
+00:10:18,000 --> 00:10:23,360
 We will select one of the three functions for which we want to generate a test case.
 
 61
@@ -267,7 +267,7 @@ Now we will demonstrate the first option.
 To generate a test case for one function, we choose Generate one SUT.
 
 68
-00:11:11,360 --> 00:11:16,360
+00:11:11,360 --> 00:11:17,360
 We can see that the trigger to generate the testcase is sent here.
 
 69
@@ -279,15 +279,15 @@ We will see the information in Visual Studio Code.
 We will go to Output and choose GitHub Copilot Chat.
 
 71
-00:11:28,360 --> 00:11:33,360
+00:11:28,360 --> 00:11:34,360
 The generation process information will be shown in this Terminal.
 
 72
-00:11:35,360 --> 00:11:39,360
+00:11:35,360 --> 00:11:40,360
 We will see a notification when test generation is complete.
 
 73
-00:11:39,360 --> 00:11:44,360
+00:11:40,360 --> 00:11:44,360
 At that point, the generation process is done.
 
 74
@@ -308,43 +308,39 @@ Next, we will check the code coverage.
 
 78
 00:12:16,360 --> 00:12:20,360
-Then we will proceed to build Cantata for this test.
+So, we will proceed to build Cantata for this test.
 
 79
 00:12:20,360 --> 00:12:23,360
 We will click Build Cantata here.
 
 80
-00:12:54,360 --> 00:13:01,360
-After Build Cantata is complete, we will check the Test Workspace Folder.
+00:12:54,360 --> 00:13:03,000
+After the Cantata build is complete, we can see that the item's Test Workspace Folder
 
 81
-00:13:01,360 --> 00:13:08,360
-Inside the Output folder, there is a Cantata folder.
+00:13:03,000 --> 00:13:09,000
+contains a Cantata folder inside the Output folder.
 
 82
-00:13:10,360 --> 00:13:12,360
-We will open Cantata.
-
-83
-00:13:12,360 --> 00:13:14,360
-Click Tools.
+00:13:10,360 --> 00:13:14,360
+Next, we will open Cantata.
 
 84
 00:13:14,360 --> 00:13:16,360
-Then we will go to the C folder.
+By going to the C drive.
 
 85
 00:13:18,360 --> 00:13:21,360
-Choose TCC.
+Select TCC.
 
 86
-00:13:22,360 --> 00:13:24,360
-Go to Tools.
+00:13:21,360 --> 00:13:24,000
+Open the Tools folder.
 
 87
-00:13:24,360 --> 00:13:26,360
-Go to Cantata.
+00:13:24,000 --> 00:13:26,360
+And then open Cantata folder.
 
 88
 00:13:26,360 --> 00:13:29,360
@@ -395,11 +391,11 @@ Before clicking this Generate button, I will delete the newly created Testcases.
 This prevents duplication in the next run.
 
 100
-00:15:27,360 --> 00:15:30,360
+00:15:26,360 --> 00:15:30,990
 Then I will click Generate Testcase All SUT.
 
 101
-00:15:30,360 --> 00:15:34,360
+00:15:30,990 --> 00:15:35,360
 This will create Testcases for all functions in this item.
 
 102
@@ -423,12 +419,8 @@ I go to Terminal and select Run Task....
 Then I select Cantata++ coverage measurement.
 
 107
-00:18:11,360 --> 00:18:14,860
-In the Terminal section, I can see the values.
-
-108
-00:18:14,860 --> 00:18:18,360
-The code coverage has reached 100%.
+00:18:11,360 --> 00:18:18,360
+In the Terminal section, I can see that all the code coverage metrics have reached 100%.
 
 109
 00:18:18,360 --> 00:18:21,360
@@ -439,41 +431,33 @@ We will go to Cantata.
 We will see that the code has 100% coverage.
 
 111
-00:18:27,360 --> 00:18:35,360
-I will gradually drag the Cantata folder into the project.
-
-112
-00:18:36,360 --> 00:18:38,360
-This is in the Cantata tool.
+00:18:27,360 --> 00:18:38,360
+I will gradually drag the Cantata folder into the project in the Cantata tool.
 
 113
-00:18:50,280 --> 00:18:54,860
+00:18:50,280 --> 00:18:57,000
 Here, we can see that the code in all three functions is already covered.
 
 114
-00:18:54,860 --> 00:19:00,860
+00:18:57,000 --> 00:19:03,000
 Therefore, their color changes to green.
 
 115
 00:19:08,360 --> 00:19:12,360
-Now we click Cantata and choose View.
+Now we can click Cantata and choose View,
 
 116
 00:19:12,360 --> 00:19:17,360
-Then choose Report Viewer to view this report.
+then choose Report Viewer to view this report.
 
 117
-00:19:17,360 --> 00:19:22,360
-We can view the test report here.
-
-118
-00:19:22,360 --> 00:19:27,360
-We can also see the coverage here.
+00:19:18,360 --> 00:19:29,360
+We can also view the test report and the coverage that we achieved here.
 
 119
-00:19:32,360 --> 00:19:34,360
+00:19:30,360 --> 00:19:34,500
 This is the end of my demonstration.
 
 120
-00:19:34,360 --> 00:19:37,360
+00:19:34,500 --> 00:19:37,360
 Thank you for watching.

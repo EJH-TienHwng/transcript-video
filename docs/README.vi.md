@@ -45,9 +45,17 @@ Dry-run kiểm tra config, input, model ASR, output và riêng từng vai trò s
 1. Chạy `process VIDEO`. Whisper ghi Vietnamese source SRT do ứng dụng sở hữu tại `data/subtitles/source/<stem>_vi_<backend>.srt` nếu file chưa tồn tại.
 2. Gửi SRT đó cho LLM bên ngoài cùng [`prompts/optimal_prompt.md`](prompts/optimal_prompt.md).
 3. Lưu kết quả tiếng Anh đã chỉnh sửa tại `data/subtitles/translated/<stem>_en.srt`, hoặc dùng `--translated-srt PATH` khi xử lý một video.
-4. Chạy lại `process`. Timed/chunked Qwen TTS tạo `data/subtitles/timed/<stem>_en_timed.srt` từ placement thực tế; SRT generated này được burn trước khi mux. TTS disabled/simple giữ timing đã dịch.
+4. Chạy lại `process`. Timed/chunked Qwen TTS tạo `data/subtitles/retimed/<stem>_en_retimed.srt` từ placement thực tế; SRT dẫn xuất này được burn trước khi mux. TTS disabled/simple burn trực tiếp SRT đã dịch.
 
 Ứng dụng không tự dịch file này và transcription không bao giờ ghi vào `translated/`. Nếu thiếu English SRT, lệnh kết thúc bình thường sau khi tạo/tái sử dụng Vietnamese source SRT, báo rõ đường dẫn cần tạo và không load Qwen.
+
+SRT trong `translated/` là bản chuẩn và không bị ghi lại. Retiming giữ nguyên cue khi narration ngắn hơn, chỉ dời start khi TTS bắt đầu trễ có ý nghĩa, và kéo dài end khi TTS dài hơn. Cue chỉ được kết thúc sớm hơn timing đã dịch để bàn giao sạch cho cue retimed tiếp theo, và không bao giờ trước khi narration của chính cue đó kết thúc. So sánh theo mili giây loại bỏ nhiễu sample; review TTS lưu timing gốc, placement thực tế, timing retimed cuối cùng, độ dịch và lý do.
+
+## Video speed-up đầu ra
+
+`<stem>_vi-dub_en-sub.mp4` dùng audio tiếng Việt với subtitle tiếng Anh. Khi bật TTS, `<stem>_en-dub_en-sub.mp4` dùng English TTS với subtitle tiếng Anh. `process --speedup` áp dụng cùng một timeline `data/speedup/<stem>.speedup.toml` cho cả hai video thường và tạo hai artifact `_speedup.mp4`; khi tắt TTS chỉ xử lý bản audio tiếng Việt. Lệnh `speedup` độc lập tự tìm một hoặc cả hai output chuẩn đang tồn tại.
+
+Các trạng thái spec được phân biệt rõ: thiếu file thì tạo một template và hoãn speed-up; file có 0 segment, kể cả file chỉ chứa `# Reviewed: no speed-up required.`, hoàn tất mà không chạy FFmpeg hay tạo bản sao; có segment hợp lệ thì tạo output; TOML hoặc interval không hợp lệ thì báo lỗi. Dry-run chỉ báo trạng thái và không tạo file.
 
 Profile là file TOML không cần khai báo đủ mọi field, đặt tại `configs/profiles/<tên>.toml` hoặc truyền đường dẫn trực tiếp. Thứ tự ghi đè là: mặc định, config gốc, profile, rồi option CLI.
 
@@ -437,12 +445,13 @@ Mọi đường dẫn tương đối trong JSON được resolve từ repository
 | --- | --- |
 | Vietnamese source SRT (ứng dụng sở hữu) | `data/subtitles/source/<video>_vi_<backend>.srt` |
 | English translated SRT (người dùng sở hữu) | `data/subtitles/translated/<video>_en.srt` |
-| English timed SRT (generated) | `data/subtitles/timed/<video>_en_timed.srt` |
-| Video có hard subtitle | `data/output/<video>_vi-dub_en-sub.mp4` |
+| English retimed SRT (generated) | `data/subtitles/retimed/<video>_en_retimed.srt` |
+| Video audio tiếng Việt + subtitle tiếng Anh | `data/output/<video>_vi-dub_en-sub.mp4` |
 | WAV TTS hoàn chỉnh | `data/audio/<video>_tts.wav` |
 | Chunk TTS để kiểm tra | `data/audio/<video>_tts_chunks/` |
 | Log kiểm tra timing/alignment TTS | `data/report/tts/<video>_tts_review.jsonl` |
-| Video TTS cuối | `data/output/<video>_en-dub_en-sub.mp4` |
+| Video English TTS + subtitle tiếng Anh | `data/output/<video>_en-dub_en-sub.mp4` |
+| Video speed-up tùy chọn | `data/output/<video>_{vi,en}-dub_en-sub_speedup.mp4` |
 | File tạm/course cuối | `data/compilation/` |
 
 ## Kiểm tra chất lượng

@@ -1,0 +1,280 @@
+1
+00:00:00,180 --> 00:00:20,360
+ở đây là video để mua cách làm ai đứt đầu tiên là bật admin để có thể truy cập vào tool
+
+2
+00:00:20,360 --> 00:01:18,430
+xe xe sau đó tiến hành mở tool đặt ghét sau đó chúng ta sẽ import những cái database được
+
+3
+00:01:18,430 --> 00:01:55,720
+lát về từ PCM là các database đã được lát từ PCM về chúng ta sẽ lấy tên của item sau đó tìm
+
+4
+00:01:55,720 --> 00:02:23,860
+Phần component name, sau khi tìm thấy item thì check xem version có chính xác hay không.
+
+5
+00:02:24,900 --> 00:02:32,210
+Tiến hành tạo ITT, tạo thư mục để test environment cho item đó.
+
+6
+00:03:02,650 --> 00:03:07,190
+Đây là bước tạo ra những file cần thiết để sử dụng tool Aleno.
+
+7
+00:03:25,650 --> 00:03:29,050
+Tiến hành tạo thư mục ITT cho item.
+
+8
+00:03:29,390 --> 00:04:11,340
+Tìm những biến parameter bị thiếu.
+
+9
+00:04:11,340 --> 00:05:30,910
+Tiếp tục tìm cho đến khi tất cả các mission parameter đã được tìm thấy
+
+10
+00:05:30,910 --> 00:05:56,690
+Tìm kiếm những formula còn thiếu
+
+11
+00:05:56,690 --> 00:05:59,450
+Sau khi add những parameter vào
+
+12
+00:05:59,450 --> 00:07:11,550
+Import những formula đã được export ra
+
+13
+00:07:11,550 --> 00:07:37,390
+Sau khi hoàn tất bước tạo hương mục ITT
+
+14
+00:07:37,390 --> 00:07:43,230
+Tiếp theo chúng ta sẽ dùng tool Alino để tạo test design
+
+15
+00:07:43,230 --> 00:08:44,520
+Tiến hành tạo các file cần thiết trong hương mục ITT của item
+
+16
+00:08:44,520 --> 00:08:48,620
+để có thể sử dụng được GenTestDesign
+
+17
+00:08:48,620 --> 00:09:51,470
+Sau đó nhập thông tin, các trường thông tin cần thiết vào tool Alino
+
+18
+00:09:51,470 --> 00:09:53,490
+để có thể gen được TestDesign
+
+19
+00:09:53,490 --> 00:10:05,890
+Tên module, version, số thứ tự, thư mục tạo ra module
+
+20
+00:10:05,890 --> 00:10:10,880
+Nơi chứa TestDesign
+
+21
+00:10:10,880 --> 00:10:16,940
+Sau đó import file DCM đã được export từ trước
+
+22
+00:10:16,940 --> 00:10:23,640
+Tiến hành GenTestDesign
+
+23
+00:10:23,640 --> 00:10:49,460
+Sau khi kiểm tra các trường Min, Max, Mid, những thông tin cần thiết của các biến trong class thì sẽ tìm những thông tin còn thiếu để thêm vào các biến Local Parameter.
+
+24
+00:11:07,750 --> 00:11:12,860
+Tiến hành kiểm tra Min và Max tolerance của các biến Input.
+
+25
+00:13:25,860 --> 00:13:32,000
+Tiến hành tìm Min, Max, Mid tolerance cho các biến Input Parameter còn thiếu.
+
+26
+00:13:32,000 --> 00:14:50,320
+Kiểm tra các công thức của các biến Local Parameter
+
+27
+00:14:50,320 --> 00:14:51,980
+Xem là chính xác hay chưa
+
+28
+00:14:51,980 --> 00:15:24,670
+Rồi tiến hành nhập Input
+
+29
+00:15:24,670 --> 00:15:45,960
+Tiến hành viết công thức cho các biến Return Value
+
+30
+00:15:45,960 --> 00:16:15,340
+Rồi đó nhấn Generate Test Case
+
+31
+00:16:15,340 --> 00:16:17,500
+Để tiến hành tạo Test Design
+
+32
+00:16:17,500 --> 00:17:01,900
+Test Design đã được tạo hành công
+
+33
+00:17:01,900 --> 00:17:39,990
+Sau khi tạo Test Design
+
+34
+00:17:39,990 --> 00:17:42,460
+Chúng ta sẽ tiến hành tạo những Test Case
+
+35
+00:17:42,460 --> 00:17:46,560
+Để cover cho C0C1
+
+36
+00:17:46,560 --> 00:18:20,230
+MCDC. Như Rebate của tab này chỉ yêu cầu C001 nên chúng ta sẽ chỉ tạo test case để cover cho C001.
+
+37
+00:18:20,230 --> 00:18:38,820
+Đây là tab thông tin sơ bộ của Class gồm có người review, tester và phần trăm C001 MCDC của Class.
+
+38
+00:18:38,820 --> 00:18:48,520
+Tiếp theo chúng ta sẽ đến tiến hành bước import test case trong test design vào thư mục Entity.
+
+39
+00:18:48,520 --> 00:19:33,980
+Chúng ta sẽ sử dụng tool Smart ITT để import các test case trong test design vào trong thư mục ITT.
+
+40
+00:19:44,120 --> 00:19:47,640
+Nhập các thông tin cần thiết vào tool để có thể import được test case.
+
+41
+00:19:47,880 --> 00:21:14,730
+Sau khi import test case vào ITT, chúng ta sẽ tiến hành chạy thử xem kết quả C0C1 của module đã được full 100% hay chưa.
+
+42
+00:21:14,730 --> 00:21:43,460
+Đây là những test case đã được add từ test design vào trong ITT.
+
+43
+00:26:32,180 --> 00:26:39,420
+Đây là bản kết quả hiển thị phần trăm của V001 MCG cho item.
+
+44
+00:27:46,180 --> 00:27:55,840
+Sau khi kết quả đã pass, copy thư mục từ ITT temp vào trong thư mục workspace.
+
+45
+00:28:44,680 --> 00:28:49,800
+Sau đó tiến hành tạo thư mục VOT cho item.
+
+46
+00:28:49,800 --> 00:29:25,130
+Sau khi tạo được phương mục VLT, chúng ta sẽ tiến hành tomo cho các biến
+
+47
+00:29:25,130 --> 00:31:31,360
+Sau khi tomo cho file VLT hoàn tất, chúng ta tiến hành xe kết quả lên TCM
+
+48
+00:31:31,360 --> 00:32:54,420
+Một item này không yêu cầu MCDC, nên chúng ta sẽ chọn region cho các biến
+
+49
+00:32:54,420 --> 00:33:01,050
+Cho các condition cần có vào MCDC là MCDC, không yêu cầu
+
+50
+00:33:01,050 --> 00:33:48,040
+Sau đó chúng ta tiến hành
+
+51
+00:33:48,040 --> 00:33:50,880
+Sell kết quả lên TCM
+
+52
+00:33:50,880 --> 00:41:51,660
+Sau khi sell hoàn tất
+
+53
+00:41:51,660 --> 00:41:52,960
+Chúng ta sẽ tiến hành
+
+54
+00:41:52,960 --> 00:41:56,480
+Tạo work rule cho item
+
+55
+00:41:56,480 --> 00:43:32,220
+Nhập các trường cần thiết
+
+56
+00:43:32,220 --> 00:43:34,380
+Trong tool MCTC
+
+57
+00:43:34,380 --> 00:43:36,360
+Để tạo work rule
+
+58
+00:43:36,360 --> 00:44:43,770
+Sau khi điện tất cả thông tin
+
+59
+00:44:43,770 --> 00:44:44,770
+Trong tool
+
+60
+00:44:44,770 --> 00:44:46,520
+Make work rule MCTC
+
+61
+00:44:46,520 --> 00:44:51,210
+Chúng ta sẽ tạo work rule cho item
+
+62
+00:44:51,210 --> 00:44:58,890
+Tiếp theo là bước
+
+63
+00:44:58,890 --> 00:45:00,810
+Lấy link
+
+64
+00:45:00,810 --> 00:45:02,330
+Trên TCM
+
+65
+00:45:02,330 --> 00:45:42,380
+Hiện tại đã sell lên, kết quả đã hiển thị complete nhưng utility result vẫn chưa upload lên trên TCM
+
+66
+00:45:42,380 --> 00:45:46,490
+Chúng ta có thể reload database để có thể check lại
+
+67
+00:45:46,490 --> 00:49:15,930
+Sau khi kiểm tra version trên TCM đúng với version utility result mà mình đã sell lên trên TCM
+
+68
+00:49:15,930 --> 00:51:06,530
+Thì tiến hành lấy link để làm workload
+
+69
+00:51:06,530 --> 00:51:08,530
+Sau đó tiến hành tạo workload
+
+70
+00:51:08,530 --> 00:52:15,070
+Sau khi có vụt ru thì chúng ta tiến hành upload vụt ru lên TCM
+

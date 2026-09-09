@@ -1,0 +1,1472 @@
+1
+00:00:01,620 --> 00:00:12,520
+Chào mọi người, thì hôm nay mình sẽ chia sẻ về cách mà mình nhận một tag, một UT request và analyze tag đó như thế nào.
+
+2
+00:00:13,170 --> 00:00:20,730
+Thì ở đây, đây là một UT request của tag 6865008, thì mình lấy tag này làm ví dụ luôn.
+
+3
+00:00:22,090 --> 00:00:28,530
+Trước tiên là mình sẽ check thông tin ở UT request đã đầy đủ các thông tin cần thiết hay chưa.
+
+4
+00:00:28,530 --> 00:00:30,450
+Ví dụ
+
+5
+00:00:30,450 --> 00:00:33,650
+Ở phần code coverage
+
+6
+00:00:33,650 --> 00:00:35,090
+C0 C1
+
+7
+00:00:35,090 --> 00:00:36,780
+Được đánh yes
+
+8
+00:00:36,780 --> 00:00:39,140
+MCDC là yes
+
+9
+00:00:39,140 --> 00:00:41,680
+Và DSD là no
+
+10
+00:00:41,680 --> 00:00:43,560
+Như vậy thì test này
+
+11
+00:00:43,560 --> 00:00:45,760
+Sẽ test code coverage
+
+12
+00:00:45,760 --> 00:00:48,510
+Và có request MCDC
+
+13
+00:00:48,510 --> 00:00:50,780
+Tiếp theo
+
+14
+00:00:50,780 --> 00:00:52,920
+Là trường thông tin
+
+15
+00:00:52,920 --> 00:00:54,280
+Về BB và config
+
+16
+00:00:54,280 --> 00:00:55,820
+Ở test này thì
+
+17
+00:00:55,820 --> 00:00:58,460
+Được request cho 2 BB
+
+18
+00:00:58,460 --> 00:01:01,560
+87328 và 87329
+
+19
+00:01:01,560 --> 00:01:04,780
+Tuy nhiên
+
+20
+00:01:04,780 --> 00:01:06,640
+thì ở đây mình sẽ quay ví dụ
+
+21
+00:01:06,640 --> 00:01:07,180
+cho
+
+22
+00:01:07,180 --> 00:01:11,050
+1 BB 87328
+
+23
+00:01:11,050 --> 00:01:13,390
+còn BB còn lại sẽ tương tự như vậy
+
+24
+00:01:13,390 --> 00:01:14,700
+Rồi
+
+25
+00:01:14,700 --> 00:01:16,540
+trong thông tin quan trọng tiếp theo
+
+26
+00:01:16,540 --> 00:01:18,590
+là thông tin về
+
+27
+00:01:18,590 --> 00:01:19,450
+Snapshot Name
+
+28
+00:01:19,450 --> 00:01:21,700
+hoặc là thông tin về Stream Name
+
+29
+00:01:21,700 --> 00:01:25,380
+Ở đây tôi sẽ nhận request
+
+30
+00:01:25,380 --> 00:01:27,320
+test cho Snapshot
+
+31
+00:01:27,320 --> 00:01:29,240
+và Snapshot Name
+
+32
+00:01:29,240 --> 00:01:30,740
+ở đây cũng đã được cung cấp rồi
+
+33
+00:01:30,740 --> 00:01:42,430
+Tiếp đến là trường về Asket, ASW, Database, rồi CR để cung cấp đầy đủ thông tin
+
+34
+00:01:42,430 --> 00:01:46,570
+Thì bây giờ mình sẽ tiến hành load database về
+
+35
+00:01:46,570 --> 00:01:53,310
+Thì trước tiên hết thì mình sẽ chuẩn bị một folder chứa
+
+36
+00:01:53,310 --> 00:01:54,890
+Mình sẽ load database về
+
+37
+00:01:54,890 --> 00:01:58,060
+Ở đây mình sẽ load database về folder này
+
+38
+00:01:58,060 --> 00:02:00,160
+Mình sẽ dùng sạc CC
+
+39
+00:02:00,160 --> 00:02:22,060
+Mình click vào work item
+
+40
+00:02:22,060 --> 00:02:26,380
+Sau đó mình sẽ tạo một repository connection
+
+41
+00:02:26,380 --> 00:02:29,880
+Mình sẽ chọn hình đầu tiên
+
+42
+00:02:29,880 --> 00:02:34,690
+Sau đó nhập user ID và password
+
+43
+00:02:34,690 --> 00:03:04,600
+Rồi, sau đó mình sẽ search theo thông tin của Snapshot
+
+44
+00:03:04,600 --> 00:03:08,500
+Chọn search, json control, Snapshot
+
+45
+00:03:08,500 --> 00:03:15,260
+Mình sẽ quay lại file thông tin utility press
+
+46
+00:03:15,260 --> 00:03:18,080
+Lấy thông tin của Snapshot name
+
+47
+00:03:18,080 --> 00:03:32,860
+Đặt tên cho nó
+
+48
+00:03:32,860 --> 00:03:37,000
+Thường thì mình sẽ đặt tên theo thác ID
+
+49
+00:03:37,000 --> 00:04:12,290
+Rồi, mình sẽ vào phần my source control
+
+50
+00:04:12,290 --> 00:04:14,170
+My workspace
+
+51
+00:04:14,170 --> 00:04:47,270
+mình sẽ tìm đến rebel mình vừa tạo. Đây, để load nó, load database về theo file load
+
+52
+00:04:47,270 --> 00:04:57,830
+through. Chọn load, load from a load through file. Chọn remote load through file. Sau đó,
+
+53
+00:04:57,830 --> 00:05:03,770
+mình sẽ tìm đến file load through. File load through sẽ nằm ở component có đuôi là trắng
+
+54
+00:05:03,770 --> 00:05:30,470
+tránh project để chọn đến đúng file load rule. Đây, Dahatsu ESP10 CP chấm load rule. Rồi, quá trình
+
+55
+00:05:30,470 --> 00:05:38,710
+này diễn ra khá lâu cho nên mình đã chuẩn bị sẵn một database cho nó. Thì sau khi load xong thì các
+
+56
+00:05:38,710 --> 00:05:46,210
+component này thì sẽ hiện màu xanh như mình đang show trên màn hình và tiếp đến thì mình sẽ tiến
+
+57
+00:05:46,210 --> 00:05:57,450
+build mtc chọn vào mtc build và nhập thông tin được cung cấp trong utility request là gồm có
+
+58
+00:05:57,450 --> 00:06:15,270
+configuration rồi tiếp đến là bb number để cho chắc chắn lần nữa thì mình sẽ dán cả bb number vào
+
+59
+00:06:15,270 --> 00:06:27,120
+rồi đây chính là config và bb mình cần phải build thì tương tự đó cho với config còn lại
+
+60
+00:06:27,120 --> 00:06:38,720
+sẽ tiến hành làm tương tự. Ở đây mình chọn xong, mình sẽ bấm Start Enable Build Jobs. Quá trình này diễn ra cũng khá lâu
+
+61
+00:06:38,720 --> 00:06:53,710
+và mình sẽ mở một cái mình đã build rồi, thì ở đó thì nó sẽ, phần này nó sẽ hiện dấu chấm xong, tức là đã build successful rồi.
+
+62
+00:06:53,710 --> 00:07:00,310
+Thì sau khi build xong, mình sẽ lấy file cần thiết để đi analyze.
+
+63
+00:07:01,720 --> 00:07:05,680
+Thì file đó được tìm thấy trong thư mục như sau.
+
+64
+00:07:08,180 --> 00:07:15,700
+Vào folder database, vào gen, tìm đến config đã build thành công.
+
+65
+00:07:26,220 --> 00:07:27,900
+Chọn build, make.
+
+66
+00:07:28,180 --> 00:07:35,180
+Hai file đó là file genmax.cdv và file escape component.
+
+67
+00:07:35,930 --> 00:07:37,230
+Mình sẽ lấy hai file đó ra ngoài.
+
+68
+00:07:37,230 --> 00:08:01,120
+và pha này cần thiết cho quá trình tpn tpn để nó đây để nó đây mình đã tạo rồi rồi tiếp đến bước
+
+69
+00:08:01,120 --> 00:08:11,700
+quan trọng tiếp theo là mình phải sửa file.csv để cái component của nó chơi giống với lại pha
+
+70
+00:08:11,700 --> 00:08:27,240
+Thì ở đây mình sử dụng Tool Only One, chọn Analysis Support, CSP Amendation, rồi mình sẽ bỏ bạc của CSP vào.
+
+71
+00:08:33,540 --> 00:08:46,210
+Rồi tiếp đến là Log Pro File, thì mình sẽ quay lại Database, mình tìm đến file Log Pro mà mình log Database về.
+
+72
+00:08:52,280 --> 00:09:01,980
+Đây, cái này, cho chắc thì mình sẽ mở Open File Location lên, và cái đường bạc là đúng rồi, cho nên mình sẽ lấy bạc của file này.
+
+73
+00:09:01,980 --> 00:09:08,410
+tiếp theo là saving directory
+
+74
+00:09:08,410 --> 00:09:10,360
+thì mình sẽ lưu
+
+75
+00:09:10,360 --> 00:09:13,160
+kết quả output sau khi chạy được
+
+76
+00:09:13,160 --> 00:09:13,640
+của tool
+
+77
+00:09:13,640 --> 00:09:18,620
+về chung
+
+78
+00:09:18,620 --> 00:09:21,140
+thư mục mà chứa file csv lúc nãy
+
+79
+00:09:21,140 --> 00:09:21,520
+của mình
+
+80
+00:09:21,520 --> 00:09:28,340
+rồi tool sẽ chạy ra được
+
+81
+00:09:28,340 --> 00:09:29,820
+cái component mà đã
+
+82
+00:09:29,820 --> 00:09:32,750
+được sửa đổi cho giống với lại
+
+83
+00:09:32,750 --> 00:09:36,020
+loadroom, ở đó đồng thời
+
+84
+00:09:36,020 --> 00:09:37,920
+cũng sẽ tạo ra được file new csv
+
+85
+00:09:37,920 --> 00:09:40,540
+ở đây, mình sẽ sử dụng file new csv
+
+86
+00:09:40,540 --> 00:09:42,340
+này và file
+
+87
+00:09:42,340 --> 00:09:45,020
+xget.xml này
+
+88
+00:09:45,020 --> 00:09:46,260
+để xem TBA
+
+89
+00:09:46,260 --> 00:09:49,250
+thì mình sẽ copy ra qua máy ảo
+
+90
+00:09:49,250 --> 00:09:52,280
+và mình cũng đã
+
+91
+00:09:52,280 --> 00:09:53,260
+chuẩn bị sẵn ở đây rồi
+
+92
+00:09:53,260 --> 00:10:00,600
+mình sẽ bật TBA
+
+93
+00:10:00,600 --> 00:10:04,840
+report generator tool lên
+
+94
+00:10:04,840 --> 00:10:07,980
+sau đó mình chọn vào
+
+95
+00:10:07,980 --> 00:10:09,980
+folder chứa hi-fi vừa rồi của mình
+
+96
+00:10:09,980 --> 00:10:12,110
+dán snapshot link
+
+97
+00:10:12,110 --> 00:10:15,410
+được cung cấp
+
+98
+00:10:15,410 --> 00:10:18,920
+tiếp đến là chọn vào trường
+
+99
+00:10:18,920 --> 00:10:21,420
+QT assessment yes
+
+100
+00:10:21,420 --> 00:10:24,890
+thì nó cũng sẽ tự động highlight lên
+
+101
+00:10:24,890 --> 00:10:26,070
+các trường mình cần phải điền
+
+102
+00:10:26,070 --> 00:10:37,310
+Ở đây, lúc nãy mình sẽ chọn vào file CSV đã được sửa đổi lúc nãy, file new, file new này, và file escape này.
+
+103
+00:10:38,790 --> 00:10:46,010
+Tiếp đến, trường quan trọng tiếp theo là phần này thì mình sẽ không analyze cho component rpa-kubas,
+
+104
+00:10:46,490 --> 00:10:55,480
+cho nên mình chọn exclude components và đồng thời cũng chọn exclude cpp-hpp, sau đó bấm xe generate report.
+
+105
+00:10:55,480 --> 00:10:59,080
+Quá trình này cũng diễn ra khá lâu
+
+106
+00:10:59,080 --> 00:11:02,870
+Và trong lúc đó thì mình có thể lấy được
+
+107
+00:11:02,870 --> 00:11:04,470
+Atcache database
+
+108
+00:11:04,470 --> 00:11:07,670
+Mình sẽ sử dụng link
+
+109
+00:11:07,670 --> 00:11:09,330
+Atcache database được cung cấp
+
+110
+00:11:09,330 --> 00:11:10,710
+Trong UTR request lúc nãy
+
+111
+00:11:10,710 --> 00:11:14,630
+Đây, sẽ lấy cái link nó
+
+112
+00:11:14,630 --> 00:11:18,800
+Vào TCM, ở trên máy ảo
+
+113
+00:11:18,800 --> 00:11:24,870
+Dán vào chỗ này
+
+114
+00:11:24,870 --> 00:11:32,560
+Mình sẽ copy
+
+115
+00:11:32,560 --> 00:11:34,060
+Mình sẽ chắc cái version
+
+116
+00:11:34,060 --> 00:11:35,870
+Chắc cái number của nó
+
+117
+00:11:35,870 --> 00:11:37,630
+25.3
+
+118
+00:11:37,630 --> 00:11:43,110
+Và ở đây là đúng 25.3
+
+119
+00:11:43,110 --> 00:11:44,910
+rồi như vậy là mình sẽ lấy
+
+120
+00:11:44,910 --> 00:11:46,930
+escape database này về copy về
+
+121
+00:11:46,930 --> 00:11:50,430
+local của mình rồi
+
+122
+00:11:50,430 --> 00:11:53,640
+thì mình đã chuẩn bị sẵn hết những cái file này rồi
+
+123
+00:11:53,640 --> 00:12:01,810
+ok sau khi gen xong
+
+124
+00:12:01,810 --> 00:12:03,390
+file tba
+
+125
+00:12:03,390 --> 00:12:05,890
+thì nó sẽ có dạng như thế này
+
+126
+00:12:05,890 --> 00:12:07,690
+internal report snapshot
+
+127
+00:12:07,690 --> 00:12:11,740
+rồi mình sẽ bật cái file này lên
+
+128
+00:12:11,740 --> 00:12:42,920
+cái file nó ban đầu là như thế này
+
+129
+00:12:42,920 --> 00:12:53,920
+file nó ban đầu là sẽ như thế này
+
+130
+00:12:53,920 --> 00:12:57,050
+sẽ có rất nhiều trường thông tin
+
+131
+00:12:57,050 --> 00:13:00,260
+tuy nhiên mình sẽ quan tâm đến trường thông tin
+
+132
+00:13:00,260 --> 00:13:01,760
+ở cột mtverdict
+
+133
+00:13:01,760 --> 00:13:05,060
+Mình sẽ thường là test UT
+
+134
+00:13:05,060 --> 00:13:08,040
+Mình sẽ UT cho những module mà undefined ở đây
+
+135
+00:13:08,040 --> 00:13:12,810
+Rồi
+
+136
+00:13:12,810 --> 00:13:15,710
+Về những cột không cần thiết
+
+137
+00:13:15,710 --> 00:13:16,850
+Thì mình sẽ hide nó lại
+
+138
+00:13:16,850 --> 00:13:39,340
+Rồi
+
+139
+00:13:39,340 --> 00:13:46,700
+Bởi bản là mình sẽ đi analyze cho những module này
+
+140
+00:13:46,700 --> 00:13:53,360
+Thì mình thường dán một cái template vào
+
+141
+00:13:53,360 --> 00:13:54,220
+Ở đây
+
+142
+00:13:54,220 --> 00:13:56,840
+Để sau đó mình sử dụng tool
+
+143
+00:13:56,840 --> 00:14:04,070
+Để chắc những module đó
+
+144
+00:14:04,070 --> 00:14:05,350
+Nó đã được test hay chưa
+
+145
+00:14:05,350 --> 00:14:06,850
+Và đồng thời
+
+146
+00:14:06,850 --> 00:14:39,960
+sau khi đã có file này rồi mình sẽ lưu nó ở dạng xls để cho tool có thể đọc được thì ở đây
+
+147
+00:14:39,960 --> 00:14:56,060
+ok mình sẽ sử dụng tool chọn vào analysis support chọn preliminary analysis ở chỗ này
+
+148
+00:14:56,060 --> 00:15:10,340
+sẽ điền các thông tin cần thiết vào, sẽ điền Tested Database và file mà mình vừa đổi cái
+
+149
+00:15:10,340 --> 00:15:21,110
+định dạng của nó. Sau đó thì sau khi chạy rồi thì mình bấm Execute. Sau khi chạy xong thì mình sẽ
+
+150
+00:15:21,110 --> 00:15:30,490
+được một file dạng như thế này. Đây thì mình cũng đã chuẩn bị trước. Cái file nó sẽ như thế này.
+
+151
+00:15:30,490 --> 00:15:44,230
+Ok, ở đây thì mình sẽ cho nó cột ở cục item name và concat.
+
+152
+00:15:45,910 --> 00:15:53,260
+Cột concat là cục quan trọng để mình chắc chính xác xem là mô đun đó đã được test hay chưa.
+
+153
+00:15:55,640 --> 00:16:07,120
+Ở cục này thì mình sẽ concat giữa ví dụ như mô đun C thì sẽ là tên item name và check-in date.
+
+154
+00:16:07,120 --> 00:16:14,650
+Còn đối với ESP thì sẽ là Item Name và Item Revision
+
+155
+00:16:14,650 --> 00:16:22,740
+Ở đây thì mình đã nhắn công thức cho nó, đáp dụng công thức cho nó
+
+156
+00:16:22,740 --> 00:16:28,800
+Rồi, như lúc nãy mình cũng đã nói thì mình sẽ check những module undefined
+
+157
+00:16:28,800 --> 00:16:38,560
+Và ở đây thường thì mình sẽ đi check những module ESP trước
+
+158
+00:16:38,560 --> 00:16:42,170
+Để 2 cái bộ này lại bị không dùng
+
+159
+00:16:42,170 --> 00:17:01,280
+Đối với những mô đun EXP thì có thể nó đã được test rồi và được test bằng Kandata cho nên ở
+
+160
+00:17:01,280 --> 00:17:12,760
+mt-verdict là hiện anti-file. Mình sẽ kiểm tra nó bằng cách check with file test.databyte. Trong
+
+161
+00:17:12,760 --> 00:17:17,980
+file test.databyte sẽ show ra những item đã được test rồi, đồng thời với những comment tương ứng
+
+162
+00:17:17,980 --> 00:18:13,040
+cột B. Bước này thì có VLOOKUP thôi. VLOOKUP cột này và rồi như đã show trên màn hình là một số
+
+163
+00:18:13,040 --> 00:18:21,940
+item được test rồi. Bởi vì là module này đã được test bởi Candata và để lấy kết quả đến TCM. Như
+
+164
+00:18:21,940 --> 00:18:29,340
+vậy là đã được có kết quả là C0, C1 được hiển thị ở đây. Như vậy là mình sẽ không cần test lại cho
+
+165
+00:18:29,340 --> 00:18:57,940
+Ok, mình sẽ lọc riêng cho nó. Và ở cục empty knitted thì mình sẽ đánh nó là any. Ok, đối với những cái còn lại thì mình sẽ xóa đi.
+
+166
+00:18:57,940 --> 00:19:26,660
+Ok, rồi. Ở cục này thì có bóng đèn một chút thì mình đã làm mất cái item list ở đây thì mình sẽ back lại không thể nói lại.
+
+167
+00:19:26,660 --> 00:19:30,660
+Cột này là cột kết quả sau khi chạy được từ tool All-in-One lúc nãy.
+
+168
+00:19:30,660 --> 00:19:43,360
+Đây, mình sẽ chọn cho cái item list mà ở trong escape-database.v
+
+169
+00:19:43,360 --> 00:19:45,780
+Đây, sẽ chọn vào item list này.
+
+170
+00:19:45,780 --> 00:19:52,780
+Xong rồi tool sẽ giúp mình điền các thông tin của module đó vào.
+
+171
+00:19:52,780 --> 00:19:58,400
+Ở bước này thì sau khi điền xong.
+
+172
+00:19:58,400 --> 00:20:12,110
+Ok, mình sẽ lọc lại cho những module ESP.
+
+173
+00:20:12,110 --> 00:20:32,240
+Đối với những model như là parameter class, message class hoặc là hierarchical thì mình sẽ không test mà mình sẽ valid cho nó.
+
+174
+00:20:32,240 --> 00:20:46,530
+Thì trước tiên là có những model này rồi, thì sau đó mình sẽ lọt riêng nó ra và trang cột này dán nó là valid.
+
+175
+00:20:46,530 --> 00:20:59,480
+Còn những cái còn lại thì sao? Mình sẽ bỏ đi cả cái này này nữa, mình sẽ đi check những cái còn lại.
+
+176
+00:20:59,480 --> 00:21:02,520
+thì trong số những cái này
+
+177
+00:21:02,520 --> 00:21:04,280
+mình nhìn sơ qua của tôn chạy được
+
+178
+00:21:04,280 --> 00:21:06,580
+thì sẽ có module này
+
+179
+00:21:06,580 --> 00:21:08,200
+là hierarchical
+
+180
+00:21:08,200 --> 00:21:10,140
+mình sẽ check lại một lần nữa
+
+181
+00:21:10,140 --> 00:21:12,020
+có chính xác hay không bằng cách kiểm tra
+
+182
+00:21:12,020 --> 00:21:14,870
+từng module này
+
+183
+00:21:14,870 --> 00:21:21,180
+với database
+
+184
+00:21:21,180 --> 00:21:21,960
+mà mình load về được
+
+185
+00:21:21,960 --> 00:21:25,380
+thì mình check module này
+
+186
+00:21:25,380 --> 00:21:40,490
+rồi đúng rồi
+
+187
+00:21:40,490 --> 00:21:42,010
+nó là hierarchical
+
+188
+00:21:42,010 --> 00:21:44,640
+thì mình sẽ
+
+189
+00:21:44,640 --> 00:21:46,990
+comment vào đó
+
+190
+00:21:46,990 --> 00:21:52,060
+module này ở dạng hierarchical
+
+191
+00:21:52,060 --> 00:21:53,560
+mình cũng sẽ valid và không test
+
+192
+00:21:53,560 --> 00:21:57,420
+thì mình cũng đã
+
+193
+00:21:57,420 --> 00:22:00,440
+search và check
+
+194
+00:22:00,440 --> 00:22:02,500
+những cái module nào đó
+
+195
+00:22:02,500 --> 00:22:06,060
+ở đây thì ngoài module vừa rồi ra
+
+196
+00:22:06,060 --> 00:22:07,440
+còn có thêm module này
+
+197
+00:22:07,440 --> 00:22:10,220
+cũng là dạng high-radical
+
+198
+00:22:10,220 --> 00:22:14,790
+ở đây
+
+199
+00:22:14,790 --> 00:22:33,010
+mình sẽ đánh cho nó
+
+200
+00:22:33,010 --> 00:22:37,890
+và nó là valid
+
+201
+00:22:37,890 --> 00:22:42,180
+này cũng vậy
+
+202
+00:22:42,180 --> 00:22:48,390
+rồi đối với những module còn lại
+
+203
+00:22:48,390 --> 00:22:50,550
+thì mình sẽ analyze dựa trên
+
+204
+00:22:50,550 --> 00:22:50,890
+e-log
+
+205
+00:22:50,890 --> 00:22:55,720
+ở cục e-log này mình chưa
+
+206
+00:22:55,720 --> 00:22:57,720
+chưa đi thông tin vàng
+
+207
+00:22:57,720 --> 00:23:00,750
+thì quay trở lại rồi
+
+208
+00:23:00,750 --> 00:23:02,070
+mình cũng có những module C
+
+209
+00:23:02,070 --> 00:23:03,390
+chưa analyze nữa
+
+210
+00:23:03,390 --> 00:23:11,900
+ok
+
+211
+00:23:11,900 --> 00:23:17,760
+thì mình sẽ sử dụng tool
+
+212
+00:23:17,760 --> 00:23:21,320
+Cmetrics để đếm
+
+213
+00:23:21,320 --> 00:23:24,260
+để lấy được số
+
+214
+00:23:24,260 --> 00:23:27,300
+elog của các module
+
+215
+00:23:27,300 --> 00:23:29,140
+ở trong database
+
+216
+00:23:29,140 --> 00:23:32,270
+thì sau khi bật Cmetrics lên
+
+217
+00:23:32,270 --> 00:23:33,510
+thì nó sẽ nhấp như này
+
+218
+00:23:33,510 --> 00:23:36,420
+nó chọn vào dấu cộng
+
+219
+00:23:36,420 --> 00:23:38,210
+mình dán vào
+
+220
+00:23:38,210 --> 00:23:40,700
+mình dán database vào
+
+221
+00:23:40,700 --> 00:23:56,050
+của database, bấm OK
+
+222
+00:23:56,050 --> 00:23:58,290
+ở đây là mình đã chạy rồi
+
+223
+00:23:58,290 --> 00:24:00,080
+sau đó là mình bấm
+
+224
+00:24:00,080 --> 00:24:02,900
+nút này để tôi analyze
+
+225
+00:24:02,900 --> 00:24:05,800
+analyze project
+
+226
+00:24:05,800 --> 00:24:09,820
+source files, sau đó mình bấm
+
+227
+00:24:09,820 --> 00:24:11,640
+sau khi chạy được kết quả rồi
+
+228
+00:24:11,640 --> 00:24:12,920
+thì mình bấm view
+
+229
+00:24:12,920 --> 00:24:14,840
+output file metric
+
+230
+00:24:14,840 --> 00:24:16,820
+mình sẽ lưu kết quả chạy được
+
+231
+00:24:16,820 --> 00:24:19,650
+về chỗ database của mình
+
+232
+00:24:19,650 --> 00:24:21,690
+chỗ workspace của mình
+
+233
+00:24:21,690 --> 00:24:25,320
+rồi, sau đó
+
+234
+00:24:25,320 --> 00:24:27,480
+mình import vào
+
+235
+00:24:27,480 --> 00:24:44,620
+file TPA này để tìm cho việc analyze ở đây, file metric của mình đây. Rồi và đồng thời mình cũng
+
+236
+00:24:44,620 --> 00:24:55,050
+sẽ build mtc nhầm. Mình sẽ build mtc tool tức là build ra những mô đun cần test cho file C thì
+
+237
+00:24:55,050 --> 00:25:08,170
+mình sẽ chọn mỗi file C thôi. Rồi mình sẽ lấy tất cả các mô đun ở đây. Mình sẽ cho ra cái list
+
+238
+00:25:08,170 --> 00:25:20,550
+Quá trình này, bởi vì quá trình này diễn ra cũng lâu cho nên là mình sẽ build cho tool chạy song song với quá trình analyze để sẽ tiết kiệm được thời gian hơn.
+
+239
+00:25:20,550 --> 00:25:29,080
+Rồi, sau khi có được thông tin ở đây. Rồi tiếp đến là mình sẽ sử dụng tool, mtc tool lúc nãy.
+
+240
+00:25:29,080 --> 00:25:31,880
+sẽ bật vào file này
+
+241
+00:25:31,880 --> 00:25:34,280
+hostconfig.xml
+
+242
+00:25:34,280 --> 00:25:37,180
+ở đây
+
+243
+00:25:37,180 --> 00:25:38,970
+thì mình sẽ điền
+
+244
+00:25:38,970 --> 00:25:41,700
+file mtc
+
+245
+00:25:41,700 --> 00:25:44,830
+mtc output
+
+246
+00:25:44,830 --> 00:25:48,170
+ở này và có một trick nhỏ
+
+247
+00:25:48,170 --> 00:25:50,470
+là mình sẽ điền hướng từ dưới lên trên
+
+248
+00:25:50,470 --> 00:25:52,170
+cho các thông tin
+
+249
+00:25:52,170 --> 00:25:53,940
+ở phần này
+
+250
+00:25:53,940 --> 00:25:57,610
+và ở đầu
+
+251
+00:25:57,610 --> 00:26:00,620
+của file thì mình sẽ
+
+252
+00:26:00,620 --> 00:26:03,440
+điền khác chữ pass
+
+253
+00:26:03,440 --> 00:26:05,520
+để cho tool bởi vì
+
+254
+00:26:05,520 --> 00:26:06,860
+mtc đã diễn ra rồi
+
+255
+00:26:06,860 --> 00:26:16,480
+còn các sách còn lại chưa cho nên là mình sẽ đi khác bác để tôi chạy và đi cho mình thì mình sẽ
+
+256
+00:26:16,480 --> 00:26:32,400
+tìm thấy cái file mtc áp út đó ở thư mục Zen quay lại với database chọn vào chọn Zen rồi mình sẽ đi
+
+257
+00:26:32,400 --> 00:26:49,490
+kiếm cần thích lúc nãy chính xác thì cần tiếp tục hãy ở đây chọn view đây đây là file sau khi đã
+
+258
+00:26:49,490 --> 00:27:06,640
+tương ứng vào các chuồng thông tin ở dưới này rồi mình sẽ đi ngược lên
+
+259
+00:27:06,640 --> 00:27:39,760
+xây dựng nguyên thay đổi rồi tiếp đến và bì bì 5g và lưu ý là mình sẽ
+
+260
+00:27:39,760 --> 00:27:50,470
+database vừa rồi lại database mình load về đây mình cũng đã zip rồi này mình sẽ lấy cái bạc của nó
+
+261
+00:27:50,470 --> 00:28:13,700
+fill vào ở đây rồi list of modules cũng đã fill được rồi sẽ fill vào đây rồi sau cái điện đầy đủ tất cả
+
+262
+00:28:13,700 --> 00:28:21,440
+Mình sẽ chọn đến mcdctool.bat này cho tool chạy
+
+263
+00:28:21,440 --> 00:28:30,780
+Rồi thì sau khi tool chạy xong thì nó sẽ ra cái thư mục này
+
+264
+00:28:30,780 --> 00:28:37,260
+Tên, database và ship gạch số bb mà mình vừa chạy
+
+265
+00:28:37,260 --> 00:28:48,980
+Thì sau khi có được, sau khi chạy xong tool thì nó sẽ ra một cái file này cho mình
+
+266
+00:28:48,980 --> 00:28:59,030
+file tba này thì file này thì nó sẽ có các thông tin để giúp cho mình skype sau khi mà test xong
+
+267
+00:28:59,030 --> 00:29:11,350
+dễ dàng hơn như là các thông tin cẩn thận khác mình sẽ lấy thông tin ở đây rồi mình cũng đưa vào file
+
+268
+00:29:11,350 --> 00:29:22,400
+analysis luôn đây mình đặt tên là tool print mình sẽ để nó ở đây rồi quay trở lại với lại file tba lúc nãy
+
+269
+00:29:22,400 --> 00:29:37,470
+Thì mình sẽ bút, mình sẽ đi tìm inlog cho những mô đun cần test ở đây để đi check lại.
+
+270
+00:29:37,470 --> 00:29:47,870
+Vậy thì ở đây sử dụng VLOOKUP, ITINIM và MATRIX.
+
+271
+00:29:47,870 --> 00:30:04,430
+Thông tin cần lấy quan trọng là cột Effect, cột C.
+
+272
+00:30:04,430 --> 00:30:16,440
+Tiếp theo là cục Function, cục MaxCC.
+
+273
+00:30:17,400 --> 00:30:21,360
+OK, Function, MaxCC, OK.
+
+274
+00:30:22,190 --> 00:30:24,150
+Rồi, mình sẽ áp dụng cho tất cả mô đun ở đây.
+
+275
+00:30:27,500 --> 00:30:28,320
+Rồi, OK.
+
+276
+00:30:30,850 --> 00:30:33,030
+Trước tiên thì mình có một cái show bộ như thế này rồi.
+
+277
+00:30:37,660 --> 00:30:46,100
+Rồi, thì sau khi mà có được thông tin e-log ở đây rồi,
+
+278
+00:30:46,100 --> 00:30:48,480
+thì mình sẽ chắc lại thử là đối với những cái mô đun C,
+
+279
+00:30:49,040 --> 00:30:53,320
+mô đun nào mà cái function nó bằng 0 không?
+
+280
+00:30:53,320 --> 00:30:54,320
+tức là không có phân hình
+
+281
+00:30:54,320 --> 00:30:55,680
+tức là mình sẽ map valid đó
+
+282
+00:30:55,680 --> 00:30:57,960
+thì không, ở đây không có
+
+283
+00:30:57,960 --> 00:31:01,900
+rồi, như vậy thì mình sẽ đi
+
+284
+00:31:01,900 --> 00:31:03,740
+làm như bình thường
+
+285
+00:31:03,740 --> 00:31:07,660
+thì tool đã giúp mình xét được các thông tin
+
+286
+00:31:07,660 --> 00:31:09,540
+collect được các
+
+287
+00:31:09,540 --> 00:31:10,680
+thông tin
+
+288
+00:31:10,680 --> 00:31:12,940
+đã được test trước đây hay chưa
+
+289
+00:31:12,940 --> 00:31:15,560
+và đồng thời mình cũng sẽ đi check thêm
+
+290
+00:31:15,560 --> 00:31:17,140
+là
+
+291
+00:31:17,140 --> 00:31:20,840
+ở những năm gần đây là đã được test hay chưa
+
+292
+00:31:20,840 --> 00:31:25,280
+ok
+
+293
+00:31:25,280 --> 00:31:40,520
+thì mình cũng đã xây dựng
+
+294
+00:31:40,520 --> 00:31:42,710
+một cái công thức
+
+295
+00:31:42,710 --> 00:31:44,660
+cho cái việc này
+
+296
+00:31:44,660 --> 00:31:49,280
+thì mình sẽ bỏ cái phần
+
+297
+00:31:49,280 --> 00:31:50,620
+trong công thức vào đây
+
+298
+00:31:50,620 --> 00:31:54,060
+công thức của mình thì
+
+299
+00:31:54,060 --> 00:31:56,470
+đi check lại với file
+
+300
+00:31:56,470 --> 00:31:57,850
+tested database
+
+301
+00:31:57,850 --> 00:32:00,160
+file test assignment
+
+302
+00:32:00,160 --> 00:32:03,330
+file này
+
+303
+00:32:03,330 --> 00:32:26,800
+ở đây thì
+
+304
+00:32:26,800 --> 00:32:28,460
+mình sẽ check xem được là
+
+305
+00:32:28,460 --> 00:32:30,060
+mô đôn đó đã được test
+
+306
+00:32:30,060 --> 00:32:32,610
+bởi
+
+307
+00:32:32,610 --> 00:32:34,350
+đã được test bằng
+
+308
+00:32:34,350 --> 00:32:37,130
+Canada hay là G-test
+
+309
+00:32:37,130 --> 00:32:38,500
+hoặc là
+
+310
+00:32:38,500 --> 00:32:41,110
+chỉ có một
+
+311
+00:32:41,110 --> 00:32:45,780
+nếu mà đã được
+
+312
+00:32:45,780 --> 00:32:47,860
+và nó sẽ đưa ra
+
+313
+00:32:47,860 --> 00:32:49,860
+cái test environment cuối cùng ở đây
+
+314
+00:32:49,860 --> 00:32:50,580
+cho mô đun đó
+
+315
+00:32:50,580 --> 00:32:52,620
+nếu là mô đun C
+
+316
+00:32:52,620 --> 00:32:54,500
+thì sẽ test
+
+317
+00:32:54,500 --> 00:32:56,680
+bởi Canada hoặc là G-test
+
+318
+00:32:56,680 --> 00:32:59,200
+nếu là
+
+319
+00:32:59,200 --> 00:33:00,400
+mô đun ESW
+
+320
+00:33:00,400 --> 00:33:01,500
+mô đun ESP
+
+321
+00:33:01,500 --> 00:33:06,110
+thì nó sẽ được
+
+322
+00:33:06,110 --> 00:33:07,670
+test bởi ESP
+
+323
+00:33:07,670 --> 00:33:09,540
+rồi
+
+324
+00:33:09,540 --> 00:33:11,180
+cột này
+
+325
+00:33:11,180 --> 00:33:19,180
+này em tin nhất định là cột hiển thị cho việc là chắc xem mô đôn đó nếu đã được test rồi thì sẽ
+
+326
+00:33:19,180 --> 00:33:31,640
+mát nó là Delta và đồng thời cũng sẽ tính effort cho Delta chân lớn thì ở đây ok mình sẽ áp dụng
+
+327
+00:33:31,640 --> 00:34:52,230
+cho tất cả các item ở đây mình đã highlight một chút ok thì mình đã xét được các thông tin đầy
+
+328
+00:34:52,230 --> 00:35:00,250
+Thì nếu mà là mô đun chưa được test thì nó sẽ bị níu ở cái cột mtnit này.
+
+329
+00:35:00,250 --> 00:35:06,250
+Tuy nhiên là test này đã được test rồi cho nên là file tested database của mình đã được cập nhật tương ứng.
+
+330
+00:35:06,250 --> 00:35:15,260
+Dẫn đến là đa số những mô đun ở cột mtnit là đều delta hết để được có delta hết.
+
+331
+00:35:15,260 --> 00:35:36,080
+Và tiếp theo là mình sẽ tính effort theo elog để từ đó mình sẽ tính được cái total effort cho mô đun đó dựa trên effort theo elog và trạng thái delta hoặc là new và test environment ở đây.
+
+332
+00:35:36,080 --> 00:35:50,300
+Thì để tính cho nhanh thì mình cũng viết sẵn một công thức cho cái này rồi dán nó vào ở đây.
+
+333
+00:35:50,300 --> 00:35:59,060
+Thì ở đây là, nếu mà mình đánh ở đây là Valid thì nó sẽ tính, nếu mà Modul C thì sẽ tính là 0.1
+
+334
+00:35:59,060 --> 00:36:03,100
+và sẽ xác xem Test Environment ở đây.
+
+335
+00:36:03,100 --> 00:36:09,100
+Nếu Modul C đó test theo VTest thì sẽ tính ELoC khác và tính theo Candata sẽ tính theo ELoC khác.
+
+336
+00:36:09,100 --> 00:36:20,360
+Và tương tự cho với ASCII, nếu là ESP thì sẽ tính theo công thức của ASCII.
+
+337
+00:36:20,360 --> 00:36:36,510
+Rồi ở đây là delta cho nên là cái total effort của mình nó sẽ bằng cái này nhân với lại 0.4
+
+338
+00:36:36,510 --> 00:36:45,780
+Và bởi vì min minimum effort cho một module là 0.6 cho nên là công thức của mình tính được 0.6 ở đây
+
+339
+00:36:45,780 --> 00:36:52,840
+Rồi mình sẽ áp dụng nó cho tất cả các item ở đây
+
+340
+00:36:52,840 --> 00:37:14,360
+Ừ rồi Ok lúc nãy là mình chưa cho mình sẽ chưa tính khi lóc chưa tính cho những mô đun nát là
+
+341
+00:37:14,360 --> 00:37:50,540
+click chắc lại Ok mình sẽ đi chắc là một lần nữa chắc việc anh đi file này mình chưa chắc cho nó
+
+342
+00:37:50,540 --> 00:37:54,840
+cho điện cho nó thì mình sẽ
+
+343
+00:37:54,840 --> 00:38:27,410
+cho đẹp thì mình sẽ cho nó chung một cái
+
+344
+00:38:27,410 --> 00:38:47,720
+sau đó mình sẽ chắc lại các thông tin ở
+
+345
+00:38:47,720 --> 00:38:51,490
+lý sinh thật hết sẽ đi chắc là một lần
+
+346
+00:38:51,490 --> 00:38:58,910
+sẽ chắc xem những mode undefined thì mình đã analyze đủ hết cho tất cả hay chưa
+
+347
+00:38:58,910 --> 00:39:09,340
+rồi cách kiểm tra cục antediluted thì mình đã check hết rồi á
+
+348
+00:39:09,340 --> 00:39:13,490
+rồi mình sẽ ok
+
+349
+00:39:13,490 --> 00:39:16,490
+rồi đối với những module C
+
+350
+00:39:16,490 --> 00:39:25,900
+mình sẽ lọc riêng ra
+
+351
+00:39:25,900 --> 00:39:30,900
+mình sẽ fill vào các cái cột CECFG
+
+352
+00:39:30,900 --> 00:39:34,380
+để cho tester tiện cho quý vị đặt cài
+
+353
+00:39:34,380 --> 00:39:36,380
+sau khi họ đã làm xong
+
+354
+00:39:36,380 --> 00:39:53,790
+thì mình sẽ lấy kết quả từ cái tool mcdc tool lúc nãy, từ cái dán này rồi
+
+355
+00:39:53,790 --> 00:40:05,690
+cho nên là bây giờ mình sẽ vlookup cho nó vlookup item name và click thất bản
+
+356
+00:40:05,690 --> 00:40:47,260
+ok mình sẽ sửa lại chút để không có vấn đề
+
+357
+00:40:47,260 --> 00:41:34,290
+mình sẽ chọn lại tool, dạ đúng rồi, apply cho tất cả item ở đây
+
+358
+00:41:34,290 --> 00:41:49,540
+Ok. Rồi. Như vậy là mình đã Analyze xong 1 task thì mình sẽ đi check lại.
+
+359
+00:41:49,540 --> 00:42:12,940
+Summarize lại. Rồi. Ở đây có 51 item cần được test và 12 item cần được valid.
+
+360
+00:42:12,940 --> 00:42:21,940
+Summarize rồi đây. Đối với BMP 87328 thì sẽ có 63 item cần được perform duty
+
+361
+00:42:21,940 --> 00:42:26,980
+Và trong đó thì có 12 atom cần valid và 51 atom cần được test.
+
+362
+00:42:26,980 --> 00:42:38,410
+Rồi, đối với cái file này thì mình sẽ tạo ra một file estimation nữa để gửi cho SEA.
+
+363
+00:42:38,410 --> 00:42:49,420
+Thì bây giờ mình sẽ lưu nó thành một file estimation.
+
+364
+00:42:49,420 --> 00:43:09,290
+Rồi, thì ở file này thì mình sẽ cho nó là value hết, không để dạng công thức ở đây.
+
+365
+00:43:09,290 --> 00:43:22,250
+mình sẽ chừa lại cột inox em thì thằng nè nhanh tin nhất định cho việc đó cho một tuần mô đun
+
+366
+00:43:22,250 --> 00:43:36,900
+anh thì phai rồi mà cũng sẽ đi lọc lại những mô đun anh thì phai đấy thì nó sẽ bỏ những thêm
+
+367
+00:43:36,900 --> 00:43:48,920
+ở đây luôn ok thì cơ bản thì cũng đã xong một tác hành nên like à
+
+368
+00:43:48,920 --> 00:43:49,120
+ừ ừ
+

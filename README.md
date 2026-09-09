@@ -29,9 +29,11 @@ Place source videos in `data/input` and local model files under `models`, or con
 1. Run `uv run transcript-video process VIDEO`. Whisper creates or reuses the application-owned Vietnamese source SRT at `data/subtitles/source/<stem>_vi_<backend>.srt`.
 2. Send that SRT to an external LLM with [`docs/prompts/optimal_prompt.md`](docs/prompts/optimal_prompt.md).
 3. Save the edited English result as `data/subtitles/translated/<stem>_en.srt`, or pass it with `--translated-srt PATH`.
-4. Rerun `process`. Timed TTS is placed first, then a generated `data/subtitles/timed/<stem>_en_timed.srt` is burned before the final mux.
+4. Rerun `process`. Timed/chunked TTS is placed first, then the derived `data/subtitles/retimed/<stem>_en_retimed.srt` is burned before the final mux. Disabled/simple TTS burns the translated SRT directly.
 
 Files under `translated/` are user-owned and are never overwritten. If the English SRT is missing, processing stops cleanly after the source SRT and prints the handoff paths without loading Qwen.
+
+Retiming changes timing only. It keeps each translated start unless TTS is meaningfully later, and keeps each translated end unless TTS runs longer. A cue may end earlier only to hand off to the next retimed cue, never before its own narration ends. Comparisons use SRT millisecond precision, and the TTS review records original, actual placement, final retimed values, shifts, and reasons.
 
 ## Basic CLI
 
@@ -75,8 +77,13 @@ and an additional speed-up artifact in one run:
 uv run transcript-video process Analysis.mp4 --speedup
 ```
 
-Each input uses `data/speedup/<stem>.speedup.toml`. If that file is missing, normal processing
-still succeeds, a commented template is created, and speed-up encoding is skipped. Edit the file:
+Each input uses one shared `data/speedup/<stem>.speedup.toml`. If that file is missing, normal processing still succeeds, a commented template is created once, and speed-up encoding is deferred. An existing empty or comment-only file explicitly means that the video was reviewed and needs no speed-up:
+
+```toml
+# Reviewed: no speed-up required.
+```
+
+A malformed file or invalid/overlapping interval remains a configuration error. To configure speed-up, add intervals:
 
 ```toml
 [[segment]]
@@ -98,12 +105,9 @@ uv run transcript-video speedup Analysis.mp4
 uv run transcript-video speedup Analysis.mp4 --spec custom.toml
 ```
 
-With TTS enabled the source/output pair is
-`Analysis_en-dub_en-sub.mp4` → `Analysis_en-dub_en-sub_speedup.mp4`; without TTS it is
-`Analysis_vi-dub_en-sub.mp4` → `Analysis_vi-dub_en-sub_speedup.mp4`. `--speedup-spec PATH`
-selects one custom spec for `process` and implies `--speedup`; it is rejected for multi-video
-runs. `[speedup] enabled = false` is the default. `process --dry-run --speedup` reports spec,
-normal output, speed-up output, segment count, and factors without creating files.
+Normal outputs are `Analysis_vi-dub_en-sub.mp4` (Vietnamese audio with English subtitles) and, when TTS is enabled, `Analysis_en-dub_en-sub.mp4` (English TTS with English subtitles). `process --speedup` applies the same spec independently to every normal output produced by that run, creating both corresponding `_speedup.mp4` files when TTS is enabled. The standalone command discovers either or both existing canonical normal outputs without consulting the current TTS setting.
+
+`--speedup-spec PATH` selects one custom spec for `process` and implies `--speedup`; it is rejected for multi-video runs. `[speedup] enabled = false` is the default. `process --dry-run --speedup` reports missing, zero-segment, or configured spec state and planned outputs without creating templates or media.
 
 ## Course tools
 

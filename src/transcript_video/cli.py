@@ -390,7 +390,7 @@ def _run_processing(
                     segments = parse_speedup_spec(path)
                     factors = (
                         ", ".join(f"\N{MULTIPLICATION SIGN}{item.speed}" for item in segments)
-                        or "0 segments"
+                        or "0 segments · no speed-up required"
                     )
                     detail = f"exists · {len(segments)} segments · {factors}"
                 spec_rows.append(f"{detail} · {path}")
@@ -481,9 +481,9 @@ def speedup_command(
     root: Annotated[Path | None, typer.Option("--root")] = None,
     video_encoder: Annotated[EncoderChoice | None, typer.Option("--video-encoder")] = None,
 ) -> None:
-    """Regenerate only the speed-up artifact from an existing final video."""
+    """Regenerate speed-up artifacts from existing rendered normal videos."""
     from .events import event_scope
-    from .processing.speedup import process_speedup_video
+    from .processing.speedup import process_speedup_outputs
 
     state = _state(ctx)
     state.logging(command="speedup")
@@ -499,9 +499,8 @@ def speedup_command(
     settings = resolved.settings
     project_root = Path(settings.project.root).expanduser().resolve()
     paths = ProjectPaths.from_root(project_root)
-    normal = paths.normal_video_path(video, tts_enabled=settings.tts.enabled)
+    normal_outputs = paths.normal_video_paths(video, tts_enabled=True)
     spec_path = paths.speedup_spec_path(video, spec or settings.speedup.spec)
-    output = paths.speedup_output_path(normal)
     configure_binary_path(project_root)
     started = time.perf_counter()
     with RichProgressObserver(
@@ -512,10 +511,9 @@ def speedup_command(
     ) as progress:
         try:
             with event_scope(progress, video=video.name):
-                result = process_speedup_video(
-                    normal,
+                results = process_speedup_outputs(
+                    normal_outputs,
                     spec_path,
-                    output,
                     video_encoder=settings.hardware.video_encoder,
                     video_stem=video.stem,
                 )
@@ -525,18 +523,17 @@ def speedup_command(
             _show_error(state, exc)
             raise typer.Exit(1) from None
     progress.summary(
-        title="Speed-up complete" if result else "Speed-up skipped",
+        title="Speed-up complete" if results else "Speed-up skipped",
         elapsed=time.perf_counter() - started,
         failures=(),
         logs=state.logs,
         details=(
             {
-                "Original": format_duration(result.original_duration),
-                "Segments": len(result.segments),
-                "Output": format_duration(result.actual_duration),
-                "Saved": format_duration(result.time_saved),
+                "Videos": len(results),
+                "Segments": len(results[0].segments),
+                "Saved": format_duration(sum(result.time_saved for result in results)),
             }
-            if result
+            if results
             else {"Result": "No speed-up video created"}
         ),
     )

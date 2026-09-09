@@ -1,0 +1,500 @@
+1
+00:00:01,040 --> 00:00:06,560
+Hi xin chào mọi người trong video hôm nay chúng ta sẽ cùng nhau thực hiện unit test sử dụng Google
+
+2
+00:00:06,560 --> 00:00:19,700
+test thì đầu tiên mình có một danh sách các cái file C các item cần được thực hiện duty và sử
+
+3
+00:00:19,700 --> 00:00:30,440
+dụng Google test ở đây mình sẽ chọn item đầu tiên để mình làm ảo thì để có thể viết được có test thì
+
+4
+00:00:30,440 --> 00:00:35,910
+đầu tiên chúng ta phải tạo một được môi trường test cho cái item này thì hiện tại thì chúng ta
+
+5
+00:00:35,910 --> 00:00:45,830
+sẽ có hai cách để thực hiện điều đó thứ nhất là cách manual thì chúng ta cần chuẩn bị thì chúng
+
+6
+00:00:45,830 --> 00:00:52,680
+ta cần có một cái folder với cái tên item mà chúng ta cần được cầm phép và chứa cái phai xi đó sau đó
+
+7
+00:00:52,680 --> 00:01:10,500
+kéo thả cái pha xi kéo thả pha xi vào script của Cuxan khi đó tool sẽ tự động phân tích và sinh
+
+8
+00:01:10,500 --> 00:01:30,470
+ra cho chúng ta một môi trường test với đầy đủ các input input là các header file và CV là chứa
+
+9
+00:01:30,470 --> 00:01:46,230
+test strip của mình cách thứ hai là chúng ta sẽ sử dụng dùng tool chúng ta sử dụng tool bằng cách
+
+10
+00:01:46,230 --> 00:01:57,700
+là view các cái trường thông tin bắt buộc như là database workspace và các item mà chúng ta
+
+11
+00:01:57,700 --> 00:02:17,920
+cần thực hiện vô tì khi đó một cái thông báo complete sẽ xuất hiện thì một môi trường test
+
+12
+00:02:17,920 --> 00:02:35,100
+tương tự như cách manual sẽ được sinh ra cũng đầy đủ tất cả các file như thế sau khi môi trường đã
+
+13
+00:02:35,100 --> 00:02:43,980
+được tạo thành công bằng một trong hai cách trên chúng ta đã có đầy đủ các header input chúng ta
+
+14
+00:02:43,980 --> 00:02:58,420
+đã có đầy đủ các header input file header chính và file cpp chứa các stop function mốc và design
+
+15
+00:02:58,420 --> 00:03:24,960
+Tuy nhiên, một vấn đề cực kỳ phổ biến khi làm UTG Test thì chính là lỗi compiler do thiếu các cái định nghĩa về kiểu dữ liệu struct enum hoặc là các cái header liên quan như console show ở đây, show ra ở đây.
+
+16
+00:03:24,960 --> 00:03:32,320
+Thì giải pháp thì chúng ta sẽ sử dụng một công cụ thứ hai
+
+17
+00:03:32,320 --> 00:03:36,050
+Đó chính là UT AI Corp
+
+18
+00:03:36,050 --> 00:03:45,620
+Chúng ta cần là cung cấp các cái đường dẫn của item
+
+19
+00:03:45,620 --> 00:03:55,480
+Item can phép đường bạch chứa database
+
+20
+00:03:55,480 --> 00:03:59,140
+Chứa các cái define
+
+21
+00:03:59,140 --> 00:04:04,700
+Sau đó chúng ta click auto define object
+
+22
+00:04:04,700 --> 00:04:56,680
+Tool đảm bảo success
+
+23
+00:04:56,680 --> 00:05:16,240
+thì thay vì phải đi tìm từng từng file header trong cái database trong database thì chúng ta
+
+24
+00:05:16,240 --> 00:05:28,680
+sẽ chỉ cần cung cấp một vài cái thông tin cần thiết để tool UT iCop này nó sẽ tự động đi lùng
+
+25
+00:05:28,680 --> 00:05:39,880
+trong cái database và tìm đúng định nghĩa và tự động chèn các cái các cái thông tin các cái dữ
+
+26
+00:05:39,880 --> 00:05:50,680
+liệu hay là các cái define vào trong header. Giờ tôi đã giải quyết xong về phần cái dữ liệu chúng
+
+27
+00:05:50,680 --> 00:05:58,680
+ta sẽ tiến hành view thử để kiểm tra xem thử là có còn lỗi nữa hay không bằng cách vào terminal
+
+28
+00:05:58,680 --> 00:06:13,250
+chọn trên Tab và View. Như trên màn hình, mọi người cũng có thể thấy là những cái lỗi Missing
+
+29
+00:06:13,250 --> 00:06:20,910
+Declaration không còn nữa. Thay vào đó là những lỗi về Undefined Reference đến các cái hàm IPC.
+
+30
+00:06:20,910 --> 00:06:31,930
+Thì đây là một cái dấu hiệu cho biết là những hàm bên ngoài này cần phải được stop hoặc là móc để
+
+31
+00:06:31,930 --> 00:06:42,740
+và lặp lại cái phạm vi của cái mô đô mình đang test. Thì để làm được cái vấn đề Stop Mock cho
+
+32
+00:06:42,740 --> 00:06:49,880
+các cái function này thì chúng ta có thể sử dụng cái chức năng Repair and Get Shoot trên tool
+
+33
+00:06:49,880 --> 00:07:16,040
+AICop. Tool đã thực hiện xong, đã thêm 2 function và móc chúng. Chúng ta sẽ tiến hành build thử
+
+34
+00:07:16,040 --> 00:07:26,310
+Để kiểm tra xem thử là lỗi Undefined Reference lúc trước có còn rồi không.
+
+35
+00:07:33,710 --> 00:07:35,790
+Thì đã không còn lỗi Undefined Reference.
+
+36
+00:07:36,210 --> 00:07:41,110
+Thay vào đó là một cái tên cây mẫu ở dưới này nó đã chạy được.
+
+37
+00:07:45,700 --> 00:07:48,960
+Tiếp theo chúng ta sẽ tiến hành design một cái tên cây.
+
+38
+00:07:51,180 --> 00:07:56,580
+Sau khi vấn đề về các hàm Undefined Reference đã được giải quyết.
+
+39
+00:07:57,270 --> 00:08:01,150
+Bằng cách chúng ta đi stop và móc các function đó.
+
+40
+00:08:02,010 --> 00:08:05,890
+Thì tiếp theo, chúng ta sẽ design một cái test case.
+
+41
+00:08:08,120 --> 00:08:11,240
+Ở đây tôi có một test case mẫu.
+
+42
+00:08:11,240 --> 00:08:21,580
+Thì một test case trúng sẽ bao gồm 6 phần.
+
+43
+00:08:22,730 --> 00:08:32,710
+Thứ nhất là một macro test, bên trong đó sẽ là test feature và test case name.
+
+44
+00:08:32,710 --> 00:08:39,870
+Mục đích của test feature là dùng để nhóm các cái test case liên quan lại với nhau
+
+45
+00:08:39,870 --> 00:08:45,250
+Test case name dùng để định danh cái test case
+
+46
+00:08:45,250 --> 00:08:48,580
+Thứ 2 là phần description
+
+47
+00:08:48,580 --> 00:08:54,450
+Ở đây chúng ta sẽ mô tả cái mục đích
+
+48
+00:08:54,450 --> 00:09:00,590
+Mục đích ở đây là kiểm tra về cái logic gì
+
+49
+00:09:00,590 --> 00:09:02,770
+Input đặc biệt là sao
+
+50
+00:09:02,770 --> 00:09:06,700
+hoặc là cover
+
+51
+00:09:06,700 --> 00:09:09,520
+true phone
+
+52
+00:09:09,520 --> 00:09:11,260
+của một cái condition nào đó
+
+53
+00:09:11,260 --> 00:09:14,660
+thứ ba
+
+54
+00:09:14,660 --> 00:09:16,560
+chính là vùng khởi tạo
+
+55
+00:09:16,560 --> 00:09:18,280
+input
+
+56
+00:09:18,280 --> 00:09:22,660
+đây là bước chuẩn bị
+
+57
+00:09:22,660 --> 00:09:24,830
+chúng ta cần phải
+
+58
+00:09:24,830 --> 00:09:27,170
+chúng ta phải khai báo
+
+59
+00:09:27,170 --> 00:09:27,690
+các biến
+
+60
+00:09:27,690 --> 00:09:30,850
+gán các giá trị đầu vào
+
+61
+00:09:30,850 --> 00:09:33,030
+cần thiết
+
+62
+00:09:33,030 --> 00:09:34,610
+vào hàm
+
+63
+00:09:34,610 --> 00:09:35,650
+vào hàm test
+
+64
+00:09:35,650 --> 00:09:41,050
+thứ tư là call stop function
+
+65
+00:09:41,050 --> 00:09:44,080
+Nếu hàm chúng ta
+
+66
+00:09:44,080 --> 00:09:45,940
+Nếu hàm chúng ta
+
+67
+00:09:45,940 --> 00:09:47,600
+Đi qua các cái function
+
+68
+00:09:47,600 --> 00:09:49,940
+Mà chúng ta đã
+
+69
+00:09:49,940 --> 00:09:53,380
+Các cái function phụ
+
+70
+00:09:53,380 --> 00:09:54,760
+Như đã
+
+71
+00:09:54,760 --> 00:09:56,580
+Ở phần trước là
+
+72
+00:09:56,580 --> 00:09:57,600
+Chúng ta đã stop
+
+73
+00:09:57,600 --> 00:09:58,800
+Móc nó
+
+74
+00:09:58,800 --> 00:10:02,510
+Thì chúng ta cần phải thiết lập
+
+75
+00:10:02,510 --> 00:10:05,270
+Các giá trị return
+
+76
+00:10:05,270 --> 00:10:07,700
+Hoặc là gọi
+
+77
+00:10:07,700 --> 00:10:09,720
+Gọi các cái function đó ra
+
+78
+00:10:09,720 --> 00:10:10,980
+Khi mà
+
+79
+00:10:10,980 --> 00:10:13,860
+Cái flow code
+
+80
+00:10:13,860 --> 00:10:22,760
+khi chúng ta đi qua cái phân trình đó thứ năm là phần con suốt thì ở đây là chúng ta thực
+
+81
+00:10:22,760 --> 00:10:35,870
+hiện gọi cái hàm mà chúng ta cần test và cuối cùng là các lệnh mất tích IQ hoặc là các hàm
+
+82
+00:10:35,870 --> 00:10:48,860
+check để so sánh kết quả trả về với các giá trị mong đợi nếu khớp thì kết quả sẽ ra bát thì kết
+
+83
+00:10:48,860 --> 00:11:02,570
+sẽ cho bát còn còn khi mà ra kết quả chắc không không khớp thì sẽ cho kết quả là theo chúng ta
+
+84
+00:11:02,570 --> 00:11:32,590
+sẽ tiến hành biểu thử một vài lỗi xảy ra ở đây là hàm tôi đang tôi đang gọi là security level
+
+85
+00:11:32,590 --> 00:11:40,440
+đang khởi tạo là giá trị đang khởi tạo là kiểu voi nhưng lại có gì tên tôi sẽ tiến hành xóa cái
+
+86
+00:11:40,440 --> 00:12:28,680
+cái đầu tiên của tôi đã bắt các cây biến sẽ chắc phải tịch của tôi đã chính xác thì thì thì còn thì
+
+87
+00:12:28,680 --> 00:12:39,290
+tết cây đã bắt Nhưng chúng ta cần biết là cái cây này đã bao phủ được bao nhiêu phần trăm của
+
+88
+00:12:39,290 --> 00:12:40,930
+cái logic của cái hàm này
+
+89
+00:12:40,930 --> 00:12:43,600
+thì để trả lời được
+
+90
+00:12:43,600 --> 00:12:44,300
+cái câu hỏi này
+
+91
+00:12:44,300 --> 00:12:47,420
+thì chúng ta sẽ tiến hành
+
+92
+00:12:47,420 --> 00:12:49,760
+cái bước tiếp theo
+
+93
+00:12:49,760 --> 00:12:51,460
+là chúng ta sẽ build Canada
+
+94
+00:12:51,460 --> 00:13:10,590
+và sẽ sử dụng một tool thứ 3
+
+95
+00:13:10,590 --> 00:13:12,670
+đó chính là Canada IDE
+
+96
+00:13:12,670 --> 00:13:15,340
+chúng ta sẽ
+
+97
+00:13:15,340 --> 00:13:23,480
+sẽ add
+
+98
+00:13:23,480 --> 00:13:25,270
+cái folder
+
+99
+00:13:25,270 --> 00:13:26,230
+Canada mà
+
+100
+00:13:26,230 --> 00:13:28,530
+chúng ta vừa build ra
+
+101
+00:13:28,530 --> 00:13:31,540
+để xem được cái độ bao phủ
+
+102
+00:13:31,540 --> 00:13:47,110
+như mọi người có thể thấy
+
+103
+00:13:47,110 --> 00:13:49,110
+Thì tết cây của tôi đang
+
+104
+00:13:49,110 --> 00:13:50,490
+Tết cây này
+
+105
+00:13:50,490 --> 00:13:53,990
+Đang mô tả là
+
+106
+00:13:53,990 --> 00:13:55,550
+Cover 2 cây cho
+
+107
+00:13:55,550 --> 00:13:57,800
+Cho cái Condition
+
+108
+00:13:57,800 --> 00:13:59,260
+Condition này
+
+109
+00:13:59,260 --> 00:14:01,300
+Thì nó đã chính xác
+
+110
+00:14:01,300 --> 00:14:34,400
+Tôi sẽ thêm 1 tết cây tiếp theo
+
+111
+00:14:34,400 --> 00:14:38,760
+Tết cây này sẽ cover
+
+112
+00:14:38,760 --> 00:14:41,170
+Fold cây của
+
+113
+00:14:41,170 --> 00:14:43,230
+Cái line Condition tại line 59
+
+114
+00:14:43,230 --> 00:15:00,870
+Kiểm tra lại coverage
+
+115
+00:15:00,870 --> 00:15:37,960
+Tết cây số 2 cũng đã pass
+
+116
+00:15:37,960 --> 00:15:43,640
+Mà chúng ta sẽ check lại coverage
+
+117
+00:15:43,640 --> 00:15:44,690
+Một lần nữa
+
+118
+00:15:44,690 --> 00:16:08,270
+cái condition phone đã được bao phủ tương tự cho các cái chương tự cho các condition tiếp theo
+
+119
+00:16:08,270 --> 00:16:17,480
+chúng ta cần phải thêm các cái điều kiện thêm design thêm nhiều test case để cover từng từng
+
+120
+00:16:17,480 --> 00:17:05,680
+từng condition để đạt bao phủ 100% tôi vừa thêm các test case bên ngoài đã chúng đã chuẩn bị sẵn
+
+121
+00:17:05,680 --> 00:17:16,960
+và các cái cây này đã hoàn thành đã bắt một trăm phần trăm 14 thích cây đều đã bắt xịt và đạt độ
+
+122
+00:17:16,960 --> 00:17:26,820
+bao phủ 100 phần trăm sẽ tiến hành trách lại Canada coverage tất cả các cái cần tính sân
+
+123
+00:17:26,820 --> 00:17:45,380
+tất cả các điều kiện đều đã được bao phủ hết thì sau khi sau khi tết cây đã đạt đủ và đã đạt đủ 100
+
+124
+00:17:45,380 --> 00:17:55,960
+thì chúng ta sẽ tiến hành gửi review và thực hiện các cái tiếp tiếp theo như là review
+
+125
+00:17:55,960 --> 00:18:11,520
+của Deliver và BDC tôi xin kết thúc video về cách làm một UTG test tại đây xin cảm ơn
+

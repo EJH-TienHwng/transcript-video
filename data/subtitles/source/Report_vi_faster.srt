@@ -1,0 +1,296 @@
+1
+00:00:00,470 --> 00:00:11,890
+Thì sau khi đã delete và valid xong thì mình sẽ tiến hành report task vừa rồi.
+
+2
+00:00:11,890 --> 00:00:23,200
+Mình cũng sẽ gen một file tba để report và cách gen cũng tương tự như cách gen trong quá trình analysis.
+
+3
+00:00:23,200 --> 00:00:28,140
+Thì sau khi đã gen xong mình sẽ có được một cái file như thế này.
+
+4
+00:00:28,140 --> 00:01:00,170
+Mình sẽ đi hide lại các cột không cần thiết.
+
+5
+00:01:00,170 --> 00:01:19,180
+sách này có request mcdc cho nên mình sẽ để lại cột mcdc. Rồi đo đoạn thì sẽ như thế này và bây
+
+6
+00:01:19,180 --> 00:01:28,180
+giờ mình sẽ cũng sẽ đi concat lại mình sẽ điền những cái tool để mình cần thiết để mình tiền
+
+7
+00:01:28,180 --> 00:01:48,180
+ở trong file analysis cũng như là database. Ok bây giờ mình cũng sẽ đi concat nếu là mô
+
+8
+00:01:48,180 --> 00:01:50,500
+thì sẽ cân cắt giữa item name và check-in date
+
+9
+00:01:50,500 --> 00:01:51,560
+còn
+
+10
+00:01:51,560 --> 00:01:54,120
+escape thì là item name và
+
+11
+00:01:54,120 --> 00:01:55,660
+version của nó
+
+12
+00:01:55,660 --> 00:02:05,120
+rồi sau đó mình sẽ
+
+13
+00:02:05,120 --> 00:02:07,360
+check những module nào
+
+14
+00:02:07,360 --> 00:02:09,200
+mà ban đầu
+
+15
+00:02:09,200 --> 00:02:09,600
+mình
+
+16
+00:02:09,600 --> 00:02:11,960
+estimation
+
+17
+00:02:11,960 --> 00:02:14,400
+mình sẽ fill
+
+18
+00:02:14,400 --> 00:02:18,320
+ở cột
+
+19
+00:02:18,320 --> 00:02:20,140
+reportable ở đây
+
+20
+00:02:20,140 --> 00:02:23,130
+thì cũng mình cắt
+
+21
+00:02:23,130 --> 00:02:25,410
+vi đúc cấp giữa file này
+
+22
+00:02:25,410 --> 00:02:27,580
+giữa cột cân cắt
+
+23
+00:02:27,580 --> 00:02:29,620
+Và file analysis
+
+24
+00:02:29,620 --> 00:02:34,950
+Đây là file analysis
+
+25
+00:02:34,950 --> 00:02:40,750
+Để đi lọc
+
+26
+00:02:40,750 --> 00:02:55,170
+Ok
+
+27
+00:02:55,170 --> 00:03:17,800
+Cột 15
+
+28
+00:03:17,800 --> 00:03:26,880
+Cột mt
+
+29
+00:03:26,880 --> 00:03:34,380
+Cột test document
+
+30
+00:03:34,380 --> 00:03:51,080
+Mình sẽ áp dụng tất cả
+
+31
+00:03:51,080 --> 00:04:01,770
+Mình sẽ lọc
+
+32
+00:04:01,770 --> 00:04:02,630
+Cột mt
+
+33
+00:04:02,630 --> 00:04:13,240
+Mình sẽ bút
+
+34
+00:04:13,240 --> 00:04:16,840
+Prepondable ở đây
+
+35
+00:04:16,840 --> 00:04:19,300
+Đây là những module mình đã test
+
+36
+00:04:19,300 --> 00:04:20,600
+Và đã valid
+
+37
+00:04:20,600 --> 00:04:22,930
+Trong vắt này
+
+38
+00:04:22,930 --> 00:04:42,020
+là đúng 63 item. Tuy nhiên, ở đây vẫn có những module undefined. Thì tester cũng đã comment là
+
+39
+00:04:42,020 --> 00:04:51,710
+những module này đã được test nhưng mà bà bị change second day. Mình check xem có những
+
+40
+00:04:51,710 --> 00:05:00,120
+comment nào là không đây. Ví dụ như này là ban đầu module này mình đã estimate, analyze nó là
+
+41
+00:05:00,120 --> 00:05:11,300
+lúc test tuy nhiên lúc test thì chắc lại thì nó là mô đô valid thì mình cũng sẽ đổi cái này thằng
+
+42
+00:05:11,300 --> 00:06:36,490
+ok cũng như là các tương ứng ok là sẽ phát lại giống là ok xóa đi không phải rồi mình sẽ chắc
+
+43
+00:06:36,490 --> 00:07:10,240
+đây có những mô đôn có lên CRP như thế này thì là thường là những mô đôn có COVID dưới 100%
+
+44
+00:07:10,240 --> 00:07:43,160
+thì mình sẽ kêu reason cho nó và cục mt comment rồi tiếp đến là mình sẽ đi chắc ngoài những mô
+
+45
+00:07:43,160 --> 00:07:56,540
+mà mình vừa test hoặc là Valid thì mình sẽ đi check những module còn lại undefined mà không có
+
+46
+00:07:56,540 --> 00:08:04,800
+reason hay không. Đây, bởi vì đã được test bằng data như ban đầu và Analyze mình cũng đã kiếm rồi
+
+47
+00:08:04,800 --> 00:08:20,810
+thì mình sẽ đánh bằng nó thôi. Ok, mình sẽ đi Clear để check lại một lần nữa những module undefined đã có
+
+48
+00:08:20,810 --> 00:08:35,040
+reason hay chưa. Ok, với những module test này thì mình cũng sẽ bút vào đây luôn. Mình cũng sẽ bút thông
+
+49
+00:08:35,040 --> 00:09:25,280
+đây là file này Ok mình sẽ bút tất cả phần corporate của nó và ô comment đối với những
+
+50
+00:09:25,280 --> 00:09:31,350
+mô đông trên second day cho nên là nó không có playlist trên nó dạng đến là nó không show được
+
+51
+00:09:31,350 --> 00:10:07,500
+kết quả mình test ở đây mình sẽ đi bút và mình sẽ đi kiếm trong một cái file mình đã đi kiếm rồi
+
+52
+00:10:07,500 --> 00:10:48,370
+tất cả thông tin đã được test và check-in-day trên check-in-day như thế nào và đã pass với kết quả
+
+53
+00:10:48,370 --> 00:10:59,120
+UT ra sao thì cũng có link cũng có region tiêm ứng được gọi trong ok như vậy để mình check lại một lần
+
+54
+00:10:59,120 --> 00:11:14,280
+Mình đã đủ hết tất cả những mô đun Reason cho mô đun Define chưa?
+
+55
+00:11:14,280 --> 00:11:16,710
+Ok, đã đủ hết rồi.
+
+56
+00:11:16,710 --> 00:11:31,460
+Tiếp đến thì mình sẽ đi kiếm Reason cho những mô đun Batch mà coverage dưới 100%.
+
+57
+00:11:31,460 --> 00:11:39,480
+Thì ở đây mình cũng sẽ dùng VLOOKUP để đi GET REGION
+
+58
+00:11:39,480 --> 00:11:57,120
+VLOOKUP theo cần CARD và READ GET REGION từ File Tested Database
+
+59
+00:11:57,120 --> 00:12:08,030
+Thì mình sẽ check ở đây trước, check chối với những mô đồ mà mình sẽ đi lọc những mô đồ có REGION rồi
+
+60
+00:12:08,030 --> 00:12:25,550
+Cho nó bằng 1 ngày trường hợp chưa có REGION
+
+61
+00:12:27,640 --> 00:13:50,300
+ok sẽ kiếm được càng dưới dần càng tốt Ok tương tự trách lấy xong một hôm nay là
+
+62
+00:13:50,300 --> 00:14:02,480
+khá lâu rồi và origin và ntc là nước ngoài nên là mình không an tâm khi mà không có
+
+63
+00:14:02,480 --> 00:14:11,660
+Rồi, sơ bản để mình sẽ check lại một lần nữa.
+
+64
+00:14:11,660 --> 00:14:27,560
+Những cái reason lại là nếu có cái reason thì mình sẽ xóa đi.
+
+65
+00:14:27,560 --> 00:14:35,110
+Những comment lại là này, mình xóa đi.
+
+66
+00:14:35,110 --> 00:14:47,000
+Sơ lại thì, ở đây chỉ có một vài người Việt thôi.
+
+67
+00:14:47,000 --> 00:15:00,130
+Khá lâu rồi, mình có thể skip được.
+
+68
+00:15:00,130 --> 00:15:10,250
+Ok, mình sẽ check lại ở cục Not Applicable.
+
+69
+00:15:10,250 --> 00:15:13,250
+Xem thử có những comment gì bắt lời không.
+
+70
+00:15:13,250 --> 00:15:30,250
+Cột Amplify đã đủ hết tất cả các region. Tiếp đến là cột Batch dưới 100%, dường như cũng đủ rồi.
+
+71
+00:15:30,250 --> 00:15:50,540
+Rồi, mình sẽ batch ra lại dạng Value. Rồi, mình sẽ đi xóa những cột không cần thiết.
+
+72
+00:15:50,540 --> 00:15:57,040
+Mình sẽ chừa lại cột Tester Command, CRP Command và CRP Review Status.
+
+73
+00:15:57,040 --> 00:16:18,910
+6 cục này đi, 6, 3 cục này, chúng ta sẽ quay lại để những cái module mà mình vừa test, vừa test trên thấp này, test hoặc là valid trên thấp này.
+
+74
+00:16:18,910 --> 00:16:54,480
+Ok, thì mình sẽ summarize được là trong này có tổng cộng là double port, sẽ có tổng cộng là 13 item để được valid và 50 item để được test, đúng với số 63 item ban đầu của mình.
+

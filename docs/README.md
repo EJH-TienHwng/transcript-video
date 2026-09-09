@@ -45,9 +45,17 @@ Dry-run validates configuration, inputs, the ASR model, output paths, and both s
 1. Run `process VIDEO`. Whisper writes the application-owned Vietnamese SRT to `data/subtitles/source/<stem>_vi_<backend>.srt` when it does not already exist.
 2. Send that SRT to an external LLM with [`prompts/optimal_prompt.md`](prompts/optimal_prompt.md).
 3. Save the edited English SRT as `data/subtitles/translated/<stem>_en.srt`, or supply `--translated-srt PATH` for a single video.
-4. Rerun `process`. Timed/chunked Qwen TTS placement produces `data/subtitles/timed/<stem>_en_timed.srt`; that generated SRT is burned before the final mux. Disabled/simple TTS keeps the translated timings.
+4. Rerun `process`. Timed/chunked Qwen TTS placement produces `data/subtitles/retimed/<stem>_en_retimed.srt`; that derived SRT is burned before the final mux. Disabled/simple TTS burns the translated SRT directly.
 
 The application never translates this file and transcription never writes under `translated/`. If it is missing, the command finishes cleanly after producing/reusing the Vietnamese source SRT and reports the expected path. Qwen is not loaded.
+
+The translated SRT is canonical and is never rewritten. Retiming preserves a translated cue when narration is shorter, shifts its start only when TTS starts meaningfully later, and extends its end when TTS runs longer. A cue may end before its translated end only to avoid an unnecessary overlap with the next retimed cue, and never before its own narration ends. Millisecond-quantized comparisons suppress sample noise; final timings, shifts, and reasons are stored in the TTS review.
+
+## Video speed-up outputs
+
+`<stem>_vi-dub_en-sub.mp4` contains Vietnamese audio with English subtitles. With TTS enabled, `<stem>_en-dub_en-sub.mp4` contains English TTS with English subtitles. `process --speedup` applies the same `data/speedup/<stem>.speedup.toml` timeline to both normal videos and creates both corresponding `_speedup.mp4` artifacts; without TTS it processes only the Vietnamese-audio variant. The standalone `speedup` command discovers whichever canonical normal variants already exist.
+
+Speed-up spec states are explicit: a missing file creates one template and defers speed-up; an existing zero-segment file (including a comment-only `# Reviewed: no speed-up required.` file) succeeds without FFmpeg or an output copy; one or more valid segments generate outputs; invalid TOML or intervals fail validation. Dry-run reports these states without creating files.
 
 Profiles are partial TOML files in `configs/profiles/<name>.toml` (or an explicit TOML path). Effective values resolve in this order: defaults, base config, profile, then command-line overrides.
 
@@ -441,12 +449,13 @@ All relative JSON paths are resolved from the repository root. The default `auto
 | --- | --- |
 | Vietnamese source SRT (application-owned) | `data/subtitles/source/<video>_vi_<backend>.srt` |
 | English translated SRT (user-owned) | `data/subtitles/translated/<video>_en.srt` |
-| Timed English SRT (generated) | `data/subtitles/timed/<video>_en_timed.srt` |
-| Hard-subtitled video | `data/output/<video>_vi-dub_en-sub.mp4` |
+| Retimed English SRT (generated) | `data/subtitles/retimed/<video>_en_retimed.srt` |
+| Vietnamese-audio, English-subtitle video | `data/output/<video>_vi-dub_en-sub.mp4` |
 | Full TTS WAV | `data/audio/<video>_tts.wav` |
 | TTS review chunks | `data/audio/<video>_tts_chunks/` |
 | TTS timing/alignment review log | `data/report/tts/<video>_tts_review.jsonl` |
-| Final TTS video | `data/output/<video>_en-dub_en-sub.mp4` |
+| English-TTS, English-subtitle video | `data/output/<video>_en-dub_en-sub.mp4` |
+| Optional speed-up videos | `data/output/<video>_{vi,en}-dub_en-sub_speedup.mp4` |
 | Course work/final files | `data/compilation/` |
 
 ## Quality checks

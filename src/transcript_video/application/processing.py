@@ -107,11 +107,14 @@ def build_process_plan(
         paths.speedup_spec_path(video, settings.speedup.spec) for video in resolved_videos
     )
     normal_output_paths = tuple(
-        paths.normal_video_path(video, tts_enabled=settings.tts.enabled)
+        normal
         for video in resolved_videos
+        for normal in paths.normal_video_paths(video, tts_enabled=settings.tts.enabled)
     )
     speedup_output_paths = tuple(
-        paths.speedup_output_path(normal) for normal in normal_output_paths
+        output
+        for video in resolved_videos
+        for output in _planned_speedup_outputs(video, paths, settings)
     )
     for variable in ("TRANSCRIPT_VIDEO_FFMPEG", "TRANSCRIPT_VIDEO_FFPROBE"):
         configured = os.environ.get(variable)
@@ -241,16 +244,33 @@ def _artifacts_for(
             ]
         )
         if settings.tts.generation_mode == "chunked" or settings.tts.mode == "timed":
-            artifacts.append(paths.timed_subtitle_dir / f"{video.stem}_en_timed.srt")
+            artifacts.append(paths.retimed_subtitle_dir / f"{video.stem}_en_retimed.srt")
         if settings.tts.generation_mode == "chunked" or settings.tts.mode == "timed":
             review = paths.tts_review_path(paths.audio_dir / f"{video.stem}_tts.wav")
             artifacts.extend([review, review.with_suffix(".pretty.json")])
         review = paths.tts_review_path(paths.audio_dir / f"{video.stem}_tts.wav")
         artifacts.append(review.with_suffix(".duration.json"))
     if settings.speedup.enabled:
-        normal = paths.normal_video_path(video, tts_enabled=settings.tts.enabled)
-        artifacts.append(paths.speedup_output_path(normal))
+        artifacts.extend(_planned_speedup_outputs(video, paths, settings))
     return artifacts
+
+
+def _planned_speedup_outputs(
+    video: Path, paths: ProjectPaths, settings: RunSettings
+) -> tuple[Path, ...]:
+    if not settings.speedup.enabled:
+        return ()
+    spec = paths.speedup_spec_path(video, settings.speedup.spec)
+    if not spec.is_file():
+        return ()
+    from ..processing.speedup import parse_speedup_spec
+
+    if not parse_speedup_spec(spec):
+        return ()
+    candidates = paths.normal_video_paths(video, tts_enabled=settings.tts.enabled)
+    if settings.transcription.skip_burn:
+        candidates = tuple(path for path in candidates if path.is_file())
+    return tuple(paths.speedup_output_path(path) for path in candidates)
 
 
 def _from_root(root: Path, value: str) -> Path:

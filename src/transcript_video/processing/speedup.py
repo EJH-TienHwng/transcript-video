@@ -257,20 +257,23 @@ def process_speedup_video(
         )
         return None
 
+    segments = parse_speedup_spec(spec)
+    if not segments:
+        emit(
+            PipelineStage.SPEEDUP,
+            f"Speed-up skipped: no speed-up intervals configured.\n"
+            f"Normal video will be used as final output: {source}",
+            kind=EventKind.COMPLETE,
+            artifact=source,
+            details={"status": "not_required", "segments": 0},
+        )
+        return None
+
     with stage_context(PipelineStage.SPEEDUP, "Creating speed-up video"):
         duration = get_media_duration_seconds(source)
         if duration is None:
             raise ValueError(f"Could not read final video duration: {source}")
-        segments = validate_speedup_segments(parse_speedup_spec(spec), duration)
-        if not segments:
-            emit(
-                PipelineStage.SPEEDUP,
-                f"No speed-up intervals configured. Normal video is already available: {source}",
-                kind=EventKind.WARNING,
-                artifact=source,
-                details={"status": "empty_spec"},
-            )
-            return None
+        segments = validate_speedup_segments(segments, duration)
         if not media_has_audio(source):
             raise ValueError(f"Speed-up requires a final video with an audio stream: {source}")
         timeline = build_speedup_timeline(segments, duration)
@@ -316,6 +319,54 @@ def process_speedup_video(
         saved,
     )
     return result
+
+
+def process_speedup_outputs(
+    sources: tuple[Path, ...] | list[Path],
+    spec: Path,
+    *,
+    video_encoder: str,
+    video_stem: str,
+) -> tuple[SpeedupResult, ...]:
+    """Apply one source-video speed-up specification to each rendered variant."""
+    available = tuple(source for source in sources if source.is_file())
+    if not available:
+        raise FileNotFoundError(
+            "No rendered normal video was found for speed-up. "
+            "Run the normal processing pipeline first."
+        )
+    if not spec.is_file():
+        process_speedup_video(
+            available[0],
+            spec,
+            available[0].with_name(f"{available[0].stem}_speedup{available[0].suffix}"),
+            video_encoder=video_encoder,
+            video_stem=video_stem,
+        )
+        return ()
+    if not parse_speedup_spec(spec):
+        names = " and ".join(path.name for path in available)
+        emit(
+            PipelineStage.SPEEDUP,
+            "Speed-up skipped: no speed-up intervals configured.\n"
+            f"Normal video{'s' if len(available) > 1 else ''} will be used: {names}",
+            kind=EventKind.COMPLETE,
+            artifact=spec,
+            details={"status": "not_required", "segments": 0},
+        )
+        return ()
+    results = []
+    for source in available:
+        result = process_speedup_video(
+            source,
+            spec,
+            source.with_name(f"{source.stem}_speedup{source.suffix}"),
+            video_encoder=video_encoder,
+            video_stem=video_stem,
+        )
+        if result is not None:
+            results.append(result)
+    return tuple(results)
 
 
 def format_timestamp(seconds: float) -> str:

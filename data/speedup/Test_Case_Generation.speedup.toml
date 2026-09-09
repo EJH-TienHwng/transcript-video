@@ -1,0 +1,17 @@
+[[segment]]
+start = "00:05:30.000"
+end = "00:09:35.000"
+speed = 10
+label = "Running Auto Define Object..."
+
+[[segment]]
+start = "00:12:27.000"
+end = "00:12:50.000"
+speed = 10
+label = "Building Cantata..."
+
+[[segment]]
+start = "00:15:40.000"
+end = "00:17:20.000"
+speed = 10
+label = "Generating test cases..."

@@ -1,0 +1,788 @@
+1
+00:00:00,850 --> 00:00:05,130
+Xin chào mọi người. Trong video hôm nay, chúng ta sẽ cùng thực hiện UT sử dụng Cantata.
+
+2
+00:00:06,210 --> 00:00:09,470
+Đầu tiên, chúng ta sẽ có danh sách các file C cần thực hiện UT.
+
+3
+00:00:10,460 --> 00:00:15,300
+Để thực hiện UT sử dụng Cantata, chúng ta sẽ được cung cấp folder database.
+
+4
+00:00:16,580 --> 00:00:20,360
+Trong folder database sẽ chứa đầu tiên là folder header
+
+5
+00:00:20,360 --> 00:00:25,480
+và các folder Cantata tương ứng với các file C cần thực hiện UT.
+
+6
+00:00:27,700 --> 00:00:30,200
+Khi cần thực hiện UT cho một mô đun cụ thể nào đó,
+
+7
+00:00:30,200 --> 00:00:38,190
+Chúng ta sẽ thực hiện copy folder header và folder cantata tương ứng với phai C cần thực hiện vào workspace của mình.
+
+8
+00:00:38,980 --> 00:00:46,610
+Ví dụ trong video này, chúng ta sẽ thực hiện ưu ti cho phai C có tên là brc-signal-monitoring.
+
+9
+00:00:47,110 --> 00:00:53,150
+Chúng ta sẽ thực hiện copy folder header và folder cantata tương ứng với phai C vào workspace của mình.
+
+10
+00:00:55,750 --> 00:01:01,180
+Sau đó chúng ta sẽ mở cantata và import các folder này vào cantata.
+
+11
+00:01:01,180 --> 00:01:05,910
+Sau khi hoàn thành bị import, chúng ta sẽ thực hiện release
+
+12
+00:01:05,910 --> 00:01:20,000
+Sau khi release đã thành công, chúng ta sẽ thực hiện generate test brief
+
+13
+00:01:20,000 --> 00:01:44,290
+Lúc này chúng ta đã có thể tạo cái test case cần thiết để cover phái C
+
+14
+00:01:44,290 --> 00:01:51,710
+Ví dụ mình sẽ tạo test case để cover function monitoring
+
+15
+00:01:51,710 --> 00:01:53,750
+HBSYS
+
+16
+00:01:53,750 --> 00:02:00,380
+Chúng ta sẽ copy function name và tiến hành x test case cho function name đó
+
+17
+00:02:00,680 --> 00:02:08,260
+Test case do Cantata tạo ra sẽ có format như sau
+
+18
+00:02:08,260 --> 00:02:11,640
+đầu tiên là phần Initialize Global Data
+
+19
+00:02:11,640 --> 00:02:12,990
+Function này
+
+20
+00:02:12,990 --> 00:02:15,550
+Canada sẽ hỗ trợ
+
+21
+00:02:15,550 --> 00:02:17,250
+gán giá trị cho các
+
+22
+00:02:17,250 --> 00:02:18,910
+biến global
+
+23
+00:02:18,910 --> 00:02:23,140
+và mình cũng có thể gán giá trị
+
+24
+00:02:23,140 --> 00:02:24,560
+cho các input cần thiết
+
+25
+00:02:24,560 --> 00:02:25,740
+của function này
+
+26
+00:02:25,740 --> 00:02:27,600
+ở vị trí này
+
+27
+00:02:27,600 --> 00:02:30,170
+Tiếp theo là phần Expected
+
+28
+00:02:30,170 --> 00:02:33,440
+Phần Expected là giá trị mình mong muốn
+
+29
+00:02:33,440 --> 00:02:35,520
+sau khi test case này đã chạy
+
+30
+00:02:35,520 --> 00:02:39,640
+Phần tiếp theo là
+
+31
+00:02:39,640 --> 00:02:40,840
+Test Case Command
+
+32
+00:02:40,840 --> 00:02:44,400
+thì mình sẽ command mục đích
+
+33
+00:02:44,400 --> 00:02:45,680
+mình tạo ra test case này
+
+34
+00:02:45,680 --> 00:02:47,080
+nhằm cover những trường hợp nào
+
+35
+00:02:47,080 --> 00:02:49,100
+mình sẽ để nó vào phần comment
+
+36
+00:02:49,100 --> 00:02:52,290
+tiếp theo là expected call
+
+37
+00:02:52,290 --> 00:02:54,050
+thì tất cả các function
+
+38
+00:02:54,050 --> 00:02:58,000
+mà test case này gọi tới
+
+39
+00:02:58,000 --> 00:03:00,480
+thì sẽ được hiển thị trong đây
+
+40
+00:03:00,480 --> 00:03:06,110
+tiếp theo là function
+
+41
+00:03:06,110 --> 00:03:07,570
+dùng để cover
+
+42
+00:03:07,570 --> 00:03:11,220
+và phần check kết quả
+
+43
+00:03:11,220 --> 00:03:13,660
+sau khi đã chạy tool
+
+44
+00:03:13,660 --> 00:03:15,460
+nó sẽ thực hiện check giữa
+
+45
+00:03:15,460 --> 00:03:16,820
+expected mong muốn của mình
+
+46
+00:03:16,820 --> 00:03:19,080
+và kết quả tool chạy được
+
+47
+00:03:19,080 --> 00:03:21,820
+nếu tất cả 2 kết quả này khó với nhau
+
+48
+00:03:21,820 --> 00:03:23,260
+thì test scale của mình sẽ là pass
+
+49
+00:03:23,260 --> 00:03:27,240
+nếu kết quả không khớp thì test scale của mình sẽ là fail
+
+50
+00:03:27,240 --> 00:03:32,780
+đầu tiên mình sẽ tiến hành
+
+51
+00:03:32,780 --> 00:03:35,340
+gán các giá trị input cần thiết
+
+52
+00:03:35,340 --> 00:03:36,040
+cho test scale
+
+53
+00:03:36,040 --> 00:03:43,740
+ví dụ đây là một biến local
+
+54
+00:03:43,740 --> 00:03:45,840
+nhưng giá trị của nó sẽ được gán
+
+55
+00:03:45,840 --> 00:03:48,280
+bằng giá trị của một biến global
+
+56
+00:03:48,280 --> 00:03:50,140
+do đó mình có thể
+
+57
+00:03:50,140 --> 00:03:52,760
+gán giá trị trực tiếp cho biến global
+
+58
+00:03:52,760 --> 00:03:54,440
+có tên là raw signal
+
+59
+00:03:54,440 --> 00:03:59,970
+và mình cần có
+
+60
+00:03:59,970 --> 00:04:01,570
+trường hợp true
+
+61
+00:04:01,570 --> 00:04:03,410
+của điều kiện này
+
+62
+00:04:03,410 --> 00:04:06,010
+nên giá trị của biến RunSignal
+
+63
+00:04:06,010 --> 00:04:07,430
+mình sẽ gán bằng Forms
+
+64
+00:04:07,430 --> 00:04:13,060
+tương tự như vậy cho các điều kiện phía dưới
+
+65
+00:04:13,060 --> 00:04:16,660
+Đối với biến KN2
+
+66
+00:04:16,660 --> 00:04:17,940
+thì đây là một biến
+
+67
+00:04:17,940 --> 00:04:20,430
+sẽ nhận được giá trị từ
+
+68
+00:04:20,430 --> 00:04:22,370
+biến Message phía sau
+
+69
+00:04:22,370 --> 00:04:24,580
+nên mình sẽ gán giá trị cho
+
+70
+00:04:24,580 --> 00:04:25,620
+biến Message phía sau
+
+71
+00:04:25,620 --> 00:05:00,880
+và đến điều kiện cuối cùng này
+
+72
+00:05:00,880 --> 00:05:02,780
+thì điều kiện này
+
+73
+00:05:02,780 --> 00:05:05,220
+nó sẽ xét giá trị trả về của function này
+
+74
+00:05:05,220 --> 00:05:07,780
+thì giá trị trả về
+
+75
+00:05:07,780 --> 00:05:09,340
+của function này mình sẽ thực hiện
+
+76
+00:05:09,340 --> 00:05:10,780
+StopCantata
+
+77
+00:05:10,780 --> 00:05:13,840
+đã hỗ trợ mình bị stop function này
+
+78
+00:05:13,840 --> 00:05:16,120
+mình có thể
+
+79
+00:05:16,120 --> 00:05:18,620
+modify lại hàm stop này
+
+80
+00:05:18,620 --> 00:05:20,320
+bằng cách search
+
+81
+00:05:20,320 --> 00:05:22,100
+tên function cần stop
+
+82
+00:05:22,100 --> 00:05:23,460
+trong file test script
+
+83
+00:05:23,460 --> 00:05:29,570
+và đây mình có thể tạo nhiều hàm stop
+
+84
+00:05:29,570 --> 00:05:30,910
+với kết quả trả về khác nhau
+
+85
+00:05:30,910 --> 00:05:36,310
+trong dấu hoặc kép
+
+86
+00:05:36,310 --> 00:05:38,290
+nó sẽ là tên của hàm stop
+
+87
+00:05:38,290 --> 00:05:40,270
+ví dụ mình đặt tên nó là true
+
+88
+00:05:40,270 --> 00:05:42,350
+và giá trị 4 trả về của hàm này
+
+89
+00:05:42,350 --> 00:05:43,350
+nó cũng sẽ là true
+
+90
+00:05:43,350 --> 00:05:45,990
+và tên là false
+
+91
+00:05:45,990 --> 00:05:48,190
+giá trị trả về cũng sẽ là false
+
+92
+00:05:48,190 --> 00:05:52,600
+khi này để cover trường hợp
+
+93
+00:05:52,600 --> 00:05:55,810
+true scale của condition này
+
+94
+00:05:55,810 --> 00:05:57,470
+thì mình sẽ ghé giá trị trả về
+
+95
+00:05:57,470 --> 00:06:00,480
+cho function này
+
+96
+00:06:00,480 --> 00:06:01,220
+sẽ là true
+
+97
+00:06:01,220 --> 00:06:09,190
+khi này mình sẽ bỏ tên của
+
+98
+00:06:09,190 --> 00:06:11,210
+hàm stop hồi nãy mình mới tạo vô
+
+99
+00:06:11,210 --> 00:06:13,730
+và true, khi tên nó là true
+
+100
+00:06:13,730 --> 00:06:15,730
+thì giá trị trả về của function này
+
+101
+00:06:15,730 --> 00:06:16,450
+cũng sẽ là true
+
+102
+00:06:16,450 --> 00:06:24,260
+và sau khi mình ghé tất cả giá trị input như vậy
+
+103
+00:06:24,260 --> 00:06:26,060
+thì test scale sẽ vào được
+
+104
+00:06:26,060 --> 00:06:28,980
+điều kiện true của condition
+
+105
+00:06:28,980 --> 00:06:30,160
+ở line 78
+
+106
+00:06:30,160 --> 00:06:34,330
+và giá trị của biến local này
+
+107
+00:06:34,330 --> 00:06:35,550
+sẽ được gán bằng 0.
+
+108
+00:06:42,630 --> 00:06:44,550
+Tiếp theo, low cost sẽ chạy
+
+109
+00:06:44,550 --> 00:06:46,730
+tiếp đến line 90
+
+110
+00:06:46,730 --> 00:06:50,750
+thì Cantata sẽ gọi đến function này
+
+111
+00:06:50,750 --> 00:06:56,730
+và Cantata cũng sẽ hỗ trợ mình
+
+112
+00:06:56,730 --> 00:06:57,770
+stop function này.
+
+113
+00:07:02,980 --> 00:07:04,080
+Khi này mình chỉ cần
+
+114
+00:07:04,080 --> 00:07:06,880
+check việc gọi đến function này.
+
+115
+00:07:12,690 --> 00:07:14,170
+Function này sẽ có 2 input
+
+116
+00:07:14,170 --> 00:07:15,230
+một là giá trị
+
+117
+00:07:15,230 --> 00:07:20,780
+hai là giá trị của biến tính toán được phía trên
+
+118
+00:07:20,780 --> 00:07:24,870
+thì mình cũng có thể check giá trị tính toán được phía trên
+
+119
+00:07:24,870 --> 00:07:29,050
+bằng cách check trong cái function stop này
+
+120
+00:07:29,050 --> 00:07:33,970
+bởi vì đây là biến local nên không thể check trực tiếp được
+
+121
+00:07:33,970 --> 00:07:38,170
+nên mình sẽ phải check gián tiếp thông qua biến check đến hàm con này
+
+122
+00:07:38,170 --> 00:08:12,900
+như đã tính toán phía trước
+
+123
+00:08:12,900 --> 00:08:16,200
+thì giá trị của biến này sẽ được ghé bằng 0
+
+124
+00:08:16,200 --> 00:08:22,070
+nó sẽ tương ứng với enum fail condition detected
+
+125
+00:08:22,070 --> 00:08:34,470
+và gọi đến function này thì cũng đã hết function này
+
+126
+00:08:34,470 --> 00:08:38,090
+Do đó test case của mình đã hoàn thành
+
+127
+00:08:38,090 --> 00:08:40,610
+Bây giờ mình sẽ thực hiện
+
+128
+00:08:40,610 --> 00:08:42,970
+Điền comment cho test case
+
+129
+00:08:42,970 --> 00:08:49,810
+Khi điền comment cho test case
+
+130
+00:08:49,810 --> 00:08:50,630
+Mình sẽ chuyển
+
+131
+00:08:50,630 --> 00:08:53,230
+Những công thức thành dàn chữ
+
+132
+00:08:53,230 --> 00:10:44,990
+Sau đó đã comment xong
+
+133
+00:10:44,990 --> 00:10:48,040
+Mình sẽ thực hiện chạy test case này
+
+134
+00:10:48,040 --> 00:11:30,000
+Test case đã chạy xong
+
+135
+00:11:30,000 --> 00:11:32,440
+Và kết quả của test case chạy là pass
+
+136
+00:11:32,440 --> 00:11:35,340
+Thì chúng ta có thể coi được
+
+137
+00:11:35,340 --> 00:11:37,300
+Code coverage
+
+138
+00:11:37,300 --> 00:11:39,520
+Thông qua tab code coverage viewer
+
+139
+00:11:39,520 --> 00:11:49,740
+Khi này chúng ta có thể thấy là
+
+140
+00:11:49,740 --> 00:11:52,920
+test case sẽ chạy
+
+141
+00:11:52,920 --> 00:11:54,760
+đúng như cái phòng mô tả của chúng ta
+
+142
+00:11:54,760 --> 00:11:57,000
+trong test case
+
+143
+00:11:57,000 --> 00:12:03,250
+và cái giá trị trả về
+
+144
+00:12:03,250 --> 00:12:06,320
+cũng đúng như giá trị trả về
+
+145
+00:12:06,320 --> 00:12:18,020
+muốn muốn, thì lúc này
+
+146
+00:12:18,020 --> 00:12:20,360
+chúng ta sẽ thực hiện tạo thêm nhiều test case
+
+147
+00:12:20,360 --> 00:12:21,880
+để cover toàn bộ
+
+148
+00:12:21,880 --> 00:12:23,760
+các function và điều kiện
+
+149
+00:12:23,760 --> 00:12:26,100
+có trong file C này
+
+150
+00:12:26,100 --> 00:12:32,040
+sau khi đã hết đủ
+
+151
+00:12:32,040 --> 00:12:33,560
+toàn bộ cái test case cần thiết
+
+152
+00:12:33,560 --> 00:12:35,930
+để cover đạt
+
+153
+00:12:35,930 --> 00:12:38,430
+100% coverage cho file C
+
+154
+00:12:38,430 --> 00:12:41,290
+chúng ta sẽ thực hiện chạy lại test case một lần nữa
+
+155
+00:12:41,290 --> 00:13:19,900
+về summary
+
+156
+00:13:19,900 --> 00:13:21,980
+test result sẽ là pass
+
+157
+00:13:21,980 --> 00:13:24,100
+và tất cả các
+
+158
+00:13:24,100 --> 00:13:26,060
+like code trong phái c này
+
+159
+00:13:26,060 --> 00:13:27,220
+đều đã màu xanh
+
+160
+00:13:27,220 --> 00:13:30,020
+điều đó có nghĩa là mình đã câu vào toàn bộ phái c này
+
+161
+00:13:30,020 --> 00:13:32,670
+và phần trăm
+
+162
+00:13:32,670 --> 00:13:34,630
+code correct mình có thể xem
+
+163
+00:13:34,630 --> 00:13:36,650
+ở tab code correct result
+
+164
+00:13:36,650 --> 00:13:40,130
+ở đây thì cái chỉ số
+
+165
+00:13:40,130 --> 00:13:41,350
+cũng đã thể hiện
+
+166
+00:13:41,350 --> 00:13:44,750
+như statement đã được
+
+167
+00:13:44,750 --> 00:13:45,910
+cover 100%
+
+168
+00:13:45,910 --> 00:13:48,750
+Decision cũng đã được câu vào 100%
+
+169
+00:13:48,750 --> 00:13:51,150
+Và MCC cũng đã được câu vào 100%
+
+170
+00:13:51,150 --> 00:13:53,560
+Khi này chúng ta có thể
+
+171
+00:13:53,560 --> 00:13:54,620
+Xen report
+
+172
+00:13:54,620 --> 00:14:21,040
+Chúng ta có thể kiểm tra nhanh kết quả report
+
+173
+00:14:21,040 --> 00:14:24,680
+Ở tab report viewer
+
+174
+00:14:24,680 --> 00:14:26,730
+Đầu tiên là file C
+
+175
+00:14:26,730 --> 00:14:27,910
+Mình đã thực hiện test
+
+176
+00:14:27,910 --> 00:14:31,900
+Summary status là sẽ pass
+
+177
+00:14:31,900 --> 00:14:34,010
+Số lượng test case đã chạy
+
+178
+00:14:34,010 --> 00:14:37,610
+Động thời
+
+179
+00:14:37,610 --> 00:14:40,390
+Phần trăm correct mình đã đạt được
+
+180
+00:14:40,390 --> 00:14:45,480
+Mình cũng có thể kiểm tra kết quả
+
+181
+00:14:45,480 --> 00:14:46,740
+Thông qua folder
+
+182
+00:14:46,740 --> 00:14:53,620
+Thì mình sẽ kiểm tra kết quả
+
+183
+00:14:53,620 --> 00:14:55,060
+Thông qua 2 file report
+
+184
+00:14:55,060 --> 00:14:57,370
+Đầu tiên là test report
+
+185
+00:14:57,370 --> 00:15:01,000
+Thì giáo diện nó sẽ giống với
+
+186
+00:15:01,000 --> 00:15:03,900
+Lúc mình kiểm tra trên Canada
+
+187
+00:15:03,900 --> 00:15:07,160
+Tiếp theo là test summary
+
+188
+00:15:07,160 --> 00:15:09,950
+Thì ở đây nó sẽ
+
+189
+00:15:09,950 --> 00:15:11,410
+Overall là cho mình
+
+190
+00:15:11,410 --> 00:15:14,770
+File sheet mình đã chạy
+
+191
+00:15:14,770 --> 00:15:17,280
+Đầu tiên là overall result
+
+192
+00:15:17,280 --> 00:15:18,690
+Thì sẽ là pass
+
+193
+00:15:18,690 --> 00:15:23,440
+Và đồng thời kết tỷ lệ phần trăm coverage
+
+194
+00:15:23,440 --> 00:15:25,120
+Cũng sẽ là 100%
+
+195
+00:15:25,120 --> 00:15:27,160
+Như khi mình đã chạy trước đó
+
+196
+00:15:27,160 --> 00:16:04,400
+Sau khi kiểm tra toàn bộ các test result Cantata đã đạt được 100% như mục đích của UT, thì có nghĩa là mình đã hoàn thành việc correct cho Pisces này và mình cũng đã hoàn thành việc chạy test thực hiện UT cho Pisces sử dụng Cantata.
+
+197
+00:16:04,860 --> 00:16:05,800
+Cảm ơn mọi người đã lắng nghe.
+

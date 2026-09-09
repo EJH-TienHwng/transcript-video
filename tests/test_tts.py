@@ -15,12 +15,13 @@ from transcript_video.processing.tts.core import (
     TTSContextGroup,
     WordTiming,
     align_context_group,
+    build_retimed_subtitle_segments,
     build_tts_context_groups,
     find_safe_inter_sentence_boundary,
     fit_wav_to_available_duration,
     generate_context_group_items,
     overlay_tts_items,
-    timed_segments_from_reviews,
+    subtitle_retiming_summary,
     tts_review_counts,
     write_tts_review_log,
 )
@@ -527,6 +528,105 @@ def _entry(index: int, segment: SubtitleSegment, duration: float) -> dict[str, o
     )
 
 
+def _placed_entry(
+    index: int, segment: SubtitleSegment, actual_start: float, actual_end: float
+) -> dict[str, object]:
+    entry = _entry(index, segment, actual_end - actual_start)
+    entry.update(actual_start=actual_start, actual_end=actual_end)
+    return entry
+
+
+@pytest.mark.parametrize(
+    ("segment", "actual", "expected", "changed", "reasons"),
+    [
+        (
+            SubtitleSegment(10, 13, "shorter"),
+            (10.000041, 11.8),
+            SubtitleSegment(10, 13, "shorter"),
+            False,
+            {"translated_window_preserved", "unchanged"},
+        ),
+        (
+            SubtitleSegment(10, 13, "longer"),
+            (10, 13.4),
+            SubtitleSegment(10, 13.4, "longer"),
+            True,
+            {"tts_extended"},
+        ),
+        (
+            SubtitleSegment(12.2, 14, "shifted"),
+            (12.52, 14.3),
+            SubtitleSegment(12.52, 14.3, "shifted"),
+            True,
+            {"tts_shifted", "tts_extended"},
+        ),
+    ],
+)
+def test_retiming_preserves_translated_windows_and_uses_millisecond_precision(
+    segment, actual, expected, changed, reasons
+) -> None:
+    reviews = [_placed_entry(1, segment, *actual)]
+    assert build_retimed_subtitle_segments(reviews) == [expected]
+    assert reviews[0]["subtitle_timing_changed"] is changed
+    assert set(reviews[0]["subtitle_timing_change_reason"]) == reasons
+
+
+def test_retiming_does_not_unnecessarily_shrink_separated_cues() -> None:
+    reviews = [
+        _placed_entry(1, SubtitleSegment(10, 13, "A"), 10, 12.1),
+        _placed_entry(2, SubtitleSegment(13.2, 16, "B"), 13.2, 15.1),
+    ]
+    assert build_retimed_subtitle_segments(reviews) == [
+        SubtitleSegment(10, 13, "A"),
+        SubtitleSegment(13.2, 16, "B"),
+    ]
+    assert all(not entry["subtitle_timing_changed"] for entry in reviews)
+
+
+def test_retiming_resolves_visual_conflict_without_hiding_narration() -> None:
+    reviews = [
+        _placed_entry(1, SubtitleSegment(10, 13, "A"), 10, 12.5),
+        _placed_entry(2, SubtitleSegment(12.2, 14, "B"), 12.62, 14.3),
+    ]
+    assert build_retimed_subtitle_segments(reviews) == [
+        SubtitleSegment(10, 12.62, "A"),
+        SubtitleSegment(12.62, 14.3, "B"),
+    ]
+    assert reviews[0]["retimed_end"] >= reviews[0]["actual_tts_end"]
+    assert "next_cue_conflict" in reviews[0]["subtitle_timing_change_reason"]
+    assert reviews[0]["subtitle_end_shift"] == pytest.approx(-0.38)
+
+
+def test_retiming_mixed_sequence_updates_final_review_and_summary() -> None:
+    reviews = [
+        _placed_entry(1, SubtitleSegment(0, 2, "unchanged"), 0, 1),
+        _placed_entry(2, SubtitleSegment(3, 5, "shifted"), 3.2, 4.5),
+        _placed_entry(3, SubtitleSegment(6, 8, "extended"), 6, 8.4),
+        _placed_entry(4, SubtitleSegment(9, 12, "conflict"), 9, 10.5),
+        _placed_entry(5, SubtitleSegment(11, 13, "unchanged"), 11.4, 12.5),
+    ]
+    segments = build_retimed_subtitle_segments(reviews)
+    assert segments == [
+        SubtitleSegment(0, 2, "unchanged"),
+        SubtitleSegment(3.2, 5, "shifted"),
+        SubtitleSegment(6, 8.4, "extended"),
+        SubtitleSegment(9, 11.4, "conflict"),
+        SubtitleSegment(11.4, 13, "unchanged"),
+    ]
+    assert [(entry["retimed_start"], entry["retimed_end"]) for entry in reviews] == [
+        (segment.start, segment.end) for segment in segments
+    ]
+    assert subtitle_retiming_summary(reviews) == {
+        "total_cues": 5,
+        "unchanged": 1,
+        "start_shifted": 2,
+        "end_extended": 1,
+        "conflict_adjusted": 1,
+        "max_start_shift": pytest.approx(0.4),
+        "max_end_extension": pytest.approx(0.4),
+    }
+
+
 def _generate(model, segments, aligner=None, max_speedup=1.0):
     return generate_context_group_items(
         model=model,
@@ -841,7 +941,7 @@ def test_collision_placement_preserves_samples_logs_shift_and_recovers_gap(caplo
     assert reviews[1]["original_start"] == 13
     assert reviews[1]["actual_start"] == 14.12
     assert reviews[1]["actual_end"] == 15.12
-    assert timed_segments_from_reviews(reviews)[1] == SubtitleSegment(14.12, 15.12, "B")
+    assert build_retimed_subtitle_segments(reviews)[1] == SubtitleSegment(14.12, 15.12, "B")
     assert reviews[1]["timing_shift"] == 1.12
     assert "timing_shift_exceeds_threshold" in reviews[1]["review_reason"]
     assert reviews[2]["timing_shift"] == 0
@@ -1183,7 +1283,7 @@ def test_information_tail_and_this_onset_stay_separate_through_rebuild(
 
     record = RecordingObserver()
     with event_scope(record, run_id="test", video="test.mp4"):
-        timed_segments = chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
+        retimed_segments = chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
     progress = [event for event in record.events if event.context.operation == "chunks"]
     assert progress[-1].current == progress[-1].total == 2
     assert progress[-1].details["sentences"] == progress[-1].details["total_sentences"] == 2
@@ -1191,8 +1291,8 @@ def test_information_tail_and_this_onset_stay_separate_through_rebuild(
     assert all(event.context.run_id == "test" for event in record.events)
     entries = [json.loads(line) for line in reports.read_text(encoding="utf-8").splitlines()]
     assert all(entry["action"] == "context_aligned" for entry in entries)
-    assert timed_segments == [
-        SubtitleSegment(entry["actual_start"], entry["actual_end"], entry["text"])
+    assert retimed_segments == [
+        SubtitleSegment(entry["retimed_start"], entry["retimed_end"], entry["text"])
         for entry in entries
     ]
     audio, sr = sf.read(output, dtype="float32")

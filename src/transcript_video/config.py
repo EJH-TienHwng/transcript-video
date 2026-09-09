@@ -169,7 +169,7 @@ class ProjectPaths:
     subtitle_dir: Path
     source_subtitle_dir: Path
     translated_subtitle_dir: Path
-    timed_subtitle_dir: Path
+    retimed_subtitle_dir: Path
     audio_dir: Path
     speedup_dir: Path
     output_dir: Path
@@ -185,7 +185,7 @@ class ProjectPaths:
             subtitle_dir=data_root / "subtitles",
             source_subtitle_dir=data_root / "subtitles" / "source",
             translated_subtitle_dir=data_root / "subtitles" / "translated",
-            timed_subtitle_dir=data_root / "subtitles" / "timed",
+            retimed_subtitle_dir=data_root / "subtitles" / "retimed",
             audio_dir=data_root / "audio",
             speedup_dir=data_root / "speedup",
             output_dir=data_root / "output",
@@ -204,6 +204,12 @@ class ProjectPaths:
         suffix = "en-dub_en-sub" if tts_enabled else "vi-dub_en-sub"
         return self.output_dir / f"{stem}_{suffix}.mp4"
 
+    def normal_video_paths(self, video: Path | str, *, tts_enabled: bool) -> tuple[Path, ...]:
+        paths = [self.normal_video_path(video, tts_enabled=False)]
+        if tts_enabled:
+            paths.append(self.normal_video_path(video, tts_enabled=True))
+        return tuple(paths)
+
     def speedup_spec_path(self, video: Path | str, configured: Path | str | None = None) -> Path:
         if configured is None:
             return self.speedup_dir / f"{Path(video).stem}.speedup.toml"
@@ -220,7 +226,7 @@ class ProjectPaths:
             self.subtitle_dir,
             self.source_subtitle_dir,
             self.translated_subtitle_dir,
-            self.timed_subtitle_dir,
+            self.retimed_subtitle_dir,
             self.audio_dir,
             self.speedup_dir,
             self.output_dir,

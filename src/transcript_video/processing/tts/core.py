@@ -42,7 +42,7 @@ ACOUSTIC_RELEASE_SECONDS = 0.03
 ACOUSTIC_ONSET_CONFIRM_SECONDS = 0.06
 # Half a second is visible relative to subtitle cues; diagnose it instead of dropping speech.
 TIMING_SHIFT_REVIEW_SECONDS = 0.5
-TTS_REVIEW_VERSION = 5
+TTS_REVIEW_VERSION = 6
 SPEEDUP_EPSILON = 1e-6
 
 
@@ -1014,17 +1014,158 @@ def overlay_tts_items(
     return audio
 
 
-def timed_segments_from_reviews(entries: list[dict[str, object]]) -> list[SubtitleSegment]:
-    """Build subtitle cues from the exact placed sample ranges recorded in reviews."""
+def _milliseconds(seconds: object) -> int:
+    return round(float(seconds) * 1000)
+
+
+def subtitle_retiming_summary(entries: list[dict[str, object]]) -> dict[str, int | float]:
+    completed = [entry for entry in entries if entry.get("action") != "generation_failed"]
+    return {
+        "total_cues": len(completed),
+        "unchanged": sum(not entry.get("subtitle_timing_changed", False) for entry in completed),
+        "start_shifted": sum(
+            float(entry.get("subtitle_start_shift", 0)) > 0 for entry in completed
+        ),
+        "end_extended": sum(float(entry.get("subtitle_end_shift", 0)) > 0 for entry in completed),
+        "conflict_adjusted": sum(
+            "next_cue_conflict" in entry.get("subtitle_timing_change_reason", [])
+            and float(entry.get("retimed_end", 0))
+            < max(float(entry.get("original_end", 0)), float(entry.get("actual_tts_end", 0)))
+            for entry in completed
+        ),
+        "max_start_shift": max(
+            (float(entry.get("subtitle_start_shift", 0)) for entry in completed), default=0.0
+        ),
+        "max_end_extension": max(
+            0.0, *(float(entry.get("subtitle_end_shift", 0)) for entry in completed)
+        ),
+    }
+
+
+def build_retimed_subtitle_segments(
+    entries: list[dict[str, object]],
+) -> list[SubtitleSegment]:
+    """Minimally retime translated cues around exact final TTS sample placement."""
+    completed = sorted(
+        (entry for entry in entries if entry.get("action") != "generation_failed"),
+        key=lambda value: int(value["subtitle_index"]),
+    )
+    timings: list[dict[str, int]] = []
+    for entry in completed:
+        original_start = _milliseconds(entry["original_start"])
+        original_end = _milliseconds(entry["original_end"])
+        actual_start = _milliseconds(entry["actual_start"])
+        actual_end = _milliseconds(entry["actual_end"])
+        timings.append(
+            {
+                "original_start": original_start,
+                "original_end": original_end,
+                "actual_start": actual_start,
+                "actual_end": actual_end,
+                "retimed_start": max(original_start, actual_start),
+                "desired_end": max(original_end, actual_end),
+            }
+        )
+
+    for index, (entry, timing) in enumerate(zip(completed, timings, strict=True)):
+        retimed_end = timing["desired_end"]
+        reasons: list[str] = []
+        if index + 1 < len(timings):
+            next_start = timings[index + 1]["retimed_start"]
+            if retimed_end > next_start:
+                reasons.append("next_cue_conflict")
+                retimed_end = max(timing["actual_end"], next_start)
+        if retimed_end <= timing["retimed_start"]:
+            retimed_end = max(timing["actual_end"], timing["retimed_start"] + 1)
+        if timing["retimed_start"] > timing["original_start"]:
+            reasons.insert(0, "tts_shifted")
+        if retimed_end > timing["original_end"]:
+            reasons.append("tts_extended")
+        changed = (
+            timing["retimed_start"] != timing["original_start"]
+            or retimed_end != timing["original_end"]
+        )
+        if not changed:
+            if timing["actual_end"] < timing["original_end"]:
+                reasons.append("translated_window_preserved")
+            reasons.append("unchanged")
+
+        original_start = timing["original_start"] / 1000
+        original_end = timing["original_end"] / 1000
+        actual_start = float(entry["actual_start"])
+        actual_end = float(entry["actual_end"])
+        retimed_start = timing["retimed_start"] / 1000
+        retimed_end_seconds = retimed_end / 1000
+        entry.update(
+            original_start=original_start,
+            original_end=original_end,
+            actual_tts_start=actual_start,
+            actual_tts_end=actual_end,
+            retimed_start=retimed_start,
+            retimed_end=retimed_end_seconds,
+            subtitle_start_shift=retimed_start - original_start,
+            subtitle_end_shift=retimed_end_seconds - original_end,
+            subtitle_timing_changed=changed,
+            subtitle_timing_change_reason=reasons,
+        )
+        if changed:
+            logger.info(
+                "Subtitle #%d retimed:\n"
+                "  original : %s --> %s\n"
+                "  TTS      : %s --> %s\n"
+                "  retimed  : %s --> %s\n"
+                "  shift    : start %+.3fs, end %+.3fs\n"
+                "  reason   : %s",
+                entry["subtitle_index"],
+                _format_srt_log_time(original_start),
+                _format_srt_log_time(original_end),
+                _format_srt_log_time(actual_start),
+                _format_srt_log_time(actual_end),
+                _format_srt_log_time(retimed_start),
+                _format_srt_log_time(retimed_end_seconds),
+                entry["subtitle_start_shift"],
+                entry["subtitle_end_shift"],
+                ", ".join(reasons),
+            )
+
+    summary = subtitle_retiming_summary(entries)
+    if summary["unchanged"] == summary["total_cues"]:
+        logger.info(
+            "Subtitle retiming: %d cues, no timing adjustments required.",
+            summary["total_cues"],
+        )
+    else:
+        logger.info(
+            "Subtitle retiming:\n"
+            "  Total cues        : %d\n"
+            "  Unchanged         : %d\n"
+            "  Start shifted     : %d\n"
+            "  End extended      : %d\n"
+            "  Conflict adjusted : %d\n"
+            "  Max start shift   : %+.3fs\n"
+            "  Max end extension : %+.3fs",
+            summary["total_cues"],
+            summary["unchanged"],
+            summary["start_shifted"],
+            summary["end_extended"],
+            summary["conflict_adjusted"],
+            summary["max_start_shift"],
+            summary["max_end_extension"],
+        )
     return [
         SubtitleSegment(
-            float(entry["actual_start"]), float(entry["actual_end"]), str(entry["text"])
+            float(entry["retimed_start"]), float(entry["retimed_end"]), str(entry["text"])
         )
-        for entry in sorted(
-            entries, key=lambda value: (value["actual_start"], value["subtitle_index"])
-        )
-        if entry.get("action") != "generation_failed"
+        for entry in completed
     ]
+
+
+def _format_srt_log_time(seconds: float) -> str:
+    milliseconds = round(seconds * 1000)
+    hours, remainder = divmod(milliseconds, 3_600_000)
+    minutes, remainder = divmod(remainder, 60_000)
+    whole_seconds, milliseconds = divmod(remainder, 1000)
+    return f"{hours:02d}:{minutes:02d}:{whole_seconds:02d}.{milliseconds:03d}"
 
 
 def write_tts_review_log(path: Path, entries: list[dict[str, object]]) -> None:
@@ -1223,7 +1364,8 @@ def synthesize_timed_tts_audio(
 
         final_audio, final_rate = sf.read(str(audio_out), dtype="float32")
         verify_sentences(final_audio, final_rate, reviews, aligner, tts_language)
+    retimed_segments = build_retimed_subtitle_segments(reviews)
     write_tts_review_log(review_path, reviews)
     total = sum(len(group.segments) for group in groups)
     log_tts_summary(total, reviews, review_path)
-    return timed_segments_from_reviews(reviews)
+    return retimed_segments

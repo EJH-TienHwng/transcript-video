@@ -1,0 +1,47 @@
+[[segment]]
+start = "00:07:20.000"
+end = "00:08:20.000"
+speed = 10
+label = "Creating folders..."
+
+[[segment]]
+start = "00:11:25.000"
+end = "00:12:05.000"
+speed = 10
+label = "Running Prepare Get SUTs..."
+
+[[segment]]
+start = "00:12:40.000"
+end = "00:13:30.000"
+speed = 10
+label = "Rebuild failed modules..."
+
+[[segment]]
+start = "00:18:35.000"
+end = "00:19:22.000"
+speed = 10
+label = "Searching files..."
+
+[[segment]]
+start = "00:22:20.000"
+end = "00:24:00.000"
+speed = 10
+label = "Defining missing objects..."
+
+[[segment]]
+start = "00:30:32.940"
+end = "00:33:11.940"
+speed = 10
+label = "Running all steps..."
+
+[[segment]]
+start = "00:37:00.179"
+end = "00:37:41.179"
+speed = 10
+label = "Preparing next module..."
+
+[[segment]]
+start = "00:38:46.179"
+end = "00:39:20.179"
+speed = 10
+label = "Running Auto Define Object..."

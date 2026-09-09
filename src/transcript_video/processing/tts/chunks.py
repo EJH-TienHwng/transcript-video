@@ -12,6 +12,7 @@ from ...events import EventKind, PipelineStage, emit, stage_context
 from ..media import get_media_duration_seconds
 from .core import (
     TTSContextGroup,
+    build_retimed_subtitle_segments,
     build_tts_context_groups,
     generate_context_group_items,
     invalidate_tts_review_log,
@@ -19,7 +20,6 @@ from .core import (
     load_qwen_tts_model,
     log_tts_summary,
     overlay_tts_items,
-    timed_segments_from_reviews,
     tts_review_is_current,
     write_tts_review_log,
 )
@@ -415,6 +415,7 @@ def synthesize_tts_audio_by_time_chunks(
             )
         final_audio, final_rate = sf.read(str(audio_out), dtype="float32")
         verify_sentences(final_audio, final_rate, reviews, aligner, tts_language)
+    retimed_segments = build_retimed_subtitle_segments(reviews)
     write_tts_review_log(final_review, reviews)
     log_tts_summary(len(valid_segments), reviews, final_review)
-    return timed_segments_from_reviews(reviews)
+    return retimed_segments

@@ -3,13 +3,14 @@ from __future__ import annotations
 import json
 import math
 import os
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 from typer.testing import CliRunner
 
 from transcript_video.cli import app
-from transcript_video.config import ProjectPaths, RunSettings
+from transcript_video.config import ProjectPaths, RunSettings, SubtitleSegment
 from transcript_video.hardware import get_ffmpeg_exe, get_ffprobe_exe
 from transcript_video.process_runner import probe_media, run_ffmpeg, run_process
 from transcript_video.processing.speedup import (
@@ -22,6 +23,7 @@ from transcript_video.processing.speedup import (
     calculate_speedup_duration,
     parse_speedup_spec,
     parse_speedup_timestamp,
+    process_speedup_outputs,
     process_speedup_video,
     validate_speedup_segments,
 )
@@ -55,6 +57,20 @@ def test_parse_speedup_spec_with_optional_label(tmp_path):
         encoding="utf-8",
     )
     assert parse_speedup_spec(spec) == (SpeedupSegment(1, 2.5, 5, "Running build..."),)
+
+
+def test_malformed_speedup_spec_fails_explicitly(tmp_path):
+    spec = tmp_path / "video.speedup.toml"
+    spec.write_text("abc =", encoding="utf-8")
+    with pytest.raises(ValueError, match="not valid TOML"):
+        parse_speedup_spec(spec)
+
+
+@pytest.mark.parametrize("content", ["", "# Reviewed: no speed-up required.\n"])
+def test_empty_and_comment_only_specs_mean_no_speedup(tmp_path, content):
+    spec = tmp_path / "video.speedup.toml"
+    spec.write_text(content, encoding="utf-8")
+    assert parse_speedup_spec(spec) == ()
 
 
 @pytest.mark.parametrize("speed", [1, 3, 20])
@@ -130,6 +146,61 @@ def test_missing_spec_creates_template_without_touching_normal_video(tmp_path):
     assert not output.exists()
 
 
+@pytest.mark.parametrize("content", ["", "# Reviewed: no speed-up required.\n"])
+def test_empty_spec_skips_without_probing_or_rendering(tmp_path, monkeypatch, content):
+    from transcript_video.processing import speedup
+
+    source = tmp_path / "normal.mp4"
+    source.write_bytes(b"normal")
+    spec = tmp_path / "lesson.speedup.toml"
+    spec.write_text(content, encoding="utf-8")
+    output = tmp_path / "normal_speedup.mp4"
+    probe = Mock(side_effect=AssertionError("empty specs must not probe or render"))
+    monkeypatch.setattr(speedup, "get_media_duration_seconds", probe)
+    assert (
+        process_speedup_video(source, spec, output, video_encoder="libx264", video_stem="lesson")
+        is None
+    )
+    assert source.read_bytes() == b"normal"
+    assert not output.exists() and not probe.called
+
+
+def test_speedup_outputs_processes_both_variants_with_one_spec(tmp_path, monkeypatch):
+    from transcript_video.processing import speedup
+
+    sources = (tmp_path / "lesson_vi-dub_en-sub.mp4", tmp_path / "lesson_en-dub_en-sub.mp4")
+    for source in sources:
+        source.touch()
+    spec = tmp_path / "lesson.speedup.toml"
+    spec.write_text('[[segment]]\nstart="00:00"\nend="00:01"\nspeed=2\n')
+    process = Mock(return_value=None)
+    monkeypatch.setattr(speedup, "process_speedup_video", process)
+    assert (
+        process_speedup_outputs(sources, spec, video_encoder="libx264", video_stem="lesson") == ()
+    )
+    assert [call.args[:2] for call in process.call_args_list] == [
+        (sources[0], spec),
+        (sources[1], spec),
+    ]
+    assert [call.args[2] for call in process.call_args_list] == [
+        tmp_path / "lesson_vi-dub_en-sub_speedup.mp4",
+        tmp_path / "lesson_en-dub_en-sub_speedup.mp4",
+    ]
+
+
+def test_speedup_outputs_missing_spec_creates_only_one_template(tmp_path):
+    sources = (tmp_path / "lesson_vi-dub_en-sub.mp4", tmp_path / "lesson_en-dub_en-sub.mp4")
+    for source in sources:
+        source.write_bytes(b"normal")
+    spec = tmp_path / "specs/lesson.speedup.toml"
+    assert (
+        process_speedup_outputs(sources, spec, video_encoder="libx264", video_stem="lesson") == ()
+    )
+    assert spec.is_file()
+    assert all(source.read_bytes() == b"normal" for source in sources)
+    assert not any(tmp_path.glob("*_speedup.mp4"))
+
+
 def test_invalid_spec_preserves_existing_normal_and_speedup_output(tmp_path, monkeypatch):
     from transcript_video.processing import speedup
 
@@ -168,13 +239,72 @@ def test_pipeline_runs_speedup_after_normal_render(tmp_path, monkeypatch):
     def fake_burn(_video, _srt, output, **_kwargs):
         output.write_bytes(b"normal")
 
-    speedup = Mock(side_effect=lambda normal, *_args, **_kwargs: normal.is_file())
+    speedup = Mock()
     monkeypatch.setattr(pipeline, "burn_subtitles", fake_burn)
     monkeypatch.setattr(pipeline, "get_media_duration_seconds", lambda _path: 1.0)
-    monkeypatch.setattr(pipeline, "process_speedup_video", speedup)
+    monkeypatch.setattr(pipeline, "process_speedup_outputs", speedup)
     pipeline.process_video(video, tmp_path / "model", source, translated, paths, settings)
-    assert speedup.call_args.args[0] == paths.normal_video_path(video, tts_enabled=False)
-    assert speedup.call_args.args[0].read_bytes() == b"normal"
+    assert speedup.call_args.args[0] == (paths.normal_video_path(video, tts_enabled=False),)
+    assert speedup.call_args.args[0][0].read_bytes() == b"normal"
+
+
+def test_pipeline_with_tts_speeds_up_both_normal_outputs(tmp_path, monkeypatch):
+    from transcript_video.processing import pipeline
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.create_dirs()
+    video = paths.input_dir / "lesson.mp4"
+    source = paths.source_subtitle_dir / "lesson_vi_faster.srt"
+    translated = paths.translated_subtitle_dir / "lesson_en.srt"
+    video.touch()
+    for path in (source, translated):
+        path.write_text("1\n00:00:00,000 --> 00:00:01,000\nText\n", encoding="utf-8")
+    settings = RunSettings.defaults()
+    settings.tts.enabled = True
+    settings.speedup.enabled = True
+
+    def write_output(*args, **_kwargs):
+        Path(args[-1]).write_bytes(b"normal")
+
+    monkeypatch.setattr(pipeline, "burn_subtitles", write_output)
+    monkeypatch.setattr(pipeline, "mux_audio_into_video_replace", write_output)
+    monkeypatch.setattr(
+        pipeline,
+        "synthesize_tts_audio_by_time_chunks",
+        Mock(return_value=[SubtitleSegment(0, 1, "Text")]),
+    )
+    monkeypatch.setattr(pipeline, "get_media_duration_seconds", lambda _path: 1.0)
+    speedup = Mock()
+    monkeypatch.setattr(pipeline, "process_speedup_outputs", speedup)
+    pipeline.process_video(video, tmp_path / "model", source, translated, paths, settings)
+    assert speedup.call_args.args[:2] == (
+        paths.normal_video_paths(video, tts_enabled=True),
+        paths.speedup_spec_path(video),
+    )
+
+
+def test_skip_burn_only_uses_existing_normal_outputs(tmp_path, monkeypatch):
+    from transcript_video.processing import pipeline
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.create_dirs()
+    video = paths.input_dir / "lesson.mp4"
+    source = paths.source_subtitle_dir / "lesson_vi_faster.srt"
+    translated = paths.translated_subtitle_dir / "lesson_en.srt"
+    for path in (video, source, translated):
+        path.write_text("1\n00:00:00,000 --> 00:00:01,000\nText\n", encoding="utf-8")
+    normal = paths.normal_video_path(video, tts_enabled=False)
+    normal.touch()
+    settings = RunSettings.defaults()
+    settings.transcription.skip_burn = True
+    settings.speedup.enabled = True
+    burn = Mock(side_effect=AssertionError("skip-burn must not render"))
+    speedup = Mock()
+    monkeypatch.setattr(pipeline, "burn_subtitles", burn)
+    monkeypatch.setattr(pipeline, "process_speedup_outputs", speedup)
+    pipeline.process_video(video, tmp_path / "model", source, translated, paths, settings)
+    burn.assert_not_called()
+    assert speedup.call_args.args[0] == (normal,)
 
 
 def test_pipeline_missing_spec_keeps_render_and_creates_template(tmp_path, monkeypatch):
@@ -240,6 +370,35 @@ def test_explicit_speedup_spec_rejects_batch(tmp_path):
         build_process_plan(settings, videos)
 
 
+def test_process_plan_reports_dual_outputs_only_for_configured_segments(tmp_path):
+    from transcript_video.application.processing import build_process_plan
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.input_dir.mkdir(parents=True)
+    paths.speedup_dir.mkdir(parents=True)
+    video = paths.input_dir / "lesson.mp4"
+    video.touch()
+    model = tmp_path / "model"
+    model.mkdir()
+    (model / "model.bin").touch()
+    settings = RunSettings.defaults()
+    settings.project.root = str(tmp_path)
+    settings.project.model = str(model)
+    settings.tts.enabled = True
+    settings.speedup.enabled = True
+    spec = paths.speedup_spec_path(video)
+    spec.write_text('[[segment]]\nstart="00:00"\nend="00:01"\nspeed=2\n')
+    plan = build_process_plan(settings, [video])
+    assert plan.normal_output_paths == paths.normal_video_paths(video, tts_enabled=True)
+    assert plan.speedup_output_paths == tuple(
+        paths.speedup_output_path(path) for path in plan.normal_output_paths
+    )
+    spec.write_text("# Reviewed: no speed-up required.\n")
+    plan = build_process_plan(settings, [video])
+    assert plan.speedup_output_paths == ()
+    assert not any(path.name.endswith("_speedup.mp4") for path in plan.artifacts)
+
+
 def test_process_speedup_spec_option_implies_enabled(tmp_path, monkeypatch):
     from transcript_video import cli
 
@@ -256,12 +415,15 @@ def test_process_speedup_spec_option_implies_enabled(tmp_path, monkeypatch):
     assert settings.speedup.spec == str(spec.resolve())
 
 
-def test_standalone_speedup_uses_final_video_without_core_pipeline(tmp_path, monkeypatch):
+@pytest.mark.parametrize("tts_enabled", [False, True])
+def test_standalone_speedup_uses_existing_variant_without_core_pipeline(
+    tmp_path, monkeypatch, tts_enabled
+):
     from transcript_video.processing import speedup
 
     paths = ProjectPaths.from_root(tmp_path)
     paths.output_dir.mkdir(parents=True)
-    normal = paths.normal_video_path("Analysis.mp4", tts_enabled=False)
+    normal = paths.normal_video_path("Analysis.mp4", tts_enabled=tts_enabled)
     normal.touch()
     called = Mock(return_value=None)
     monkeypatch.setattr(speedup, "process_speedup_video", called)
@@ -273,6 +435,31 @@ def test_standalone_speedup_uses_final_video_without_core_pipeline(tmp_path, mon
         paths.speedup_spec_path("Analysis.mp4"),
         paths.speedup_output_path(normal),
     )
+
+
+def test_standalone_speedup_discovers_both_existing_variants(tmp_path, monkeypatch):
+    from transcript_video.processing import speedup
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.output_dir.mkdir(parents=True)
+    normals = paths.normal_video_paths("Analysis.mp4", tts_enabled=True)
+    for normal in normals:
+        normal.touch()
+    paths.speedup_dir.mkdir(parents=True)
+    paths.speedup_spec_path("Analysis.mp4").write_text(
+        '[[segment]]\nstart="00:00"\nend="00:01"\nspeed=2\n'
+    )
+    called = Mock(return_value=None)
+    monkeypatch.setattr(speedup, "process_speedup_video", called)
+    result = CliRunner().invoke(app, ["speedup", "Analysis.mp4", "--root", str(tmp_path)])
+    assert result.exit_code == 0, result.exception
+    assert [call.args[0] for call in called.call_args_list] == list(normals)
+
+
+def test_standalone_speedup_fails_when_no_rendered_variant_exists(tmp_path):
+    result = CliRunner().invoke(app, ["speedup", "Analysis.mp4", "--root", str(tmp_path)])
+    assert result.exit_code == 1
+    assert "No rendered normal video was found" in result.output
 
 
 @pytest.mark.integration
