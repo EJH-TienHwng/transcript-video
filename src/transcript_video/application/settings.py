@@ -101,11 +101,12 @@ def validate_settings(settings: RunSettings) -> None:
                 or not math.isfinite(value)
             ):
                 raise ValueError(f"{name} must be a finite number.")
-    project, hardware, transcription, tts = (
+    project, hardware, transcription, tts, speedup = (
         settings.project,
         settings.hardware,
         settings.transcription,
         settings.tts,
+        settings.speedup,
     )
     strings = {
         "project.root": project.root,
@@ -121,6 +122,8 @@ def validate_settings(settings: RunSettings) -> None:
             raise ValueError(f"{name} must be a non-empty string.")
     if project.video is not None and not isinstance(project.video, str):
         raise ValueError("project.video must be a string or null.")
+    if speedup.spec is not None and (not isinstance(speedup.spec, str) or not speedup.spec.strip()):
+        raise ValueError("speedup.spec must be a non-empty path string or null.")
     if not isinstance(transcription.language, str):
         raise ValueError("transcription.language must be a string.")
     choices = {

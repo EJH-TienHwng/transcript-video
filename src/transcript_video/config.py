@@ -84,6 +84,12 @@ class TTSSettings:
 
 
 @dataclass(slots=True)
+class SpeedupSettings:
+    enabled: bool = False
+    spec: str | None = None
+
+
+@dataclass(slots=True)
 class SubtitleStyle:
     font_name: str | None = None
     font_size: float | None = None
@@ -148,6 +154,7 @@ class RunSettings:
     hardware: HardwareSettings
     transcription: TranscriptionSettings
     tts: TTSSettings
+    speedup: SpeedupSettings = field(default_factory=SpeedupSettings)
     subtitle_style: SubtitleStyle = field(default_factory=SubtitleStyle)
 
     @classmethod
@@ -164,6 +171,7 @@ class ProjectPaths:
     translated_subtitle_dir: Path
     timed_subtitle_dir: Path
     audio_dir: Path
+    speedup_dir: Path
     output_dir: Path
     temp_dir: Path
     report_dir: Path
@@ -179,6 +187,7 @@ class ProjectPaths:
             translated_subtitle_dir=data_root / "subtitles" / "translated",
             timed_subtitle_dir=data_root / "subtitles" / "timed",
             audio_dir=data_root / "audio",
+            speedup_dir=data_root / "speedup",
             output_dir=data_root / "output",
             temp_dir=data_root / "temp",
             report_dir=data_root / "report",
@@ -190,6 +199,21 @@ class ProjectPaths:
             return directory / audio_path.parent.name / f"{audio_path.stem}.review.jsonl"
         return directory / f"{audio_path.stem}_review.jsonl"
 
+    def normal_video_path(self, video: Path | str, *, tts_enabled: bool) -> Path:
+        stem = Path(video).stem
+        suffix = "en-dub_en-sub" if tts_enabled else "vi-dub_en-sub"
+        return self.output_dir / f"{stem}_{suffix}.mp4"
+
+    def speedup_spec_path(self, video: Path | str, configured: Path | str | None = None) -> Path:
+        if configured is None:
+            return self.speedup_dir / f"{Path(video).stem}.speedup.toml"
+        path = Path(configured).expanduser()
+        return (path if path.is_absolute() else self.root / path).resolve()
+
+    @staticmethod
+    def speedup_output_path(normal_video: Path) -> Path:
+        return normal_video.with_name(f"{normal_video.stem}_speedup{normal_video.suffix}")
+
     def create_dirs(self) -> None:
         for folder in (
             self.input_dir,
@@ -198,6 +222,7 @@ class ProjectPaths:
             self.translated_subtitle_dir,
             self.timed_subtitle_dir,
             self.audio_dir,
+            self.speedup_dir,
             self.output_dir,
             self.temp_dir,
             self.report_dir,
@@ -210,6 +235,7 @@ _SECTION_TYPES = {
     "hardware": HardwareSettings,
     "transcription": TranscriptionSettings,
     "tts": TTSSettings,
+    "speedup": SpeedupSettings,
     "subtitle_style": SubtitleStyle,
 }
 
@@ -278,6 +304,7 @@ def load_run_settings(config_path: Path, base: RunSettings | None = None) -> Run
             raw, "transcription", TranscriptionSettings, previous.transcription
         ),
         tts=_load_section(raw, "tts", TTSSettings, previous.tts),
+        speedup=_load_section(raw, "speedup", SpeedupSettings, previous.speedup),
         subtitle_style=_load_section(raw, "subtitle_style", SubtitleStyle, previous.subtitle_style),
     )
 

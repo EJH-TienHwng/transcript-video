@@ -25,6 +25,7 @@ from .media import (
     mux_audio_into_video_replace,
     split_audio_into_chunks,
 )
+from .speedup import process_speedup_video
 from .subtitles import post_process_segments, read_srt, write_srt
 from .transcription import transcribe_video
 from .tts import (
@@ -46,7 +47,12 @@ def process_video(
     """Generate subtitles, optionally generate TTS, and render the output video."""
     with event_scope(observer, video=video_path.name):
         return _process_video(
-            video_path, model_path, source_srt_path, translated_srt_path, paths, settings
+            video_path,
+            model_path,
+            source_srt_path,
+            translated_srt_path,
+            paths,
+            settings,
         )
 
 
@@ -65,11 +71,13 @@ def _process_video(
         raise ValueError("Vietnamese source subtitles must be written under data/subtitles/source.")
     if source_srt_path.resolve() == translated_srt_path.resolve():
         raise ValueError("Source and translated subtitle paths must be different.")
-    subtitled_output_path = paths.output_dir / f"{video_path.stem}_vi-dub_en-sub.mp4"
+    subtitled_output_path = paths.normal_video_path(video_path, tts_enabled=False)
     tts_audio_path = paths.audio_dir / f"{video_path.stem}_tts.wav"
     tts_chunks_dir = paths.audio_dir / f"{video_path.stem}_tts_chunks"
     tts_review_path = paths.tts_review_path(tts_audio_path)
-    final_tts_output_path = paths.output_dir / f"{video_path.stem}_en-dub_en-sub.mp4"
+    final_tts_output_path = paths.normal_video_path(video_path, tts_enabled=True)
+    final_output_path = paths.normal_video_path(video_path, tts_enabled=tts.enabled)
+    speedup_spec_path = paths.speedup_spec_path(video_path, settings.speedup.spec)
 
     logger = logging.getLogger(__name__)
 
@@ -141,6 +149,9 @@ def _process_video(
     )
 
     if transcription.skip_burn:
+        _process_speedup_if_enabled(
+            final_output_path, speedup_spec_path, video_path.stem, paths, settings
+        )
         return
 
     duration = get_media_duration_seconds(video_path)
@@ -164,6 +175,9 @@ def _process_video(
             kind=EventKind.ARTIFACT,
             artifact=subtitled_output_path,
             details={"category": "Video"},
+        )
+        _process_speedup_if_enabled(
+            final_output_path, speedup_spec_path, video_path.stem, paths, settings
         )
         return
     tts_model_path = Path(tts.model).expanduser()
@@ -353,3 +367,24 @@ def _process_video(
             details=report,
             artifact=report_path,
         )
+    _process_speedup_if_enabled(
+        final_output_path, speedup_spec_path, video_path.stem, paths, settings
+    )
+
+
+def _process_speedup_if_enabled(
+    final_output_path: Path,
+    spec_path: Path,
+    video_stem: str,
+    paths: ProjectPaths,
+    settings: RunSettings,
+) -> None:
+    if not settings.speedup.enabled:
+        return
+    process_speedup_video(
+        final_output_path,
+        spec_path,
+        paths.speedup_output_path(final_output_path),
+        video_encoder=settings.hardware.video_encoder,
+        video_stem=video_stem,
+    )

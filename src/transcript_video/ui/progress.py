@@ -234,6 +234,19 @@ class RichProgressObserver:
                 )
             )
             visible = False
+        if event.kind == EventKind.REVIEW and event.stage == PipelineStage.SPEEDUP:
+            values = event.details
+            self.console.print(
+                Text(
+                    "Speed-up summary · "
+                    f"Original {format_duration(values['original_duration'])} · "
+                    f"Segments {values['segments']} · "
+                    f"Output {format_duration(values['actual_duration'])} · "
+                    f"Saved {format_duration(values['time_saved'])}",
+                    style="review",
+                )
+            )
+            visible = False
         # Detailed recovery messages are already logged under -v; avoid printing them twice.
         if event.kind == EventKind.REVIEW:
             visible = False

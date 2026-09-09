@@ -180,6 +180,12 @@ def get_media_duration_seconds(media_path: Path) -> float | None:
         return None
 
 
+def media_has_audio(media_path: Path) -> bool:
+    """Return whether ffprobe reports at least one audio stream."""
+    metadata = probe_media(get_ffprobe_exe(), media_path)
+    return any(stream.get("codec_type") == "audio" for stream in metadata.get("streams", []))
+
+
 def split_audio_into_chunks(
     audio_in: Path,
     output_dir: Path,

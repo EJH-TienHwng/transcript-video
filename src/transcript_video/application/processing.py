@@ -29,6 +29,9 @@ class ProcessPlan:
     videos: tuple[Path, ...]
     source_srt_paths: tuple[Path, ...]
     translated_srt_paths: tuple[Path, ...]
+    speedup_spec_paths: tuple[Path, ...]
+    normal_output_paths: tuple[Path, ...]
+    speedup_output_paths: tuple[Path, ...]
     artifacts: tuple[Path, ...]
 
 
@@ -84,6 +87,8 @@ def build_process_plan(
     suffix = get_model_filename_suffix(model)
     if translated_srt is not None and len(resolved_videos) != 1:
         raise ValueError("--translated-srt can only be used when processing one video.")
+    if settings.speedup.enabled and settings.speedup.spec is not None and len(resolved_videos) != 1:
+        raise ValueError("--speedup-spec can only be used when processing one video.")
     source_srt_paths = tuple(
         paths.source_subtitle_dir / f"{video.stem}_vi_{suffix}.srt" for video in resolved_videos
     )
@@ -98,6 +103,16 @@ def build_process_plan(
     ):
         if source_srt_path.resolve() == translated_srt_path.resolve():
             raise ValueError("Source and translated subtitle paths must be different.")
+    speedup_spec_paths = tuple(
+        paths.speedup_spec_path(video, settings.speedup.spec) for video in resolved_videos
+    )
+    normal_output_paths = tuple(
+        paths.normal_video_path(video, tts_enabled=settings.tts.enabled)
+        for video in resolved_videos
+    )
+    speedup_output_paths = tuple(
+        paths.speedup_output_path(normal) for normal in normal_output_paths
+    )
     for variable in ("TRANSCRIPT_VIDEO_FFMPEG", "TRANSCRIPT_VIDEO_FFPROBE"):
         configured = os.environ.get(variable)
         if configured and not Path(configured).expanduser().is_file():
@@ -114,14 +129,17 @@ def build_process_plan(
         if artifact.is_dir() or not parent.is_dir():
             raise ValueError(f"Invalid output path: {artifact}")
     return ProcessPlan(
-        settings,
-        root,
-        paths,
-        model,
-        resolved_videos,
-        source_srt_paths,
-        translated_srt_paths,
-        artifacts,
+        settings=settings,
+        root=root,
+        paths=paths,
+        model=model,
+        videos=resolved_videos,
+        source_srt_paths=source_srt_paths,
+        translated_srt_paths=translated_srt_paths,
+        speedup_spec_paths=speedup_spec_paths,
+        normal_output_paths=normal_output_paths,
+        speedup_output_paths=speedup_output_paths,
+        artifacts=artifacts,
     )
 
 
@@ -152,9 +170,9 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
             ):
                 stages = ["source subtitles", "translated subtitles"]
                 if translated_srt_path.is_file() and not plan.settings.transcription.skip_burn:
-                    stages += (
-                        ["tts", "render", "mux"] if plan.settings.tts.enabled else ["render"]
-                    )
+                    stages += ["tts", "render", "mux"] if plan.settings.tts.enabled else ["render"]
+                if plan.settings.speedup.enabled:
+                    stages.append("speedup")
                 video_started = time.perf_counter()
                 emit(
                     PipelineStage.VIDEO,
@@ -214,12 +232,12 @@ def _artifacts_for(
 ) -> list[Path]:
     artifacts = [source_srt_path, translated_srt_path]
     if not settings.transcription.skip_burn:
-        artifacts.append(paths.output_dir / f"{video.stem}_vi-dub_en-sub.mp4")
+        artifacts.append(paths.normal_video_path(video, tts_enabled=False))
     if settings.tts.enabled and not settings.transcription.skip_burn:
         artifacts.extend(
             [
                 paths.audio_dir / f"{video.stem}_tts.wav",
-                paths.output_dir / f"{video.stem}_en-dub_en-sub.mp4",
+                paths.normal_video_path(video, tts_enabled=True),
             ]
         )
         if settings.tts.generation_mode == "chunked" or settings.tts.mode == "timed":
@@ -229,6 +247,9 @@ def _artifacts_for(
             artifacts.extend([review, review.with_suffix(".pretty.json")])
         review = paths.tts_review_path(paths.audio_dir / f"{video.stem}_tts.wav")
         artifacts.append(review.with_suffix(".duration.json"))
+    if settings.speedup.enabled:
+        normal = paths.normal_video_path(video, tts_enabled=settings.tts.enabled)
+        artifacts.append(paths.speedup_output_path(normal))
     return artifacts
 
 

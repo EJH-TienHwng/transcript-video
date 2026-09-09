@@ -30,3 +30,6 @@ context_max_sentences = 4
 context_max_chars = 450
 context_break_seconds = 3.0
 verify_final_audio = false
+
+[speedup]
+enabled = false

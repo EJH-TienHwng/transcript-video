@@ -66,6 +66,45 @@ Positional inputs accept names inside `data/input/` or absolute paths. Repeated 
 
 The pre-0.3 form (`transcript-video --video lesson.mp4 ...`) remains accepted. The old `transcript-course` and `transcript-course-config` executables are deprecated wrappers.
 
+## Speed up waiting intervals
+
+Normal processing remains unchanged unless speed-up is enabled. To create the normal final video
+and an additional speed-up artifact in one run:
+
+```powershell
+uv run transcript-video process Analysis.mp4 --speedup
+```
+
+Each input uses `data/speedup/<stem>.speedup.toml`. If that file is missing, normal processing
+still succeeds, a commented template is created, and speed-up encoding is skipped. Edit the file:
+
+```toml
+[[segment]]
+start = "00:04:32.500"
+end = "00:05:50.000"
+speed = 10
+label = "Running build..."
+```
+
+Allowed factors are `2`, `5`, and `10`. Timestamps accept `HH:MM:SS`, milliseconds with `.` or
+`,`, and `MM:SS`. Intervals are sorted but must not overlap or exceed the final video duration.
+The optional label appears above `Speed up ×N` in the top-right overlay.
+
+After adjusting timestamps, regenerate only the additional artifact without running Whisper,
+subtitle rendering, TTS, or normal muxing:
+
+```powershell
+uv run transcript-video speedup Analysis.mp4
+uv run transcript-video speedup Analysis.mp4 --spec custom.toml
+```
+
+With TTS enabled the source/output pair is
+`Analysis_en-dub_en-sub.mp4` → `Analysis_en-dub_en-sub_speedup.mp4`; without TTS it is
+`Analysis_vi-dub_en-sub.mp4` → `Analysis_vi-dub_en-sub_speedup.mp4`. `--speedup-spec PATH`
+selects one custom spec for `process` and implies `--speedup`; it is rejected for multi-video
+runs. `[speedup] enabled = false` is the default. `process --dry-run --speedup` reports spec,
+normal output, speed-up output, segment count, and factors without creating files.
+
 ## Course tools
 
 ```powershell

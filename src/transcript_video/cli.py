@@ -20,7 +20,9 @@ from rich.text import Text
 from .application.settings import ResolvedSettings, resolve_settings
 from .config import (
     DEFAULT_CONFIG_PATH,
+    ProjectPaths,
     RunSettings,
+    configure_binary_path,
     save_run_settings,
 )
 from .context import log_context
@@ -227,6 +229,20 @@ def process_command(
     tts_chunk_tail_seconds: Annotated[
         float | None, typer.Option("--tts-chunk-tail-seconds", min=0)
     ] = None,
+    enable_speedup: Annotated[
+        bool | None,
+        typer.Option(
+            "--speedup/--no-speedup",
+            help="Create an additional speed-up video from the final rendered video.",
+        ),
+    ] = None,
+    speedup_spec: Annotated[
+        Path | None,
+        typer.Option(
+            "--speedup-spec",
+            help="Speed-up TOML for one video; passing it enables speed-up.",
+        ),
+    ] = None,
     force: Annotated[
         list[ForceTarget] | None,
         typer.Option("--force", help="Regenerate the Vietnamese source transcription."),
@@ -275,6 +291,8 @@ def process_command(
         "tts.chunk_minutes": tts_chunk_minutes,
         "tts.max_speedup": tts_max_speedup,
         "tts.chunk_tail_seconds": tts_chunk_tail_seconds,
+        "speedup.enabled": True if speedup_spec is not None else enable_speedup,
+        "speedup.spec": str(speedup_spec.expanduser().resolve()) if speedup_spec else None,
     }
     resolved = _resolved(
         config,
@@ -362,6 +380,28 @@ def _run_processing(
             f"{settings.hardware.device} / {settings.hardware.video_encoder} (resolved at runtime)",
         )
         table.add_row("TTS", "enabled" if settings.tts.enabled else "disabled")
+        if settings.speedup.enabled:
+            from .processing.speedup import parse_speedup_spec
+
+            spec_rows = []
+            for path in plan.speedup_spec_paths:
+                detail = "missing"
+                if path.is_file():
+                    segments = parse_speedup_spec(path)
+                    factors = (
+                        ", ".join(f"\N{MULTIPLICATION SIGN}{item.speed}" for item in segments)
+                        or "0 segments"
+                    )
+                    detail = f"exists · {len(segments)} segments · {factors}"
+                spec_rows.append(f"{detail} · {path}")
+            table.add_row("Speed-up", "enabled")
+            table.add_row("Speed-up spec", "\n".join(spec_rows))
+            table.add_row(
+                "Normal output", "\n".join(str(path) for path in plan.normal_output_paths)
+            )
+            table.add_row(
+                "Speed-up output", "\n".join(str(path) for path in plan.speedup_output_paths)
+            )
         state.consoles.out.print(table)
         return
     if state.verbosity >= 0:
@@ -422,6 +462,84 @@ def _show_error(state: CLIState, exc: Exception) -> None:
     state.consoles.err.print(Panel(Text(message), title="Processing failed", border_style="error"))
     if state.verbosity >= 2:
         state.consoles.err.print_exception(show_locals=False)
+
+
+@app.command("speedup")
+def speedup_command(
+    ctx: typer.Context,
+    video: Annotated[
+        Path,
+        typer.Argument(help="Original video name used to resolve the final rendered output."),
+    ],
+    spec: Annotated[Path | None, typer.Option("--spec", help="Custom speed-up TOML path.")] = None,
+    config: Annotated[
+        Path | None, typer.Option("--config", help="Base TOML run config.")
+    ] = DEFAULT_CONFIG_PATH,
+    profile: Annotated[
+        str | None, typer.Option("--profile", help="Profile name or TOML path.")
+    ] = None,
+    root: Annotated[Path | None, typer.Option("--root")] = None,
+    video_encoder: Annotated[EncoderChoice | None, typer.Option("--video-encoder")] = None,
+) -> None:
+    """Regenerate only the speed-up artifact from an existing final video."""
+    from .events import event_scope
+    from .processing.speedup import process_speedup_video
+
+    state = _state(ctx)
+    state.logging(command="speedup")
+    resolved = _resolved(
+        config,
+        profile,
+        {
+            "project.root": str(root) if root else None,
+            "hardware.video_encoder": video_encoder,
+        },
+        explicit=ctx.get_parameter_source("config").name == "COMMANDLINE",
+    )
+    settings = resolved.settings
+    project_root = Path(settings.project.root).expanduser().resolve()
+    paths = ProjectPaths.from_root(project_root)
+    normal = paths.normal_video_path(video, tts_enabled=settings.tts.enabled)
+    spec_path = paths.speedup_spec_path(video, spec or settings.speedup.spec)
+    output = paths.speedup_output_path(normal)
+    configure_binary_path(project_root)
+    started = time.perf_counter()
+    with RichProgressObserver(
+        state.consoles.out,
+        verbosity=state.verbosity,
+        plain=state.plain,
+        root=project_root,
+    ) as progress:
+        try:
+            with event_scope(progress, video=video.name):
+                result = process_speedup_video(
+                    normal,
+                    spec_path,
+                    output,
+                    video_encoder=settings.hardware.video_encoder,
+                    video_stem=video.stem,
+                )
+        except (ValueError, OSError, RuntimeError) as exc:
+            if progress.live:
+                progress.live.stop()
+            _show_error(state, exc)
+            raise typer.Exit(1) from None
+    progress.summary(
+        title="Speed-up complete" if result else "Speed-up skipped",
+        elapsed=time.perf_counter() - started,
+        failures=(),
+        logs=state.logs,
+        details=(
+            {
+                "Original": format_duration(result.original_duration),
+                "Segments": len(result.segments),
+                "Output": format_duration(result.actual_duration),
+                "Saved": format_duration(result.time_saved),
+            }
+            if result
+            else {"Result": "No speed-up video created"}
+        ),
+    )
 
 
 @config_app.command("show")
@@ -689,7 +807,7 @@ def course_tui(
 
 
 def _normalize_legacy_argv(argv: list[str]) -> list[str]:
-    commands = {"process", "course", "config", "inspect", "doctor"}
+    commands = {"process", "speedup", "course", "config", "inspect", "doctor"}
     if (
         not argv
         or any(item in commands for item in argv)

@@ -30,6 +30,7 @@ class PipelineStage(StrEnum):
     RENDER = "render"
     TTS = "tts"
     MUX = "mux"
+    SPEEDUP = "speedup"
     COMPLETE = "complete"
 
 
