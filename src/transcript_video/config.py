@@ -25,6 +25,7 @@ FASTER_WHISPER_COMPUTE_TYPES = {
 DEFAULT_CONFIG_PATH = Path("configs/transcription.toml")
 DEFAULT_MODEL_PATH = "models/faster-whisper-large-v3"
 DEFAULT_TTS_MODEL = "models/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE = 40.0
 MODEL_FILENAME_SUFFIXES = {"faster-whisper": "faster", "huggingface": "huggingface"}
 
 
@@ -59,6 +60,7 @@ class TranscriptionSettings:
 @dataclass(slots=True)
 class TTSSettings:
     enabled: bool = False
+    regenerate: bool = False
     mode: str = "timed"
     generation_mode: str = "chunked"
     rerun_chunk: int | None = None
@@ -87,6 +89,7 @@ class TTSSettings:
 class SpeedupSettings:
     enabled: bool = False
     spec: str | None = None
+    overlay_font_size: float = DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE
 
 
 @dataclass(slots=True)

@@ -506,7 +506,7 @@ và thời gian truyền CPU/GPU. Chưa benchmark offload với model thật.
 
 ### Source subtitle cũ được tái sử dụng ngoài mong muốn
 
-Dùng `--force transcription`. Mỗi lần chạy TTS bình thường sẽ tạo lại TTS; `--rerun-tts-chunk INDEX` chỉ dành cho debug/rerun chọn lọc rõ ràng.
+Dùng `--force transcription`. Lần chạy TTS bình thường tái sử dụng artifact hợp lệ; dùng `--force tts` để tạo lại toàn bộ hoặc `--rerun-tts-chunk INDEX` để tạo lại một chunk.
 
 ## Cập nhật QA và an toàn artifact
 

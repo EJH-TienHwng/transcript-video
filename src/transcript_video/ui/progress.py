@@ -344,10 +344,20 @@ class RichProgressObserver:
                 Text(name, style="stage"),
                 Text(detail),
             )
+        active = next(
+            (name for name, state in self.state.stages.items() if state.status == "active"), ""
+        )
+        title = self.state.video or "Course"
+        suffix = f" · {active.upper()}" if active else ""
+        limit = max(12, self.console.width - 12)
+        available = max(1, limit - len(suffix))
+        if len(title) > available:
+            title = title[: max(0, available - 1)] + "…"
+        title += suffix
         return Group(
             self.progress,
             Text(self.progress_detail, style="muted"),
-            Panel(Group(Text(self.state.video or "Course", style="accent"), table)),
+            Panel(table, title=Text(title, style="accent")),
         )
 
     def display_path(self, value) -> str:
@@ -360,7 +370,8 @@ class RichProgressObserver:
     def summary(
         self, *, title: str, elapsed: float, failures=(), logs=None, details: dict | None = None
     ):
-        text = f"Videos: {self.state.total - len(failures)}/{self.state.total} · Elapsed: {format_duration(elapsed)}"
+        succeeded = self.state.total - len(failures)
+        text = f"Videos: {succeeded}/{self.state.total} · Elapsed: {format_duration(elapsed)}"
         if details:
             text = (
                 " · ".join(f"{key}: {value}" for key, value in details.items())
@@ -368,11 +379,16 @@ class RichProgressObserver:
                 + format_duration(elapsed)
             )
         flagged = sum(item.get("flagged", 0) for item in self.state.quality.values())
-        text += f"\nReview: {flagged} flagged sentences · Failures: {len(failures)}"
+        text += (
+            f"\nTotal: {self.state.total} · Succeeded: {succeeded} · Failed: {len(failures)}"
+            f"\nReview: {flagged} flagged sentences"
+        )
         for video, status in self.state.videos.items():
             text += f"\n{self.symbols[status]} {video}"
-        for failure in failures:
-            text += f"\n{failure}"
+        if failures:
+            text += "\n\nFailed videos:"
+            for failure in failures:
+                text += f"\n- {failure}"
         self.console.print(
             Panel(Text(text), title=title, border_style="error" if failures else "success")
         )

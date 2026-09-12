@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 import re
 import tempfile
 import tomllib
@@ -9,6 +10,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..config import DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE
 from ..events import EventKind, PipelineStage, emit, ffmpeg_events, stage_context
 from ..hardware import get_ffmpeg_exe, video_encoder_args
 from ..process_runner import ffmpeg_progress_handler
@@ -193,7 +195,10 @@ def build_overlay_text(segment: TimelineSegment) -> str:
 
 
 def build_speedup_filter_complex(
-    timeline: tuple[TimelineSegment, ...], overlay_files: dict[int, Path]
+    timeline: tuple[TimelineSegment, ...],
+    overlay_files: dict[int, Path],
+    font_file: Path | None = None,
+    overlay_font_size: float = DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE,
 ) -> str:
     filters: list[str] = []
     inputs: list[str] = []
@@ -203,10 +208,11 @@ def build_speedup_filter_complex(
         audio = f"[0:a:0]atrim=start={start}:end={end},asetpts=PTS-STARTPTS"
         if segment.speed != 1:
             textfile = overlay_files[index]
+            font = f"fontfile='{escape_filter_path(font_file)}':" if font_file else ""
             video += (
-                f",drawtext=textfile='{escape_filter_path(textfile)}':expansion=none:"
-                "fontcolor=white:fontsize=24:box=1:boxcolor=black@0.65:"
-                "boxborderw=10:x=w-tw-24:y=24"
+                f",drawtext={font}textfile='{escape_filter_path(textfile)}':expansion=none:"
+                f"fontcolor=white:fontsize={_number(overlay_font_size)}:"
+                "borderw=3:bordercolor=black:line_spacing=-8:text_align=R:x=w-tw-24:y=24"
             )
             audio += f",{build_atempo_chain(segment.speed)}"
         filters.extend((f"{video}[v{index}]", f"{audio}[a{index}]"))
@@ -239,6 +245,7 @@ def process_speedup_video(
     *,
     video_encoder: str,
     video_stem: str,
+    overlay_font_size: float = DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE,
 ) -> SpeedupResult | None:
     if not source.is_file():
         raise FileNotFoundError(
@@ -278,7 +285,9 @@ def process_speedup_video(
             raise ValueError(f"Speed-up requires a final video with an audio stream: {source}")
         timeline = build_speedup_timeline(segments, duration)
         expected, saved = calculate_speedup_duration(duration, segments)
-        _render_speedup_video(source, output, timeline, video_encoder, expected)
+        _render_speedup_video(
+            source, output, timeline, video_encoder, expected, overlay_font_size
+        )
         actual = get_media_duration_seconds(output)
         if actual is None:
             raise ValueError(f"Could not read speed-up output duration: {output}")
@@ -327,6 +336,7 @@ def process_speedup_outputs(
     *,
     video_encoder: str,
     video_stem: str,
+    overlay_font_size: float = DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE,
 ) -> tuple[SpeedupResult, ...]:
     """Apply one source-video speed-up specification to each rendered variant."""
     available = tuple(source for source in sources if source.is_file())
@@ -342,6 +352,7 @@ def process_speedup_outputs(
             available[0].with_name(f"{available[0].stem}_speedup{available[0].suffix}"),
             video_encoder=video_encoder,
             video_stem=video_stem,
+            overlay_font_size=overlay_font_size,
         )
         return ()
     if not parse_speedup_spec(spec):
@@ -363,6 +374,7 @@ def process_speedup_outputs(
             source.with_name(f"{source.stem}_speedup{source.suffix}"),
             video_encoder=video_encoder,
             video_stem=video_stem,
+            overlay_font_size=overlay_font_size,
         )
         if result is not None:
             results.append(result)
@@ -383,8 +395,10 @@ def _render_speedup_video(
     timeline: tuple[TimelineSegment, ...],
     video_encoder: str,
     expected_duration: float,
+    overlay_font_size: float,
 ) -> None:
     ffmpeg = get_ffmpeg_exe()
+    font_file = _find_drawtext_font()
     with tempfile.TemporaryDirectory(prefix="transcript-video-speedup-") as temporary:
         directory = Path(temporary)
         overlay_files: dict[int, Path] = {}
@@ -394,7 +408,9 @@ def _render_speedup_video(
             path = directory / f"overlay-{index}.txt"
             path.write_text(build_overlay_text(segment), encoding="utf-8")
             overlay_files[index] = path
-        graph = build_speedup_filter_complex(timeline, overlay_files)
+        graph = build_speedup_filter_complex(
+            timeline, overlay_files, font_file, overlay_font_size
+        )
         command = [
             ffmpeg,
             "-y",
@@ -417,6 +433,20 @@ def _render_speedup_video(
             ffmpeg_events(PipelineStage.SPEEDUP, "Creating speed-up video", expected_duration)
         ):
             run_command(command)
+
+
+def _find_drawtext_font() -> Path | None:
+    """Avoid Fontconfig discovery on Windows builds that do not ship a config file."""
+    if os.name != "nt":
+        return None
+    fonts = Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts"
+    for name in ("arial.ttf", "segoeui.ttf", "calibri.ttf"):
+        path = fonts / name
+        if path.is_file():
+            return path
+    raise FileNotFoundError(
+        f"FFmpeg speed-up overlay requires a TrueType font. No supported font was found in: {fonts}"
+    )
 
 
 def _number(value: float) -> str:

@@ -135,8 +135,12 @@ Next is the Switch Setting part.
 This refers to the CSV file generated in the build config process using the tool Shar CC.
 
 35
-00:03:35,000 --> 00:03:51,000
-I will navigate to the database, go to Gen, select the corresponding config, then select Build, and I will grab the path of this file, the SwitchSettings CSV file.
+00:03:35,000 --> 00:03:46,000
+I will navigate to the database, go to Gen, select the corresponding config, then select Build,
+
+35
+00:03:46,000 --> 00:03:52,000
+and I will grab the path of this file, the SwitchSettings CSV file.
 
 36
 00:03:53,000 --> 00:03:56,000
@@ -311,7 +315,7 @@ And here we have the modules that have Failed.
 Currently, we have failed modules listed here.
 
 79
-00:09:54,440 --> 00:10:00,440
+00:09:55,440 --> 00:10:00,440
 These failed modules will be handled in the next steps.
 
 80
@@ -355,19 +359,19 @@ Successful is 14, Fail is 1, Total is 15.
 After that, we will proceed to Prepair Get SUTs for the failed modules.
 
 90
-00:12:12,000 --> 00:12:17,902
+00:12:13,440 --> 00:12:17,902
 After this step, the result will appear in this popup.
 
 91
-00:12:17,902 --> 00:12:25,440
+00:12:18,022 --> 00:12:25,440
 I will have 15 successful, 0 failed, out of a total of 15.
 
 92
-00:12:25,440 --> 00:12:45,440
+00:12:25,440 --> 00:12:40,440
 Then I will go to the review step for the failed modules, to verify the results for the modules I have just fixed.
 
 93
-00:13:34,440 --> 00:13:47,440
+00:13:34,840 --> 00:13:47,440
 After finishing the review, I now have 11 successful modules and 4 failed modules out of a total of 15.
 
 94
@@ -415,7 +419,7 @@ We will find them on the SharePoint.
 Now, we close this file.
 
 105
-00:15:16,440 --> 00:15:26,440
+00:15:22,440 --> 00:15:26,440
 Under the information column, you can see the SharePoint Link section.
 
 106
@@ -451,11 +455,11 @@ Inside the test environment folder, we have the test scripts for those modules.
 Then we'll take the SharePoint link which contains the database.
 
 114
-00:16:54,440 --> 00:16:59,440
+00:16:56,440 --> 00:16:59,440
 Then we will put it into the tool.
 
 115
-00:16:59,440 --> 00:17:08,440
+00:17:03,440 --> 00:17:08,440
 Then we will load the database.
 
 116
@@ -519,7 +523,7 @@ Then, I'll input the name of that module into Module Name.
 Then I'll click Search Files.
 
 131
-00:19:08,440 --> 00:19:39,440
+00:19:29,440 --> 00:19:39,440
 And here, after completing this step, I see that there are 4 tests completed for that module.
 
 132
@@ -539,7 +543,7 @@ Now I will choose a test to refer to the current module.
 I will choose this one.
 
 136
-00:20:01,440 --> 00:20:11,440
+00:20:04,440 --> 00:20:11,440
 I want to download the test script back, so I will create a folder for downloading.
 
 137
@@ -559,7 +563,7 @@ Then I will right-click on the test that I want to download.
 Then I will choose the download folder.
 
 141
-00:20:31,440 --> 00:20:46,440
+00:20:36,440 --> 00:20:46,440
 I will go to the next step, which is to create a folder for that module.
 
 142
@@ -575,15 +579,15 @@ After that, I will build test for that module.
 To see the details, I open the Module Info file here.
 
 145
-00:21:38,940 --> 00:21:44,524
+00:21:38,940 --> 00:21:46,524
 Then I will see the module where I just downloaded the test Delta.
 
 146
-00:21:44,644 --> 00:21:54,940
+00:21:49,644 --> 00:21:54,940
 The result after running the tool shows the status is Failed.
 
 147
-00:21:54,940 --> 00:22:18,940
+00:21:59,940 --> 00:22:18,940
 Then the next step is to define the missing objects in that module.
 
 148
@@ -599,15 +603,15 @@ Then we will go to the next step, Prepair Get SUTs.
 The result is successful is 5, total is 5.
 
 151
-00:24:39,940 --> 00:24:44,940
+00:24:38,940 --> 00:24:44,940
 Then, we will go to another step, which is Rebuild Failed Modules to get the result of that module.
 
 152
-00:24:48,940 --> 00:24:57,940
+00:24:48,940 --> 00:24:56,940
 After Rebuild Failed Module, we will have a result here.
 
 153
-00:24:58,940 --> 00:25:02,940
+00:24:56,940 --> 00:25:02,940
 And to view detail info, we will go to the file Module Info here.
 
 154
@@ -635,7 +639,7 @@ Then I will download the test scripts from the previous version for those module
 And see the results again in this file.
 
 160
-00:26:06,940 --> 00:26:11,940
+00:26:07,940 --> 00:26:11,940
 Here I have finished the demo for everyone.
 
 161
@@ -684,7 +688,7 @@ You can see the instructions here.
 
 172
 00:27:08,940 --> 00:27:16,940
-The yellow sections contain the information the tool has to fill, and the blue sections are the optional parts.
+The yellow sections contain the information the tool has to fill, and the green sections are the optional parts.
 
 173
 00:27:19,940 --> 00:27:30,940
@@ -719,7 +723,7 @@ Copy this file path.
 Then I will input it into the Analyze path.
 
 181
-00:28:08,940 --> 00:28:14,940
+00:28:11,940 --> 00:28:14,940
 Then I will use the old database here.
 
 182
@@ -727,19 +731,19 @@ Then I will use the old database here.
 The workspace I will input here is Workspace 2.
 
 183
-00:28:22,940 --> 00:28:27,940
+00:28:24,940 --> 00:28:30,940
 And the switch setting, I will use the same switch setting as before.
 
 184
-00:28:28,940 --> 00:28:31,940
+00:28:30,940 --> 00:28:33,940
 Here I will not change the switch setting.
 
 185
-00:28:31,940 --> 00:28:38,940
+00:28:33,940 --> 00:28:38,940
 Then I will click on Create Delta File.
 
 186
-00:28:38,940 --> 00:28:51,940
+00:28:48,940 --> 00:28:51,940
 In here, I will see the information.
 
 187
@@ -755,7 +759,7 @@ You can see it here.
 Let's see the information here: New is 4, Old is 10.
 
 190
-00:29:10,940 --> 00:29:13,940
+00:29:10,240 --> 00:29:13,940
 To see the information in detail, I will go to the Output folder.
 
 191
@@ -767,7 +771,7 @@ I will open the Module Info file here.
 Then I will see that there are 4 New modules and the remaining are Old, corresponding to 10 modules here.
 
 193
-00:29:37,940 --> 00:29:42,940
+00:29:37,440 --> 00:29:42,940
 Here I have one more feature called Run All Steps.
 
 194
@@ -867,27 +871,23 @@ So, I will choose these.
 First I choose this one, next is this one.
 
 218
-00:35:48,940 --> 00:35:51,440
+00:35:49,940 --> 00:35:55,440
 Now, I'm going to download these 2 modules.
 
-219
-00:35:51,440 --> 00:35:54,940
-Again, go back to my existing output.
-
 220
-00:35:54,940 --> 00:36:20,179
+00:36:15,940 --> 00:36:20,179
 Then I will choose Create Folder for these two modules.
 
 221
-00:36:50,179 --> 00:36:55,179
-Check again.
+00:36:46,179 --> 00:36:53,179
+I will go to the folder to check again.
 
 222
 00:36:55,179 --> 00:37:00,179
 Next is the other module.
 
 223
-00:37:41,179 --> 00:37:44,179
+00:37:40,179 --> 00:37:44,179
 And then I will build test for this module.
 
 224
@@ -903,7 +903,7 @@ I'm going to Output -> Module Info to check the result of that module.
 For this Failed module, I can use Auto Define Object, then use Prepair Get SUTs, and then build the module again, like the first demo.
 
 227
-00:39:20,179 --> 00:39:26,179
+00:39:21,179 --> 00:39:26,179
 After running Auto Define Object, I will have a successful result.
 
 228
@@ -931,16 +931,12 @@ Then I will open this file, and I will see that my result is here.
 Then it will be successful for this module.
 
 234
-00:40:41,179 --> 00:40:45,179
+00:40:42,179 --> 00:40:45,179
 The result of C0 and C1 is 100%.
 
 235
-00:40:45,179 --> 00:40:54,179
+00:40:46,179 --> 00:40:54,179
 The result of MCDC is 88%.
-
-236
-00:40:54,179 --> 00:40:58,179
-That's all.
 
 237
 00:41:05,179 --> 00:41:17,179

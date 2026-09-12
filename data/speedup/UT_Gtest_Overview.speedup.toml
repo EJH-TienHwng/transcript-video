@@ -3,21 +3,3 @@ start = "00:04:12.000"
 end = "00:04:50.000"
 speed = 10
 label = "Running Auto Define Object..."
-
-[[segment]]
-start = "00:14:55.360"
-end = "00:15:45.360"
-speed = 10
-label = "Running test case..."
-
-[[segment]]
-start = "00:14:55.360"
-end = "00:15:45.360"
-speed = 10
-label = "Running test case..."
-
-[[segment]]
-start = "00:14:55.360"
-end = "00:15:45.360"
-speed = 10
-label = "Running test case..."
