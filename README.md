@@ -95,15 +95,20 @@ label = "Running build..."
 
 Allowed factors are `2`, `5`, and `10`. Timestamps accept `HH:MM:SS`, milliseconds with `.` or
 `,`, and `MM:SS`. Intervals are sorted but must not overlap or exceed the final video duration.
-The optional label appears above `Speed up ×N` in the top-right overlay.
+The optional label appears above `Speed up ×N` in the top-right overlay. White text uses a thin
+black character outline without a background box.
 
 After adjusting timestamps, regenerate only the additional artifact without running Whisper,
 subtitle rendering, TTS, or normal muxing:
 
 ```powershell
 uv run transcript-video speedup Analysis.mp4
+uv run transcript-video speedup Analysis.mp4 Build.mp4 Configuration.mp4
 uv run transcript-video speedup Analysis.mp4 --spec custom.toml
 ```
+
+Batch runs resolve one conventional spec per video, continue after individual failures, and exit
+non-zero after the summary if any video failed. `--spec` is accepted only with one video.
 
 Normal outputs are `Analysis_vi-dub_en-sub.mp4` (Vietnamese audio with English subtitles) and, when TTS is enabled, `Analysis_en-dub_en-sub.mp4` (English TTS with English subtitles). `process --speedup` applies the same spec independently to every normal output produced by that run, creating both corresponding `_speedup.mp4` files when TTS is enabled. The standalone command discovers either or both existing canonical normal outputs without consulting the current TTS setting.
 
@@ -179,8 +184,9 @@ uv run transcript-video process lesson.mp4 --force transcription
 
 `--force transcription` regenerates only the Vietnamese source SRT. It never modifies the
 translated English SRT. Existing source SRTs are otherwise reused solely by file existence;
-model/config changes do not invalidate them. TTS generation reached by a normal run regenerates
-its output and chunks. `--rerun-tts-chunk INDEX` remains an explicit selective debugging control.
+model/config changes do not invalidate them. TTS generation reached by a normal run reuses
+valid output and chunks. Use `--force tts` for a full rebuild; `--rerun-tts-chunk INDEX` remains
+an explicit selective debugging control.
 
 Dry-run checks video paths/extensions, stem collisions, the local ASR model format and
 paths, settings, explicit binary paths and output path conflicts without loading weights or running
@@ -236,7 +242,7 @@ data/report/tts/<video>_tts_chunks/<video>_tts_chunk_000.review.jsonl
 data/report/tts/<video>_tts_chunks/<video>_tts_chunk_000.review.pretty.json
 ```
 
-JSONL keeps one object per line; read `.pretty.json` for manual inspection. Normal runs regenerate
+JSONL keeps one object per line; read `.pretty.json` for manual inspection. Normal runs reuse valid
 TTS chunks; review metadata retains sentence ranges for assembly and explicit selective reruns.
 Old provenance metadata is ignored and may be removed manually. Direct Python TTS calls default to the current project report directory;
 pass `review_log_path` (or `review_path` for a single chunk) for a different project.

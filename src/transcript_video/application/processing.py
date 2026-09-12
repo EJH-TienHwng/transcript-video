@@ -15,6 +15,7 @@ from ..processing.media import find_videos
 from ..processing.models import get_model_filename_suffix
 from ..processing.pipeline import process_video
 from ..processing.runtime import model_runtime
+from ..processing.speedup import process_speedup_outputs
 from .errors import describe_error
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,8 @@ def build_process_plan(
     settings: RunSettings,
     videos: Sequence[Path] | None = None,
     translated_srt: Path | None = None,
+    *,
+    defer_video_errors: bool = False,
 ) -> ProcessPlan:
     from .settings import validate_settings
 
@@ -62,14 +65,15 @@ def build_process_plan(
         video = video.expanduser()
         if video.is_absolute():
             video = video.resolve()
-            if not video.is_file():
-                raise FileNotFoundError(f"Video not found: {video}")
-            if video.suffix.lower() not in VIDEO_EXTENSIONS:
-                raise ValueError(f"Unsupported video format: {video.name}")
-            if is_partial_artifact(video):
-                raise ValueError(f"Incomplete artifact cannot be used as input: {video}")
         else:
-            video = find_videos(paths.input_dir, str(video))[0]
+            input_root = paths.input_dir.resolve()
+            video = (input_root / video).resolve()
+            try:
+                video.relative_to(input_root)
+            except ValueError as exc:
+                raise ValueError("Relative videos must point inside data/input.") from exc
+        if not defer_video_errors:
+            _validate_input_video(video)
         selected.append(video)
     resolved_videos = (
         tuple(dict.fromkeys(selected)) if requested else tuple(find_videos(paths.input_dir))
@@ -186,6 +190,7 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
                     details={"stages": stages},
                 )
                 try:
+                    _validate_input_video(video)
                     process_video(
                         video,
                         plan.model,
@@ -222,6 +227,72 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
         elapsed,
         tuple(failures),
         existing,
+        tuple(errors),
+    )
+
+
+def execute_speedup_batch(
+    videos: Sequence[Path],
+    paths: ProjectPaths,
+    settings: RunSettings,
+    spec: Path | str | None = None,
+    observer: PipelineObserver | None = None,
+) -> RunSummary:
+    """Create speed-up outputs for each video independently and keep the requested order."""
+    failures: list[str] = []
+    errors: list[Exception] = []
+    artifacts: list[Path] = []
+    started = time.perf_counter()
+    with (
+        event_scope(observer),
+        stage_context(PipelineStage.RUN, "Processing speed-up videos", total=len(videos)),
+    ):
+        for position, video in enumerate(videos, 1):
+            with event_scope(None, video=video.name):
+                video_started = time.perf_counter()
+                emit(
+                    PipelineStage.VIDEO,
+                    f"[{position}/{len(videos)}] {video.name}",
+                    kind=EventKind.START,
+                    current=position - 1,
+                    total=len(videos),
+                    details={"stages": ["speedup"]},
+                )
+                try:
+                    results = process_speedup_outputs(
+                        paths.normal_video_paths(video, tts_enabled=True),
+                        paths.speedup_spec_path(video, spec),
+                        video_encoder=settings.hardware.video_encoder,
+                        video_stem=video.stem,
+                    )
+                except Exception as exc:
+                    logger.debug(
+                        "Speed-up processing failed",
+                        exc_info=True,
+                        extra={"diagnostic_only": True},
+                    )
+                    failures.append(f"{video.name}: {describe_error(exc)}")
+                    errors.append(exc)
+                    emit(
+                        PipelineStage.VIDEO,
+                        str(exc),
+                        kind=EventKind.FAILURE,
+                        details={"elapsed_seconds": time.perf_counter() - video_started},
+                    )
+                else:
+                    artifacts.extend(result.output for result in results)
+                    emit(
+                        PipelineStage.VIDEO,
+                        f"{video.name} completed",
+                        kind=EventKind.COMPLETE,
+                        details={"elapsed_seconds": time.perf_counter() - video_started},
+                    )
+    return RunSummary(
+        len(videos) - len(failures),
+        len(videos),
+        time.perf_counter() - started,
+        tuple(failures),
+        tuple(artifacts),
         tuple(errors),
     )
 
@@ -276,3 +347,12 @@ def _planned_speedup_outputs(
 def _from_root(root: Path, value: str) -> Path:
     path = Path(value).expanduser()
     return (path if path.is_absolute() else root / path).resolve()
+
+
+def _validate_input_video(video: Path) -> None:
+    if not video.is_file():
+        raise FileNotFoundError(f"Video not found: {video}")
+    if video.suffix.lower() not in VIDEO_EXTENSIONS:
+        raise ValueError(f"Unsupported video format: {video.name}")
+    if is_partial_artifact(video):
+        raise ValueError(f"Incomplete artifact cannot be used as input: {video}")

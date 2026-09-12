@@ -401,7 +401,7 @@ are written to `data/report/tts/<video>_tts_review.jsonl`; speech is never silen
 
 JSONL keeps one object per line; an indented `.pretty.json` sits beside each report.
 Chunk metadata lives in `data/report/tts/<video>_tts_chunks/`, separate from the WAVs.
-Old sidecars beside audio are ignored. Normal runs regenerate all TTS chunks; an explicit chunk
+Old sidecars beside audio are ignored. Normal runs reuse valid TTS chunks; an explicit chunk
 rerun also regenerates its cross-boundary context owner and rebuilds from the remaining chunks.
 The 180 ms tail budget protects the next onset, with a 120 ms minimum release gap at placement.
 Unsafe boundaries still regenerate individual sentences; speech is never hard-trimmed.
@@ -510,7 +510,7 @@ This is expected. Media decoding, libass subtitle rasterization, FFmpeg filters,
 
 ### Existing source subtitles are unexpectedly reused
 
-Use `--force transcription`. Normal TTS runs regenerate TTS; `--rerun-tts-chunk INDEX` is only an explicit selective debugging run.
+Use `--force transcription`. Normal TTS runs reuse valid artifacts; use `--force tts` for a full rebuild or `--rerun-tts-chunk INDEX` for a selective rebuild.
 
 ## Quality and safety update
 

@@ -51,6 +51,7 @@ app.add_typer(config_app, name="config")
 
 class ForceTarget(StrEnum):
     transcription = "transcription"
+    tts = "tts"
 
 
 class DeviceChoice(StrEnum):
@@ -245,7 +246,7 @@ def process_command(
     ] = None,
     force: Annotated[
         list[ForceTarget] | None,
-        typer.Option("--force", help="Regenerate the Vietnamese source transcription."),
+        typer.Option("--force", help="Regenerate a cached artifact (transcription or TTS)."),
     ] = None,
     events_json: Annotated[
         Path | None,
@@ -264,6 +265,10 @@ def process_command(
         raise typer.BadParameter("Use positional VIDEOS or --video, not both.")
     selected_video = legacy_video or (str(videos[0]) if videos and len(videos) == 1 else None)
     force_set = set(force or [])
+    if ForceTarget.tts in force_set and rerun_tts_chunk is not None:
+        raise typer.BadParameter(
+            "--force tts cannot be combined with --rerun-tts-chunk.", param_hint="--force"
+        )
     overrides = {
         "project.root": str(root) if root else None,
         "project.video": selected_video,
@@ -277,6 +282,7 @@ def process_command(
         else overwrite_srt,
         "transcription.skip_burn": skip_burn,
         "tts.enabled": enable_tts,
+        "tts.regenerate": True if ForceTarget.tts in force_set else None,
         "tts.mode": tts_mode,
         "tts.generation_mode": tts_generation_mode,
         "tts.rerun_chunk": rerun_tts_chunk,
@@ -327,7 +333,11 @@ def _run_processing(
     from .application.processing import build_process_plan, execute_process_plan
 
     try:
-        plan = build_process_plan(settings, videos, translated_srt)
+        plan = (
+            build_process_plan(settings, videos, translated_srt)
+            if dry_run
+            else build_process_plan(settings, videos, translated_srt, defer_video_errors=True)
+        )
     except (ValueError, OSError) as exc:
         if dry_run:
             raise
@@ -467,9 +477,11 @@ def _show_error(state: CLIState, exc: Exception) -> None:
 @app.command("speedup")
 def speedup_command(
     ctx: typer.Context,
-    video: Annotated[
-        Path,
-        typer.Argument(help="Original video name used to resolve the final rendered output."),
+    videos: Annotated[
+        list[Path],
+        typer.Argument(
+            help="Original video names used to resolve final rendered outputs, in order."
+        ),
     ],
     spec: Annotated[Path | None, typer.Option("--spec", help="Custom speed-up TOML path.")] = None,
     config: Annotated[
@@ -482,8 +494,7 @@ def speedup_command(
     video_encoder: Annotated[EncoderChoice | None, typer.Option("--video-encoder")] = None,
 ) -> None:
     """Regenerate speed-up artifacts from existing rendered normal videos."""
-    from .events import event_scope
-    from .processing.speedup import process_speedup_outputs
+    from .application.processing import execute_speedup_batch
 
     state = _state(ctx)
     state.logging(command="speedup")
@@ -499,8 +510,11 @@ def speedup_command(
     settings = resolved.settings
     project_root = Path(settings.project.root).expanduser().resolve()
     paths = ProjectPaths.from_root(project_root)
-    normal_outputs = paths.normal_video_paths(video, tts_enabled=True)
-    spec_path = paths.speedup_spec_path(video, spec or settings.speedup.spec)
+    configured_spec = spec or settings.speedup.spec
+    if configured_spec is not None and len(videos) != 1:
+        raise typer.BadParameter(
+            "--spec can only be used with exactly one video.", param_hint="--spec"
+        )
     configure_binary_path(project_root)
     started = time.perf_counter()
     with RichProgressObserver(
@@ -509,34 +523,15 @@ def speedup_command(
         plain=state.plain,
         root=project_root,
     ) as progress:
-        try:
-            with event_scope(progress, video=video.name):
-                results = process_speedup_outputs(
-                    normal_outputs,
-                    spec_path,
-                    video_encoder=settings.hardware.video_encoder,
-                    video_stem=video.stem,
-                )
-        except (ValueError, OSError, RuntimeError) as exc:
-            if progress.live:
-                progress.live.stop()
-            _show_error(state, exc)
-            raise typer.Exit(1) from None
+        summary = execute_speedup_batch(videos, paths, settings, configured_spec, progress)
     progress.summary(
-        title="Speed-up complete" if results else "Speed-up skipped",
+        title="Speed-up completed with errors" if summary.failures else "Speed-up complete",
         elapsed=time.perf_counter() - started,
-        failures=(),
+        failures=summary.failures,
         logs=state.logs,
-        details=(
-            {
-                "Videos": len(results),
-                "Segments": len(results[0].segments),
-                "Saved": format_duration(sum(result.time_saved for result in results)),
-            }
-            if results
-            else {"Result": "No speed-up video created"}
-        ),
     )
+    if summary.failures:
+        raise typer.Exit(1)
 
 
 @config_app.command("show")

@@ -175,5 +175,7 @@ def validate_settings(settings: RunSettings) -> None:
         or tts.rerun_chunk < 0
     ):
         raise ValueError("tts.rerun_chunk must be an integer at least 0.")
+    if tts.regenerate and tts.rerun_chunk is not None:
+        raise ValueError("tts.regenerate cannot be combined with tts.rerun_chunk.")
     if tts.verify_final_audio and tts.mode == "simple" and tts.generation_mode == "full":
         raise ValueError("tts.verify_final_audio requires timed or chunked generation.")

@@ -59,6 +59,7 @@ class TranscriptionSettings:
 @dataclass(slots=True)
 class TTSSettings:
     enabled: bool = False
+    regenerate: bool = False
     mode: str = "timed"
     generation_mode: str = "chunked"
     rerun_chunk: int | None = None

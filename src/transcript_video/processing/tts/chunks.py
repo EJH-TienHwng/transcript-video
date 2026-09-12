@@ -222,7 +222,7 @@ def synthesize_tts_audio_by_time_chunks(
     attn_implementation: str,
     chunk_minutes: int = 5,
     rerun_chunk: int | None = None,
-    regenerate_all_chunks: bool = True,
+    regenerate_all_chunks: bool = False,
     max_speedup: float = 1.25,
     chunk_tail_seconds: float = 10.0,
     alignment_model_name: str | Path | None = None,
@@ -339,6 +339,19 @@ def synthesize_tts_audio_by_time_chunks(
         ) in infos:
             if not should_generate:
                 continue
+            with log_context(operation="chunks", chunk=chunk_index):
+                emit(
+                    PipelineStage.TTS,
+                    f"{'Rebuilding' if rerun_chunk is not None else 'Generating'} TTS chunk "
+                    f"{chunk_index + 1}/{len(infos)}",
+                    current=chunk_index + 1,
+                    total=len(infos),
+                    details={
+                        "unit": "chunks",
+                        "current_chunk": chunk_index + 1,
+                        "total_chunks": len(infos),
+                    },
+                )
             with (
                 log_context(chunk=chunk_index),
                 stage_context(

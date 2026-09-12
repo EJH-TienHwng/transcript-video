@@ -130,6 +130,16 @@ def test_custom_label_is_kept_out_of_filter_syntax(tmp_path):
     assert build_overlay_text(segment) == f"{label}\nSpeed up \N{MULTIPLICATION SIGN}5"
     assert label not in graph
     assert "textfile=" in graph and "expansion=none" in graph
+    assert "borderw=2:bordercolor=black" in graph
+    assert "box=" not in graph and "boxcolor=" not in graph and "boxborderw=" not in graph
+
+
+def test_speedup_filter_uses_explicit_font_when_available(tmp_path):
+    font = tmp_path / "font.ttf"
+    graph = build_speedup_filter_complex(
+        (TimelineSegment(1, 2, 5),), {0: tmp_path / "overlay.txt"}, font
+    )
+    assert f"fontfile='{font.resolve().as_posix().replace(':', r'\:')}'" in graph
 
 
 def test_missing_spec_creates_template_without_touching_normal_video(tmp_path):
@@ -460,6 +470,55 @@ def test_standalone_speedup_fails_when_no_rendered_variant_exists(tmp_path):
     result = CliRunner().invoke(app, ["speedup", "Analysis.mp4", "--root", str(tmp_path)])
     assert result.exit_code == 1
     assert "No rendered normal video was found" in result.output
+
+
+def test_standalone_speedup_batch_continues_and_resolves_each_spec(tmp_path, monkeypatch):
+    from transcript_video.processing import speedup
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.output_dir.mkdir(parents=True)
+    paths.speedup_dir.mkdir(parents=True)
+    for name in ("Analysis", "Build"):
+        paths.normal_video_path(f"{name}.mp4", tts_enabled=False).touch()
+        paths.speedup_spec_path(f"{name}.mp4").write_text(
+            '[[segment]]\nstart="00:00"\nend="00:01"\nspeed=2\n'
+        )
+    called = []
+
+    def process(source, spec, output, **kwargs):
+        called.append((source, spec, output, kwargs["video_stem"]))
+
+    monkeypatch.setattr(speedup, "process_speedup_video", process)
+    result = CliRunner().invoke(
+        app,
+        [
+            "--plain",
+            "--no-color",
+            "speedup",
+            "Analysis.mp4",
+            "Missing.mp4",
+            "Build.mp4",
+            "--root",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 1, result.exception
+    assert [item[3] for item in called] == ["Analysis", "Build"]
+    assert [item[1] for item in called] == [
+        paths.speedup_spec_path("Analysis.mp4"),
+        paths.speedup_spec_path("Build.mp4"),
+    ]
+    assert "Total: 3" in result.output and "Succeeded: 2" in result.output
+    assert "Missing.mp4" in result.output and "No rendered normal video" in result.output
+
+
+def test_standalone_speedup_rejects_custom_spec_for_batch(tmp_path):
+    result = CliRunner().invoke(
+        app,
+        ["speedup", "A.mp4", "B.mp4", "--spec", "custom.toml", "--root", str(tmp_path)],
+    )
+    assert result.exit_code == 2
+    assert "exactly one video" in result.output
 
 
 @pytest.mark.integration
