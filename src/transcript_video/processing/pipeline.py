@@ -26,13 +26,14 @@ from .media import (
     split_audio_into_chunks,
 )
 from .speedup import process_speedup_outputs
-from .subtitles import post_process_segments, read_srt, write_srt
+from .subtitles import post_process_segments, read_srt, validate_translated_srt, write_srt
 from .transcription import transcribe_video
 from .tts import (
     synthesize_simple_tts_audio,
     synthesize_timed_tts_audio,
     synthesize_tts_audio_by_time_chunks,
 )
+from .tts.core import build_tts_identity, tts_identity_is_current, tts_review_is_current
 
 
 def process_video(
@@ -43,7 +44,7 @@ def process_video(
     paths: ProjectPaths,
     settings: RunSettings,
     observer: PipelineObserver | None = None,
-) -> None:
+) -> str:
     """Generate subtitles, optionally generate TTS, and render the output video."""
     with event_scope(observer, video=video_path.name):
         return _process_video(
@@ -63,7 +64,7 @@ def _process_video(
     translated_srt_path: Path,
     paths: ProjectPaths,
     settings: RunSettings,
-) -> None:
+) -> str:
     transcription = settings.transcription
     hardware = settings.hardware
     tts = settings.tts
@@ -75,6 +76,7 @@ def _process_video(
     tts_audio_path = paths.audio_dir / f"{video_path.stem}_tts.wav"
     tts_chunks_dir = paths.audio_dir / f"{video_path.stem}_tts_chunks"
     tts_review_path = paths.tts_review_path(tts_audio_path)
+    retimed_subtitle_path = paths.retimed_subtitle_dir / f"{video_path.stem}_en_retimed.srt"
     final_tts_output_path = paths.normal_video_path(video_path, tts_enabled=True)
     speedup_spec_path = paths.speedup_spec_path(video_path, settings.speedup.spec)
 
@@ -134,11 +136,11 @@ def _process_video(
                 "prompt": str(paths.root / "docs/prompts/optimal_prompt.md"),
             },
         )
-        return
+        return "waiting_for_translation"
 
-    translated_segments = read_srt(translated_srt_path)
-    if not translated_segments:
-        raise ValueError(f"SRT contains no valid subtitles: {translated_srt_path}")
+    translated_segments = validate_translated_srt(
+        translated_srt_path, get_media_duration_seconds(video_path)
+    )
     emit(
         PipelineStage.TRANSLATE,
         "Using translated English subtitles",
@@ -154,7 +156,7 @@ def _process_video(
             video_path.stem,
             settings,
         )
-        return
+        return "completed"
 
     duration = get_media_duration_seconds(video_path)
     if not tts.enabled:
@@ -181,16 +183,55 @@ def _process_video(
         _process_speedup_outputs_if_enabled(
             (subtitled_output_path,), speedup_spec_path, video_path.stem, settings
         )
-        return
+        return "completed"
     tts_model_path = Path(tts.model).expanduser()
     tts_model_name = (
         str((paths.root / tts_model_path).resolve())
         if not tts_model_path.is_absolute()
         else str(tts_model_path)
     )
+    tts_identity = build_tts_identity(
+        model=tts_model_name,
+        speaker=tts.speaker,
+        language=tts.language,
+        instruct=tts.instruct,
+        mode=tts.mode,
+        generation_mode=tts.generation_mode,
+        device=hardware.device,
+        attn_implementation=tts.attn_implementation,
+        alignment_model=model_path if tts.mode == "timed" else None,
+        max_speedup=tts.max_speedup,
+        chunk_minutes=tts.chunk_minutes if tts.generation_mode == "chunked" else None,
+        chunk_tail_seconds=tts.chunk_tail_seconds if tts.generation_mode == "chunked" else None,
+        context_max_sentences=tts.context_max_sentences if tts.mode == "timed" else None,
+        context_max_chars=tts.context_max_chars if tts.mode == "timed" else None,
+        context_break_seconds=tts.context_break_seconds if tts.mode == "timed" else None,
+    )
 
     retimed_segments = None
-    with stage_context(PipelineStage.TTS, "Generating English voice-over"):
+    cached_audio = (
+        tts.generation_mode == "full"
+        and not tts.regenerate
+        and tts_audio_path.is_file()
+        and bool(get_media_duration_seconds(tts_audio_path))
+        and tts_audio_path.stat().st_mtime_ns >= translated_srt_path.stat().st_mtime_ns
+    )
+    reuse_full_tts = bool(cached_audio)
+    if reuse_full_tts and tts.mode == "simple":
+        reuse_full_tts = tts_identity_is_current(tts_audio_path, tts_identity)
+    cached_retimed_segments = None
+    if reuse_full_tts and tts.mode == "timed":
+        reuse_full_tts = retimed_subtitle_path.is_file() and tts_review_is_current(
+            tts_review_path, list(enumerate(translated_segments, 1)), tts_identity
+        )
+        if reuse_full_tts:
+            cached_retimed_segments = read_srt(retimed_subtitle_path)
+            reuse_full_tts = bool(cached_retimed_segments)
+    with stage_context(
+        PipelineStage.TTS,
+        "Using existing English voice-over" if reuse_full_tts else "Generating English voice-over",
+        reused=reuse_full_tts,
+    ):
         if tts.generation_mode == "chunked":
             logger.info("Generating/rebuilding chunked Qwen TTS audio: %s", tts_audio_path)
             retimed_segments = synthesize_tts_audio_by_time_chunks(
@@ -206,7 +247,7 @@ def _process_video(
                 attn_implementation=tts.attn_implementation,
                 chunk_minutes=tts.chunk_minutes,
                 rerun_chunk=tts.rerun_chunk,
-                regenerate_all_chunks=tts.rerun_chunk is None,
+                regenerate_all_chunks=tts.regenerate,
                 max_speedup=tts.max_speedup,
                 chunk_tail_seconds=tts.chunk_tail_seconds,
                 alignment_model_name=model_path,
@@ -215,6 +256,7 @@ def _process_video(
                 context_break_seconds=tts.context_break_seconds,
                 review_log_path=tts_review_path,
                 verify_final_audio=tts.verify_final_audio,
+                tts_identity=tts_identity,
             )
         else:
             if tts.rerun_chunk is not None:
@@ -222,7 +264,10 @@ def _process_video(
                     logger,
                     "tts.rerun_chunk only applies to chunked generation and will be ignored.",
                 )
-            if tts.mode == "simple":
+            if reuse_full_tts:
+                if tts.mode == "timed":
+                    retimed_segments = cached_retimed_segments
+            elif tts.mode == "simple":
                 synthesize_simple_tts_audio(
                     segments=translated_segments,
                     audio_out=tts_audio_path,
@@ -232,6 +277,7 @@ def _process_video(
                     tts_instruct=tts.instruct,
                     device=hardware.device,
                     attn_implementation=tts.attn_implementation,
+                    tts_identity=tts_identity,
                 )
             else:
                 retimed_segments = synthesize_timed_tts_audio(
@@ -251,9 +297,10 @@ def _process_video(
                     context_break_seconds=tts.context_break_seconds,
                     review_log_path=tts_review_path,
                     verify_final_audio=tts.verify_final_audio,
+                    tts_identity=tts_identity,
                 )
 
-            if tts.split_audio:
+            if tts.split_audio and not reuse_full_tts:
                 logger.info(
                     "Splitting TTS audio into %d-minute review chunks: %s",
                     tts.chunk_minutes,
@@ -282,12 +329,15 @@ def _process_video(
     )
     subtitle_path = translated_srt_path
     if isinstance(retimed_segments, list):
-        subtitle_path = paths.retimed_subtitle_dir / f"{video_path.stem}_en_retimed.srt"
-        write_srt(retimed_segments, subtitle_path, post_process=False)
+        subtitle_path = retimed_subtitle_path
+        if not reuse_full_tts:
+            write_srt(retimed_segments, subtitle_path, post_process=False)
         emit(
             PipelineStage.SUBTITLES,
-            "Retimed English subtitles ready",
-            kind=EventKind.ARTIFACT,
+            "Using existing retimed English subtitles"
+            if reuse_full_tts
+            else "Retimed English subtitles ready",
+            kind=EventKind.REUSED if reuse_full_tts else EventKind.ARTIFACT,
             artifact=subtitle_path,
             details={"category": "Generated subtitles"},
         )
@@ -375,6 +425,7 @@ def _process_video(
         video_path.stem,
         settings,
     )
+    return "completed"
 
 
 def _process_speedup_outputs_if_enabled(
@@ -390,4 +441,5 @@ def _process_speedup_outputs_if_enabled(
         spec_path,
         video_encoder=settings.hardware.video_encoder,
         video_stem=video_stem,
+        overlay_font_size=settings.speedup.overlay_font_size,
     )

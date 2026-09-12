@@ -215,9 +215,13 @@ async def test_review_real_progress_and_failure(course, monkeypatch):
         assert "2 / 3" in str(screen.query_one("#session-count", Static).render())
         await send(PipelineStage.NORMALIZE, EventKind.REUSED)
         assert screen.query_one("#overall-progress", ProgressBar).progress == 1
+        assert "Normalize" in str(screen.query_one("#stage-status", Static).render())
+        assert "Reused" in str(screen.query_one("#stage-status", Static).render())
         await send(PipelineStage.CARDS, EventKind.FAILURE)
         assert screen.query_one("#stage-progress", ProgressBar).progress == 0
         assert screen.query_one("#overall-progress", ProgressBar).progress == 1
+        assert "Cards" in str(screen.query_one("#stage-status", Static).render())
+        assert "Failed" in str(screen.query_one("#stage-status", Static).render())
 
 
 @pytest.mark.asyncio

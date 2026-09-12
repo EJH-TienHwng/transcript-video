@@ -51,7 +51,7 @@ def test_legacy_hardware_settings_are_normalized(tmp_path, source):
 
 
 @pytest.mark.parametrize("target", ["transcription", "tts", "all", "translation", "render"])
-def test_only_transcription_is_a_force_target(tmp_path, monkeypatch, target):
+def test_supported_force_targets(tmp_path, monkeypatch, target):
     from transcript_video import cli
 
     captured = Mock()
@@ -67,13 +67,23 @@ def test_only_transcription_is_a_force_target(tmp_path, monkeypatch, target):
             "--no-overwrite-srt",
         ],
     )
-    if target != "transcription":
+    if target not in {"transcription", "tts"}:
         assert result.exit_code == 2
         assert not captured.called
     else:
         assert result.exit_code == 0, result.exception
         settings = captured.call_args.args[1]
-        assert settings.transcription.overwrite_srt
+        assert settings.transcription.overwrite_srt is (target == "transcription")
+        assert settings.tts.regenerate is (target == "tts")
+
+
+def test_full_tts_force_rejects_selective_chunk_rerun():
+    result = CliRunner().invoke(
+        app,
+        ["process", "--dry-run", "--force", "tts", "--rerun-tts-chunk", "1"],
+    )
+    assert result.exit_code == 2
+    assert "cannot be combined" in result.output
 
 
 @pytest.mark.parametrize("missing", [None, "video", "model"])

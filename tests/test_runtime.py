@@ -30,7 +30,8 @@ def test_three_video_batch_loads_whisper_once_and_cleans_scope(tmp_path, monkeyp
     for video in videos:
         video.touch()
     result = execute_process_plan(build_process_plan(settings, videos))
-    assert result.succeeded == 3, result.failures
+    assert result.succeeded == 0, result.failures
+    assert len(result.waiting_for_translation) == 3
     assert factory.call_count == 1
     transcription.load_whisper(tmp_path / "model", "cpu", "int8")
     assert factory.call_count == 2  # Invocation scope cannot leak into the next caller.

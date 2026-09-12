@@ -130,6 +130,27 @@ def test_custom_label_is_kept_out_of_filter_syntax(tmp_path):
     assert build_overlay_text(segment) == f"{label}\nSpeed up \N{MULTIPLICATION SIGN}5"
     assert label not in graph
     assert "textfile=" in graph and "expansion=none" in graph
+    assert "fontsize=44" in graph
+    assert "borderw=3:bordercolor=black" in graph
+    assert "line_spacing=-6:text_align=R" in graph
+    assert "box=" not in graph and "boxcolor=" not in graph and "boxborderw=" not in graph
+
+
+def test_speedup_filter_uses_explicit_font_when_available(tmp_path):
+    font = tmp_path / "font.ttf"
+    graph = build_speedup_filter_complex(
+        (TimelineSegment(1, 2, 5),), {0: tmp_path / "overlay.txt"}, font
+    )
+    assert f"fontfile='{font.resolve().as_posix().replace(':', r'\:')}'" in graph
+
+
+def test_speedup_overlay_font_size_is_configurable(tmp_path):
+    graph = build_speedup_filter_complex(
+        (TimelineSegment(1, 2, 5),),
+        {0: tmp_path / "overlay.txt"},
+        overlay_font_size=72,
+    )
+    assert "fontsize=72" in graph
 
 
 def test_missing_spec_creates_template_without_touching_normal_video(tmp_path):
@@ -232,6 +253,7 @@ def test_pipeline_runs_speedup_after_normal_render(tmp_path, monkeypatch):
         path.write_text("1\n00:00:00,000 --> 00:00:01,000\nText\n", encoding="utf-8")
     settings = RunSettings.defaults()
     settings.speedup.enabled = True
+    settings.speedup.overlay_font_size = 72
     spec = paths.speedup_spec_path(video)
     spec.parent.mkdir(parents=True, exist_ok=True)
     spec.write_text('[[segment]]\nstart="00:00"\nend="00:01"\nspeed=2\n')
@@ -245,6 +267,7 @@ def test_pipeline_runs_speedup_after_normal_render(tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline, "process_speedup_outputs", speedup)
     pipeline.process_video(video, tmp_path / "model", source, translated, paths, settings)
     assert speedup.call_args.args[0] == (paths.normal_video_path(video, tts_enabled=False),)
+    assert speedup.call_args.kwargs["overlay_font_size"] == 72
     assert speedup.call_args.args[0][0].read_bytes() == b"normal"
 
 
@@ -460,6 +483,55 @@ def test_standalone_speedup_fails_when_no_rendered_variant_exists(tmp_path):
     result = CliRunner().invoke(app, ["speedup", "Analysis.mp4", "--root", str(tmp_path)])
     assert result.exit_code == 1
     assert "No rendered normal video was found" in result.output
+
+
+def test_standalone_speedup_batch_continues_and_resolves_each_spec(tmp_path, monkeypatch):
+    from transcript_video.processing import speedup
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.output_dir.mkdir(parents=True)
+    paths.speedup_dir.mkdir(parents=True)
+    for name in ("Analysis", "Build"):
+        paths.normal_video_path(f"{name}.mp4", tts_enabled=False).touch()
+        paths.speedup_spec_path(f"{name}.mp4").write_text(
+            '[[segment]]\nstart="00:00"\nend="00:01"\nspeed=2\n'
+        )
+    called = []
+
+    def process(source, spec, output, **kwargs):
+        called.append((source, spec, output, kwargs["video_stem"]))
+
+    monkeypatch.setattr(speedup, "process_speedup_video", process)
+    result = CliRunner().invoke(
+        app,
+        [
+            "--plain",
+            "--no-color",
+            "speedup",
+            "Analysis.mp4",
+            "Missing.mp4",
+            "Build.mp4",
+            "--root",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 1, result.exception
+    assert [item[3] for item in called] == ["Analysis", "Build"]
+    assert [item[1] for item in called] == [
+        paths.speedup_spec_path("Analysis.mp4"),
+        paths.speedup_spec_path("Build.mp4"),
+    ]
+    assert "Total: 3" in result.output and "Succeeded: 2" in result.output
+    assert "Missing.mp4" in result.output and "No rendered normal video" in result.output
+
+
+def test_standalone_speedup_rejects_custom_spec_for_batch(tmp_path):
+    result = CliRunner().invoke(
+        app,
+        ["speedup", "A.mp4", "B.mp4", "--spec", "custom.toml", "--root", str(tmp_path)],
+    )
+    assert result.exit_code == 2
+    assert "exactly one video" in result.output
 
 
 @pytest.mark.integration

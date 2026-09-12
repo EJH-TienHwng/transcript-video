@@ -186,22 +186,50 @@ def read_srt(srt_path: Path) -> list[SubtitleSegment]:
         raise FileNotFoundError(f"SRT file not found: {srt_path}")
     content = srt_path.read_text(encoding="utf-8-sig")
     segments = []
-    for block in re.split(r"\n\s*\n", content.strip()):
+    blocks = re.split(r"\n\s*\n", content.strip()) if content.strip() else []
+    for block_index, block in enumerate(blocks, 1):
         lines = [line.strip() for line in block.splitlines() if line.strip()]
         timing_line_index = next((i for i, line in enumerate(lines) if "-->" in line), None)
         if timing_line_index is None:
-            continue
-        start_text, end_text = [part.strip() for part in lines[timing_line_index].split("-->", 1)]
+            raise ValueError(f"Malformed SRT block {block_index}: missing timestamp line.")
+        timing_parts = lines[timing_line_index].split("-->", 1)
+        if len(timing_parts) != 2:
+            raise ValueError(f"Malformed SRT block {block_index}: invalid timestamp line.")
+        start_text, end_text = [part.strip() for part in timing_parts]
         # SRT permits optional positioning metadata after the end timestamp.
         end_parts = end_text.split(maxsplit=1)
         if not end_parts:
             raise ValueError(f"Invalid SRT timing line: {lines[timing_line_index]}")
         end_text = end_parts[0]
         text = " ".join(lines[timing_line_index + 1 :]).strip()
-        if text:
-            segments.append(
-                SubtitleSegment(
-                    parse_srt_timestamp(start_text), parse_srt_timestamp(end_text), text
+        if not text:
+            raise ValueError(f"Malformed SRT block {block_index}: subtitle text is empty.")
+        start = parse_srt_timestamp(start_text)
+        end = parse_srt_timestamp(end_text)
+        if start >= end:
+            raise ValueError(f"Malformed SRT block {block_index}: start must be before end.")
+        segments.append(SubtitleSegment(start, end, text))
+    return segments
+
+
+def validate_translated_srt(
+    srt_path: Path, video_duration: float | None = None
+) -> list[SubtitleSegment]:
+    """Validate user-owned translated subtitles without rewriting them."""
+    segments = read_srt(srt_path)
+    if not segments:
+        raise ValueError(f"Translated SRT contains no subtitles: {srt_path}")
+    previous_end = -1.0
+    for index, segment in enumerate(segments, 1):
+        if segment.start < previous_end:
+            raise ValueError(f"Translated SRT subtitle {index} overlaps the previous subtitle.")
+        previous_end = segment.end
+    if video_duration is not None:
+        tolerance = 0.1
+        for index, segment in enumerate(segments, 1):
+            if segment.end > video_duration + tolerance:
+                raise ValueError(
+                    f"Translated SRT subtitle {index} ends at {segment.end:.3f}s, "
+                    f"beyond video duration {video_duration:.3f}s (tolerance {tolerance:.3f}s)."
                 )
-            )
     return segments

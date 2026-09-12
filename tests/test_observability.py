@@ -186,17 +186,19 @@ def test_live_unknown_total_plain_and_no_color(width):
     console = Console(file=stream, theme=THEME, width=width, force_terminal=True, no_color=True)
     with RichProgressObserver(console) as observer:
         observer.notify(PipelineEvent(PipelineStage.RUN, "Start", total=3, kind=EventKind.START))
-        observer.notify(
-            PipelineEvent(
-                PipelineStage.VIDEO,
-                "Video",
-                kind=EventKind.START,
-                details={"stages": ["source subtitles", "translated subtitles", "render"]},
+        with event_scope(video="Video"):
+            observer.notify(
+                PipelineEvent(
+                    PipelineStage.VIDEO,
+                    "Video",
+                    kind=EventKind.START,
+                    details={"stages": ["source subtitles", "translated subtitles", "render"]},
+                )
             )
-        )
-        observer.notify(PipelineEvent(PipelineStage.TTS, "Loading Qwen", kind=EventKind.START))
+            observer.notify(PipelineEvent(PipelineStage.TTS, "Loading Qwen", kind=EventKind.START))
         console.print(observer.render())
         assert observer.progress.tasks[observer.stage_task].total is None
+        assert "Video · TTS" in stream.getvalue()
         observer.notify(PipelineEvent(PipelineStage.TTS, "Chunks", current=1, total=4))
         observer.notify(PipelineEvent(PipelineStage.MUX, "Unknown duration", kind=EventKind.START))
         assert observer.progress.tasks[observer.stage_task].total is None
@@ -319,6 +321,30 @@ def test_batch_continues_after_failure_and_json_remains_separate(tmp_path, monke
     logs = list((tmp_path / "logs/runs").glob("*.jsonl"))
     assert len(logs) == 1 and "intentional failure" in logs[0].read_text(encoding="utf-8")
     assert current_context.get() == EventContext()
+
+
+def test_process_batch_defers_missing_video_error_and_continues(tmp_path, monkeypatch):
+    from transcript_video.application import processing
+    from transcript_video.config import RunSettings
+
+    model = tmp_path / "model"
+    model.mkdir()
+    (model / "model.bin").touch()
+    videos = [tmp_path / name for name in ("A.mp4", "Missing.mp4", "C.mp4")]
+    videos[0].touch()
+    videos[2].touch()
+    settings = RunSettings.defaults()
+    settings.project.root = str(tmp_path)
+    settings.project.model = str(model)
+    seen = []
+    monkeypatch.setattr(processing, "process_video", lambda video, *args: seen.append(video.name))
+
+    plan = processing.build_process_plan(settings, videos, defer_video_errors=True)
+    summary = processing.execute_process_plan(plan)
+
+    assert seen == ["A.mp4", "C.mp4"]
+    assert summary.succeeded == 2 and summary.total == 3
+    assert summary.failures[0].startswith("Missing.mp4: Video not found:")
 
 
 def test_course_builder_emits_every_stage(tmp_path, monkeypatch):

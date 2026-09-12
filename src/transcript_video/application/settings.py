@@ -124,6 +124,8 @@ def validate_settings(settings: RunSettings) -> None:
         raise ValueError("project.video must be a string or null.")
     if speedup.spec is not None and (not isinstance(speedup.spec, str) or not speedup.spec.strip()):
         raise ValueError("speedup.spec must be a non-empty path string or null.")
+    if speedup.overlay_font_size <= 0:
+        raise ValueError("speedup.overlay_font_size must be greater than zero.")
     if not isinstance(transcription.language, str):
         raise ValueError("transcription.language must be a string.")
     choices = {
@@ -175,5 +177,7 @@ def validate_settings(settings: RunSettings) -> None:
         or tts.rerun_chunk < 0
     ):
         raise ValueError("tts.rerun_chunk must be an integer at least 0.")
+    if tts.regenerate and tts.rerun_chunk is not None:
+        raise ValueError("tts.regenerate cannot be combined with tts.rerun_chunk.")
     if tts.verify_final_audio and tts.mode == "simple" and tts.generation_mode == "full":
         raise ValueError("tts.verify_final_audio requires timed or chunked generation.")

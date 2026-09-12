@@ -1,7 +1,10 @@
 # Quality implementation and validation
 
 The existing CLI/Wizard/TUI → application → processing/course architecture is preserved.
-TTS review schema is v4 and semantic events remain v1. Artifact provenance has been removed.
+TTS review schema is v6 and semantic events remain v1. TTS artifacts carry a versioned identity
+derived from waveform-affecting settings and lightweight model metadata. Model weights are not
+hashed on normal runs, so replacing weights without changing path, size, or mtime remains a
+known limitation. Legacy or incomplete metadata is rejected for reuse.
 No model inference or manual listening acceptance is implied by mocked/unit test results.
 
 ## Local environment, 2026-09-07
@@ -48,8 +51,9 @@ Qwen generation, real Whisper recognition or human listening.
 Partial output tests cover exceptions, KeyboardInterrupt, failed FFmpeg publication and stale
 WAV manifests. Hard-kill orphans use recognizable names and are ignored, rather than deleting
 files that might belong to another live writer. Atomic replacement covers individual files;
-report/WAV/manifest are not a multi-file transaction. Version/range checks and WAV identity
-prevent incomplete or mismatched generations from authorizing reuse.
+report/WAV/manifest are not a multi-file transaction. Review invalidation before WAV replacement
+and version/range/identity checks prevent incomplete or mismatched generations from authorizing
+reuse. Simple full TTS uses an identity sidecar.
 
 ## Checks executed
 

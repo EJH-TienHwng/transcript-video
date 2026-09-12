@@ -17,6 +17,7 @@ from transcript_video.processing.tts.core import (
     align_context_group,
     build_retimed_subtitle_segments,
     build_tts_context_groups,
+    build_tts_identity,
     find_safe_inter_sentence_boundary,
     fit_wav_to_available_duration,
     generate_context_group_items,
@@ -1009,11 +1010,11 @@ def test_chunk_boundary_rebuild_and_rerun_keep_each_sentence_once(tmp_path, monk
         assert first_audio[last - 1] == pytest.approx(index / 10 + 0.01, abs=0.0001)
     calls.clear()
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
-    assert calls == [0, 1, 2]
-    assert loader.call_count == 2
+    assert calls == []
+    assert loader.call_count == 1
     np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], first_audio)
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs, rerun_chunk=1)
-    assert calls == [0, 1, 2, 0, 1, 2]  # Explicit rerun includes the boundary owner.
+    assert calls == [0, 1, 2]  # Explicit rerun includes the boundary owner.
     np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], first_audio)
 
 
@@ -1027,6 +1028,46 @@ def test_outdated_chunk_review_is_rejected(tmp_path) -> None:
     write_tts_review_log(path, [entry])
     assert core.tts_review_is_current(path, [(1, segment)])
     assert not core.tts_review_is_current(path, [(1, SubtitleSegment(0, 1, "Changed"))])
+
+
+def test_tts_identity_invalidates_changed_voice_inputs(tmp_path) -> None:
+    model = tmp_path / "qwen"
+    model.mkdir()
+    identity = build_tts_identity(
+        model=model,
+        speaker="Aiden",
+        language="English",
+        instruct="steady",
+        mode="timed",
+        generation_mode="chunked",
+        device="cpu",
+        attn_implementation="sdpa",
+        alignment_model=None,
+        max_speedup=1.25,
+        chunk_minutes=5,
+        chunk_tail_seconds=10.0,
+        context_max_sentences=4,
+        context_max_chars=450,
+        context_break_seconds=3.0,
+    )
+    changed = build_tts_identity(
+        model=model,
+        speaker="Ryan",
+        language="English",
+        instruct="steady",
+        mode="timed",
+        generation_mode="chunked",
+        device="cpu",
+        attn_implementation="sdpa",
+        alignment_model=None,
+        max_speedup=1.25,
+        chunk_minutes=5,
+        chunk_tail_seconds=10.0,
+        context_max_sentences=4,
+        context_max_chars=450,
+        context_break_seconds=3.0,
+    )
+    assert identity != changed
 
 
 @pytest.mark.parametrize("mode", ["replace", "mix"])
@@ -1285,6 +1326,14 @@ def test_information_tail_and_this_onset_stay_separate_through_rebuild(
     with event_scope(record, run_id="test", video="test.mp4"):
         retimed_segments = chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
     progress = [event for event in record.events if event.context.operation == "chunks"]
+    assert any(
+        event.message == "Generating TTS chunk 1/2"
+        and event.current == 1
+        and event.total == 2
+        and event.details["current_chunk"] == 1
+        and event.details["total_chunks"] == 2
+        for event in progress
+    )
     assert progress[-1].current == progress[-1].total == 2
     assert progress[-1].details["sentences"] == progress[-1].details["total_sentences"] == 2
     assert [event.current for event in progress] == sorted(event.current for event in progress)
@@ -1309,12 +1358,12 @@ def test_information_tail_and_this_onset_stay_separate_through_rebuild(
     assert "\n  {" in reports.with_suffix(".pretty.json").read_text(encoding="utf-8")
     assert json.loads(reports.with_suffix(".pretty.json").read_text(encoding="utf-8")) == entries
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
-    assert model.generate_custom_voice.call_count == 2
+    assert model.generate_custom_voice.call_count == 1
     np.testing.assert_array_equal(sf.read(output, dtype="float32")[0], audio)
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs, rerun_chunk=1)
-    assert model.generate_custom_voice.call_count == 3
+    assert model.generate_custom_voice.call_count == 2
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs, regenerate_all_chunks=True)
-    assert model.generate_custom_voice.call_count == 4
+    assert model.generate_custom_voice.call_count == 3
 
 
 def test_information_this_without_acoustic_gap_regenerates_both_sentences(monkeypatch):
@@ -1407,7 +1456,7 @@ def test_release_gap_for_nearby_non_overlapping_sentences():
     assert np.count_nonzero(audio[1000:1120]) == 0
 
 
-def test_normal_chunk_runs_regenerate_without_provenance(tmp_path, monkeypatch, caplog):
+def test_normal_chunk_runs_reuse_current_review_metadata(tmp_path, monkeypatch, caplog):
     import soundfile as sf
 
     paths = ProjectPaths.from_root(tmp_path)
@@ -1443,7 +1492,7 @@ def test_normal_chunk_runs_regenerate_without_provenance(tmp_path, monkeypatch, 
     assert "regenerating safely" in caplog.text
     assert model.generate_custom_voice.call_count == 2
     chunks.synthesize_tts_audio_by_time_chunks(**kwargs)
-    assert model.generate_custom_voice.call_count == 4
+    assert model.generate_custom_voice.call_count == 2
     assert not list(tmp_path.rglob("*.provenance.json"))
     assert (paths.report_dir / "tts/legacy_tts_chunks/legacy_tts_chunk_000.review.jsonl").exists()
 
@@ -1494,3 +1543,61 @@ def test_pipeline_routes_reports_and_preserves_tts_modes(tmp_path, monkeypatch, 
             generators[chosen].call_args.kwargs["review_log_path"]
             == paths.report_dir / "tts/lesson_tts_review.jsonl"
         )
+
+
+@pytest.mark.parametrize("regenerate,expected_calls", [(False, 0), (True, 1)])
+def test_full_simple_tts_reuses_valid_audio_unless_forced(
+    tmp_path, monkeypatch, regenerate, expected_calls
+):
+    from transcript_video.config import RunSettings
+    from transcript_video.events import EventKind, PipelineStage, RecordingObserver
+    from transcript_video.processing import pipeline
+    from transcript_video.processing.subtitles import write_srt
+    from transcript_video.processing.tts.core import build_tts_identity, write_tts_identity
+
+    paths = ProjectPaths.from_root(tmp_path)
+    paths.create_dirs()
+    video = tmp_path / "lesson.mp4"
+    video.touch()
+    model = tmp_path / "model"
+    model.mkdir()
+    (model / "model.bin").touch()
+    source = paths.source_subtitle_dir / "lesson_vi_faster.srt"
+    translated = paths.translated_subtitle_dir / "lesson_en.srt"
+    write_srt([SubtitleSegment(0, 1, "nguồn")], source)
+    write_srt([SubtitleSegment(0, 1, "one")], translated)
+    (paths.audio_dir / "lesson_tts.wav").write_bytes(b"cached audio")
+    settings = RunSettings.defaults()
+    settings.tts.enabled = True
+    settings.tts.mode = "simple"
+    settings.tts.generation_mode = "full"
+    settings.tts.split_audio = False
+    settings.tts.regenerate = regenerate
+    identity = build_tts_identity(
+        model=str(tmp_path / settings.tts.model),
+        speaker=settings.tts.speaker,
+        language=settings.tts.language,
+        instruct=settings.tts.instruct,
+        mode=settings.tts.mode,
+        generation_mode=settings.tts.generation_mode,
+        device=settings.hardware.device,
+        attn_implementation=settings.tts.attn_implementation,
+        alignment_model=None,
+        max_speedup=settings.tts.max_speedup,
+    )
+    write_tts_identity(paths.audio_dir / "lesson_tts.wav", identity)
+    (paths.audio_dir / "lesson_tts.wav").touch()
+    generator = mock.Mock()
+    monkeypatch.setattr(pipeline, "synthesize_simple_tts_audio", generator)
+    monkeypatch.setattr(pipeline, "get_media_duration_seconds", lambda *args: 2.0)
+    monkeypatch.setattr(pipeline, "burn_subtitles", mock.Mock())
+    monkeypatch.setattr(pipeline, "mux_audio_into_video_replace", mock.Mock())
+    observer = RecordingObserver()
+
+    pipeline.process_video(video, model, source, translated, paths, settings, observer)
+
+    assert generator.call_count == expected_calls
+    assert any(
+        event.stage == PipelineStage.TTS and event.kind == EventKind.REUSED
+        for event in observer.events
+    ) is (not regenerate)

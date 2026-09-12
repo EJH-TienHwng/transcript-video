@@ -130,7 +130,7 @@ def test_force_transcription_only_rewrites_source_and_english_drives_burn_and_tt
     assert burn.call_args.args[1] == retimed
     assert read_srt(retimed) == [SubtitleSegment(0.25, 1.5, "Manual English edit.")]
     assert tts.call_args.kwargs["segments"][0].text == "Manual English edit."
-    assert tts.call_args.kwargs["regenerate_all_chunks"] is True
+    assert tts.call_args.kwargs["regenerate_all_chunks"] is False
     assert mux.called
     assert not list(tmp_path.rglob("*.provenance.json"))
 

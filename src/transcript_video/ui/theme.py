@@ -3,6 +3,11 @@
 from rich.theme import Theme
 
 PALETTE = {
+    "background": "#101518",
+    "surface": "#172126",
+    "panel": "#1d2a30",
+    "border": "#48616a",
+    "foreground": "#e7ecec",
     "accent": "#00aaaa",
     "success": "#00aa00",
     "warning": "#aaaa00",
@@ -10,7 +15,7 @@ PALETTE = {
     "info": "#00aaaa",
     "muted": "#888888",
     "path": "#5555ff",
-    "stage": "#aa55aa",
+    "stage": "#5c9c95",
     "active": "#00aaaa",
     "pending": "#888888",
     "review": "#aaaa00",

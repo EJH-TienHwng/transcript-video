@@ -67,6 +67,7 @@ def synthesize_one_fixed_time_chunk(
     tts_language: str,
     tts_speaker: str,
     tts_instruct: str,
+    tts_identity: str | None = None,
     sample_rate: int | None = None,
     max_speedup: float = 1.25,
     all_segments: list[SubtitleSegment] | None = None,
@@ -96,6 +97,7 @@ def synthesize_one_fixed_time_chunk(
         instruct=tts_instruct,
         max_speedup=max_speedup,
         video_duration=video_duration,
+        tts_identity=tts_identity,
     )
     if sample_rate is not None and generated_rate is not None and sample_rate != generated_rate:
         raise ValueError(f"Inconsistent sample rate: {generated_rate} != {sample_rate}")
@@ -135,6 +137,7 @@ def rebuild_full_tts_audio_from_chunks(
     audio_out: Path,
     expected_total_duration: float | None = None,
     review_paths: list[Path] | None = None,
+    tts_identity: str | None = None,
 ) -> list[dict[str, object]]:
     """Recover complete chunk sentences and place them on one collision-free timeline."""
     import soundfile as sf
@@ -160,7 +163,7 @@ def rebuild_full_tts_audio_from_chunks(
             (entry["subtitle_index"], SubtitleSegment(entry["start"], entry["end"], entry["text"]))
             for entry in chunk_reviews
         ]
-        if not tts_review_is_current(review_path, expected):
+        if not tts_review_is_current(review_path, expected, tts_identity):
             raise ValueError(
                 f"Outdated TTS chunk review: {chunk_path}; run a normal TTS generation first"
             )
@@ -222,7 +225,7 @@ def synthesize_tts_audio_by_time_chunks(
     attn_implementation: str,
     chunk_minutes: int = 5,
     rerun_chunk: int | None = None,
-    regenerate_all_chunks: bool = True,
+    regenerate_all_chunks: bool = False,
     max_speedup: float = 1.25,
     chunk_tail_seconds: float = 10.0,
     alignment_model_name: str | Path | None = None,
@@ -231,6 +234,7 @@ def synthesize_tts_audio_by_time_chunks(
     context_break_seconds: float = 3.0,
     review_log_path: Path | None = None,
     verify_final_audio: bool = False,
+    tts_identity: str | None = None,
 ) -> list[SubtitleSegment]:
     """Generate contextual TTS in fixed multi-minute processing units."""
     if rerun_chunk is not None and rerun_chunk < 0:
@@ -280,12 +284,12 @@ def synthesize_tts_audio_by_time_chunks(
             regenerate_all_chunks
             or chunk_index in rerun_owners
             or not chunk_path.exists()
-            or not tts_review_is_current(review_path, owned_segments)
+            or not tts_review_is_current(review_path, owned_segments, tts_identity)
         )
         if (
             should_generate
             and chunk_path.exists()
-            and not tts_review_is_current(review_path, owned_segments)
+            and not tts_review_is_current(review_path, owned_segments, tts_identity)
         ):
             logger.info(
                 "TTS chunk %03d: missing or outdated report metadata at %s; regenerating safely",
@@ -339,6 +343,19 @@ def synthesize_tts_audio_by_time_chunks(
         ) in infos:
             if not should_generate:
                 continue
+            with log_context(operation="chunks", chunk=chunk_index):
+                emit(
+                    PipelineStage.TTS,
+                    f"{'Rebuilding' if rerun_chunk is not None else 'Generating'} TTS chunk "
+                    f"{chunk_index + 1}/{len(infos)}",
+                    current=chunk_index + 1,
+                    total=len(infos),
+                    details={
+                        "unit": "chunks",
+                        "current_chunk": chunk_index + 1,
+                        "total_chunks": len(infos),
+                    },
+                )
             with (
                 log_context(chunk=chunk_index),
                 stage_context(
@@ -403,6 +420,7 @@ def synthesize_tts_audio_by_time_chunks(
         audio_out,
         expected_duration,
         review_paths=[info[5] for info in infos],
+        tts_identity=tts_identity,
     )
     if verify_final_audio:
         import soundfile as sf

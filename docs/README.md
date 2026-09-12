@@ -21,8 +21,8 @@ Global options must appear before the command: `-q`, `-v`, `-vv`, `--no-color`, 
 
 The default terminal log is concise. `-v` adds diagnostics and `-vv` adds source locations and tracebacks. Detailed DEBUG logs always rotate at `logs/transcript-video.log` unless `--log-file` overrides the path. `NO_COLOR` and `--no-color` are both honored.
 
-
 See [logging/event schema](observability.md): default output contains status/progress, warnings and results; `-q` disables progress. Long commands also write per-run DEBUG text and JSONL in `logs/runs/`. Use `--events-json FILE` on `process` or `course build` for a new event JSONL file; dry-run writes none. The wizard supports batch selection, automatic titles/numbers, Recommended/Custom settings and review before saving.
+
 ## Everyday workflows
 
 ```powershell
@@ -116,6 +116,8 @@ Pytest markers are `integration`, `gpu`, and `slow`; `just test-fast` excludes a
 - [Transcript Video Documentation](#transcript-video-documentation)
   - [Command overview](#command-overview)
   - [Everyday workflows](#everyday-workflows)
+  - [Required subtitle handoff](#required-subtitle-handoff)
+  - [Video speed-up outputs](#video-speed-up-outputs)
   - [Course wizard and full TUI](#course-wizard-and-full-tui)
   - [Architecture](#architecture)
   - [Developer workflow](#developer-workflow)
@@ -138,6 +140,7 @@ Pytest markers are `integration`, `gpu`, and `slow`; `just test-fast` excludes a
     - [CUDA out of memory](#cuda-out-of-memory)
     - [CPU activity is still visible](#cpu-activity-is-still-visible)
     - [Existing source subtitles are unexpectedly reused](#existing-source-subtitles-are-unexpectedly-reused)
+  - [Quality and safety update](#quality-and-safety-update)
 
 ## Capabilities
 
@@ -326,6 +329,12 @@ Reuse it later:
 uv run transcript-video process --config configs/lesson-02.toml
 ```
 
+TTS reuse is fail-closed: timed/chunked review metadata and simple full-generation sidecars
+must match the English subtitle text/timestamps and the effective voice, instruction, model
+fingerprint, alignment, context, and timing settings. Legacy or incomplete metadata regenerates.
+Model weights are not hashed on every run; a replacement at the same path with unchanged size and
+mtime is not detected automatically. Use `--force tts` when weights were replaced manually.
+
 ## Transcription workflow
 
 Place videos in `data/input`, set a valid model path, then run:
@@ -401,7 +410,7 @@ are written to `data/report/tts/<video>_tts_review.jsonl`; speech is never silen
 
 JSONL keeps one object per line; an indented `.pretty.json` sits beside each report.
 Chunk metadata lives in `data/report/tts/<video>_tts_chunks/`, separate from the WAVs.
-Old sidecars beside audio are ignored. Normal runs regenerate all TTS chunks; an explicit chunk
+Old sidecars beside audio are ignored. Normal runs reuse valid TTS chunks; an explicit chunk
 rerun also regenerates its cross-boundary context owner and rebuilds from the remaining chunks.
 The 180 ms tail budget protects the next onset, with a 120 ms minimum release gap at placement.
 Unsafe boundaries still regenerate individual sentences; speech is never hard-trimmed.
@@ -510,7 +519,7 @@ This is expected. Media decoding, libass subtitle rasterization, FFmpeg filters,
 
 ### Existing source subtitles are unexpectedly reused
 
-Use `--force transcription`. Normal TTS runs regenerate TTS; `--rerun-tts-chunk INDEX` is only an explicit selective debugging run.
+Use `--force transcription`. Normal TTS runs reuse valid artifacts; use `--force tts` for a full rebuild or `--rerun-tts-chunk INDEX` for a selective rebuild.
 
 ## Quality and safety update
 

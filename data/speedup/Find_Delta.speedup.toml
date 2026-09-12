@@ -29,14 +29,14 @@ speed = 10
 label = "Defining missing objects..."
 
 [[segment]]
-start = "00:30:32.940"
-end = "00:33:11.940"
+start = "00:30:36.000"
+end = "00:33:12.000"
 speed = 10
 label = "Running all steps..."
 
 [[segment]]
-start = "00:37:00.179"
-end = "00:37:41.179"
+start = "00:37:05.000"
+end = "00:37:36.000"
 speed = 10
 label = "Preparing next module..."
 

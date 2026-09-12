@@ -15,6 +15,7 @@ from ..processing.media import find_videos
 from ..processing.models import get_model_filename_suffix
 from ..processing.pipeline import process_video
 from ..processing.runtime import model_runtime
+from ..processing.speedup import process_speedup_outputs
 from .errors import describe_error
 
 logger = logging.getLogger(__name__)
@@ -43,12 +44,15 @@ class RunSummary:
     failures: tuple[str, ...]
     artifacts: tuple[Path, ...]
     errors: tuple[Exception, ...] = ()
+    waiting_for_translation: tuple[Path, ...] = ()
 
 
 def build_process_plan(
     settings: RunSettings,
     videos: Sequence[Path] | None = None,
     translated_srt: Path | None = None,
+    *,
+    defer_video_errors: bool = False,
 ) -> ProcessPlan:
     from .settings import validate_settings
 
@@ -62,14 +66,15 @@ def build_process_plan(
         video = video.expanduser()
         if video.is_absolute():
             video = video.resolve()
-            if not video.is_file():
-                raise FileNotFoundError(f"Video not found: {video}")
-            if video.suffix.lower() not in VIDEO_EXTENSIONS:
-                raise ValueError(f"Unsupported video format: {video.name}")
-            if is_partial_artifact(video):
-                raise ValueError(f"Incomplete artifact cannot be used as input: {video}")
         else:
-            video = find_videos(paths.input_dir, str(video))[0]
+            input_root = paths.input_dir.resolve()
+            video = (input_root / video).resolve()
+            try:
+                video.relative_to(input_root)
+            except ValueError as exc:
+                raise ValueError("Relative videos must point inside data/input.") from exc
+        if not defer_video_errors:
+            _validate_input_video(video)
         selected.append(video)
     resolved_videos = (
         tuple(dict.fromkeys(selected)) if requested else tuple(find_videos(paths.input_dir))
@@ -82,16 +87,37 @@ def build_process_plan(
                 f"Videos share an output name: {stems[video.stem.casefold()]} and {video}; rename one input."
             )
         stems[video.stem.casefold()] = video
-    if not model.is_dir():
-        raise FileNotFoundError(f"Model folder not found: {model}")
-    suffix = get_model_filename_suffix(model)
     if translated_srt is not None and len(resolved_videos) != 1:
         raise ValueError("--translated-srt can only be used when processing one video.")
     if settings.speedup.enabled and settings.speedup.spec is not None and len(resolved_videos) != 1:
         raise ValueError("--speedup-spec can only be used when processing one video.")
-    source_srt_paths = tuple(
-        paths.source_subtitle_dir / f"{video.stem}_vi_{suffix}.srt" for video in resolved_videos
-    )
+    model_available = model.is_dir()
+    suffix = get_model_filename_suffix(model) if model_available else None
+    source_srt_paths = []
+    for video in resolved_videos:
+        if suffix is not None:
+            source_srt_paths.append(paths.source_subtitle_dir / f"{video.stem}_vi_{suffix}.srt")
+            continue
+        candidates = sorted(paths.source_subtitle_dir.glob(f"{video.stem}_vi_*.srt"))
+        if len(candidates) > 1:
+            raise FileNotFoundError(
+                f"ASR model folder not found and source subtitles are ambiguous for {video.name}: "
+                + ", ".join(str(path) for path in candidates)
+            )
+        if not candidates or settings.transcription.overwrite_srt:
+            raise FileNotFoundError(f"Model folder not found: {model}")
+        source_srt_paths.append(candidates[0])
+    source_srt_paths = tuple(source_srt_paths)
+    if not model_available and any(
+        settings.tts.enabled and settings.tts.mode == "timed" and translated.is_file()
+        for translated in (
+            translated_srt.expanduser().resolve()
+            if translated_srt is not None
+            else paths.translated_subtitle_dir / f"{video.stem}_en.srt"
+            for video in resolved_videos
+        )
+    ):
+        raise FileNotFoundError(f"Timed TTS requires the configured alignment model: {model}")
     translated_srt_paths = tuple(
         translated_srt.expanduser().resolve()
         if translated_srt is not None
@@ -149,6 +175,7 @@ def build_process_plan(
 def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = None) -> RunSummary:
     failures: list[str] = []
     errors: list[Exception] = []
+    waiting: list[Path] = []
     started = time.perf_counter()
     with (
         event_scope(observer),
@@ -157,8 +184,6 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
     ):
         plan.paths.create_dirs()
         configure_binary_path(plan.root)
-        if not plan.model.is_dir():
-            raise FileNotFoundError(f"Model folder not found: {plan.model}")
         for position, (video, source_srt_path, translated_srt_path) in enumerate(
             zip(
                 plan.videos,
@@ -186,7 +211,19 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
                     details={"stages": stages},
                 )
                 try:
-                    process_video(
+                    _validate_input_video(video)
+                    needs_model = (
+                        plan.settings.transcription.overwrite_srt
+                        or not source_srt_path.is_file()
+                        or (
+                            plan.settings.tts.enabled
+                            and plan.settings.tts.mode == "timed"
+                            and translated_srt_path.is_file()
+                        )
+                    )
+                    if needs_model and not plan.model.is_dir():
+                        raise FileNotFoundError(f"Model folder not found: {plan.model}")
+                    outcome = process_video(
                         video,
                         plan.model,
                         source_srt_path,
@@ -208,20 +245,91 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
                         details={"elapsed_seconds": time.perf_counter() - video_started},
                     )
                 else:
+                    if outcome == "waiting_for_translation":
+                        waiting.append(translated_srt_path)
+                    else:
+                        emit(
+                            PipelineStage.VIDEO,
+                            f"{video.name} completed",
+                            kind=EventKind.COMPLETE,
+                            details={"elapsed_seconds": time.perf_counter() - video_started},
+                        )
+    elapsed = time.perf_counter() - started
+    existing = tuple(path for path in plan.artifacts if path.exists())
+    return RunSummary(
+        len(plan.videos) - len(failures) - len(waiting),
+        len(plan.videos),
+        elapsed,
+        tuple(failures),
+        existing,
+        tuple(errors),
+        tuple(waiting),
+    )
+
+
+def execute_speedup_batch(
+    videos: Sequence[Path],
+    paths: ProjectPaths,
+    settings: RunSettings,
+    spec: Path | str | None = None,
+    observer: PipelineObserver | None = None,
+) -> RunSummary:
+    """Create speed-up outputs for each video independently and keep the requested order."""
+    failures: list[str] = []
+    errors: list[Exception] = []
+    artifacts: list[Path] = []
+    started = time.perf_counter()
+    with (
+        event_scope(observer),
+        stage_context(PipelineStage.RUN, "Processing speed-up videos", total=len(videos)),
+    ):
+        for position, video in enumerate(videos, 1):
+            with event_scope(None, video=video.name):
+                video_started = time.perf_counter()
+                emit(
+                    PipelineStage.VIDEO,
+                    f"[{position}/{len(videos)}] {video.name}",
+                    kind=EventKind.START,
+                    current=position - 1,
+                    total=len(videos),
+                    details={"stages": ["speedup"]},
+                )
+                try:
+                    results = process_speedup_outputs(
+                        paths.normal_video_paths(video, tts_enabled=True),
+                        paths.speedup_spec_path(video, spec),
+                        video_encoder=settings.hardware.video_encoder,
+                        video_stem=video.stem,
+                        overlay_font_size=settings.speedup.overlay_font_size,
+                    )
+                except Exception as exc:
+                    logger.debug(
+                        "Speed-up processing failed",
+                        exc_info=True,
+                        extra={"diagnostic_only": True},
+                    )
+                    failures.append(f"{video.name}: {describe_error(exc)}")
+                    errors.append(exc)
+                    emit(
+                        PipelineStage.VIDEO,
+                        str(exc),
+                        kind=EventKind.FAILURE,
+                        details={"elapsed_seconds": time.perf_counter() - video_started},
+                    )
+                else:
+                    artifacts.extend(result.output for result in results)
                     emit(
                         PipelineStage.VIDEO,
                         f"{video.name} completed",
                         kind=EventKind.COMPLETE,
                         details={"elapsed_seconds": time.perf_counter() - video_started},
                     )
-    elapsed = time.perf_counter() - started
-    existing = tuple(path for path in plan.artifacts if path.exists())
     return RunSummary(
-        len(plan.videos) - len(failures),
-        len(plan.videos),
-        elapsed,
+        len(videos) - len(failures),
+        len(videos),
+        time.perf_counter() - started,
         tuple(failures),
-        existing,
+        tuple(artifacts),
         tuple(errors),
     )
 
@@ -276,3 +384,12 @@ def _planned_speedup_outputs(
 def _from_root(root: Path, value: str) -> Path:
     path = Path(value).expanduser()
     return (path if path.is_absolute() else root / path).resolve()
+
+
+def _validate_input_video(video: Path) -> None:
+    if not video.is_file():
+        raise FileNotFoundError(f"Video not found: {video}")
+    if video.suffix.lower() not in VIDEO_EXTENSIONS:
+        raise ValueError(f"Unsupported video format: {video.name}")
+    if is_partial_artifact(video):
+        raise ValueError(f"Incomplete artifact cannot be used as input: {video}")

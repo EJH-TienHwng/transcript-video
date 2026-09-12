@@ -29,22 +29,22 @@
     {
       "number": 2,
       "title": "ASW Demo",
-      "video": "data/output/ASW_Demo_vi-dub_en-sub.mp4"
+      "video": "data/output/ASW_Demo_vi-dub_en-sub_speedup.mp4"
     },
     {
       "number": 3,
       "title": "UT Cantata Demo",
-      "video": "data/output/UT_Cantata_Demo_Version_1_vi-dub_en-sub.mp4"
+      "video": "data/output/UT_Cantata_Demo_Version_1_vi-dub_en-sub_speedup.mp4"
     },
     {
       "number": 4,
       "title": "UT Gtest Overview",
-      "video": "data/output/UT_Gtest_Overview_vi-dub_en-sub.mp4"
+      "video": "data/output/UT_Gtest_Overview_vi-dub_en-sub_speedup.mp4"
     },
     {
       "number": 5,
       "title": "Report",
-      "video": "data/output/Report_vi-dub_en-sub.mp4"
+      "video": "data/output/Report_vi-dub_en-sub_speedup.mp4"
     }
   ]
 }

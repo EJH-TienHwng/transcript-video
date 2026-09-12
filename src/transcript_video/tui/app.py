@@ -10,7 +10,7 @@ from typing import ClassVar
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
@@ -18,7 +18,6 @@ from textual.widgets import (
     Collapsible,
     DataTable,
     Footer,
-    Header,
     Input,
     Label,
     ListItem,
@@ -67,6 +66,28 @@ class CourseDraft:
         }
 
 
+class WorkflowHeader(Horizontal):
+    """Shared workflow shell; screen content remains responsible for behavior."""
+
+    def __init__(self, step: int) -> None:
+        super().__init__(classes="workflow-header")
+        self.step = step
+
+    def compose(self) -> ComposeResult:
+        yield Static("TRANSCRIPT·VIDEO", classes="app-brand")
+        for position, label in enumerate(("Metadata", "Sessions", "Review"), 1):
+            if position > 1:
+                yield Static("→", classes="workflow-arrow")
+            state = (
+                "active"
+                if position == self.step
+                else "complete"
+                if position < self.step
+                else "pending"
+            )
+            yield Static(f"{position} {label}", classes=f"workflow-step {state}")
+
+
 class ConfirmQuit(ModalScreen[bool]):
     def compose(self) -> ComposeResult:
         yield Static("You have unsaved changes. Quit anyway?", id="confirm-message")
@@ -86,26 +107,32 @@ class MetadataScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield WorkflowHeader(1)
         with VerticalScroll(id="form"):
-            yield Label("Course metadata", classes="heading")
-            yield Label("Title")
-            yield Input(self.app.draft.title, id="title")
-            yield Label("Output MP4")
-            yield Input(self.app.draft.output, id="output")
-            yield Label("Theme image (optional)")
-            yield Input(self.app.draft.theme_image, id="theme")
-            yield Label("Config JSON")
-            yield Input(str(self.app.draft.config_path), id="config-path")
+            yield Label("Course setup", classes="heading")
+            with Vertical(classes="form-section"):
+                yield Label("Course", classes="section-title")
+                yield Label("Title")
+                yield Input(self.app.draft.title, id="title")
+                yield Label("Output MP4")
+                yield Input(self.app.draft.output, id="output")
+                yield Label("Theme image (optional)")
+                yield Input(self.app.draft.theme_image, id="theme")
+                yield Label("Config JSON")
+                yield Input(str(self.app.draft.config_path), id="config-path")
             extra = self.app.draft.extra
-            yield Label("Session card duration (seconds)")
-            yield Input(str(extra.get("card_duration", 5.0)), id="card-duration")
-            yield Checkbox("Add chapters", value=extra.get("add_chapters", True), id="add-chapters")
-            toc = {**asdict(TocConfig()), **extra.get("toc", {})}
-            yield Checkbox("Table of contents", value=toc["enabled"], id="toc-enabled")
-            for name in ("heading", "items_per_page", "page_duration"):
-                yield Label("TOC " + name.replace("_", " "))
-                yield Input(str(toc[name]), id="toc-" + name.replace("_", "-"))
+            with Vertical(classes="form-section"):
+                yield Label("Presentation", classes="section-title")
+                yield Label("Session card duration (seconds)")
+                yield Input(str(extra.get("card_duration", 5.0)), id="card-duration")
+                yield Checkbox(
+                    "Add chapters", value=extra.get("add_chapters", True), id="add-chapters"
+                )
+                toc = {**asdict(TocConfig()), **extra.get("toc", {})}
+                yield Checkbox("Table of contents", value=toc["enabled"], id="toc-enabled")
+                for name in ("heading", "items_per_page", "page_duration"):
+                    yield Label("TOC " + name.replace("_", " "))
+                    yield Input(str(toc[name]), id="toc-" + name.replace("_", "-"))
             with Collapsible(title="Advanced rendering", collapsed=True):
                 render = {**asdict(RenderConfig()), **extra.get("render", {})}
                 for name in asdict(RenderConfig()):
@@ -202,11 +229,11 @@ class SessionScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield WorkflowHeader(2)
         with Horizontal(id="session-workspace"):
             yield DataTable(id="videos", cursor_type="row")
             with VerticalScroll(id="session-form"):
-                yield Label("Session editor", classes="heading")
+                yield Label("Session editor", classes="panel-title")
                 yield Label("Title")
                 yield Input(placeholder="Session title", id="session-title")
                 yield Label("Video path")
@@ -287,7 +314,7 @@ class SessionScreen(Screen):
             view.append(
                 ListItem(
                     Label(
-                        f"{item.get('number') or index:02d}. {item['title']}\n{item['video']}",
+                        f"{item.get('number') or index:02d}  {item['title']}\n    {item['video']}",
                         markup=False,
                     )
                 )
@@ -318,10 +345,12 @@ class SessionScreen(Screen):
                         path, self.app.inspection_settings, self.app.metadata_cache
                     )
                 text = "\n".join(
-                    f"{key}: {value}" for key, value in media_fields(result["metadata"]).items()
+                    f"{key:<14}{value}" for key, value in media_fields(result["metadata"]).items()
                 )
-                text += "\n\nArtifacts\n" + "\n".join(
-                    f"{key}: {value}" for key, value in result["artifact_states"].items()
+                text = "Media\n\n" + text
+                text += "\n\nArtifacts\n\n" + "\n".join(
+                    f"{key.replace('_', ' ').title():<22}{value}"
+                    for key, value in result["artifact_states"].items()
                 )
             except (OSError, ValueError, RuntimeError) as exc:
                 text = f"Metadata unavailable: {exc}"
@@ -462,9 +491,9 @@ class ReviewScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield WorkflowHeader(3)
         with VerticalScroll(id="review-details"):
-            yield Label("Review & build", classes="heading")
+            yield Label("Build review", classes="heading")
             yield Static(id="review-summary", markup=False)
         with Horizontal(id="review-actions"):
             yield Button("Back", id="back")
@@ -475,18 +504,24 @@ class ReviewScreen(Screen):
         yield Static("Ready", id="stage-label", markup=False)
         yield ProgressBar(total=None, id="stage-progress")
         yield Static("", id="session-count")
+        yield Static("", id="stage-status")
         yield Log(id="build-log")
         yield Footer()
 
     def on_mount(self) -> None:
         self.completed_stages = set()
         self.planned_stages = []
+        self.stage_states = {}
         self.review_durations()
 
     @work(thread=True, exclusive=True, group="review-metadata")
     def review_durations(self) -> None:
         draft = self.app.draft
-        text = f"{draft.title}\nOutput: {draft.output}\nTheme: {draft.theme_image or 'None'}\n\n"
+        text = (
+            f"Course\n{draft.title}\n\n"
+            f"Output\n{draft.output}\n\n"
+            f"Sessions · {len(draft.sessions)}\n\n"
+        )
         durations = []
         for index, item in enumerate(draft.sessions, 1):
             try:
@@ -500,7 +535,11 @@ class ReviewScreen(Screen):
             except (ValueError, OSError, RuntimeError):
                 duration = None
             durations.append(duration)
-            text += f"{item.get('number') or index:02d}. {item['title']}\n  {item['video']}\n  {format_duration(duration) if duration is not None else 'Duration unavailable'}\n"
+            text += (
+                f"{item.get('number') or index:02d}  {item['title']}\n"
+                f"    Path     {item['video']}\n"
+                f"    Source   {format_duration(duration) if duration is not None else 'Duration unavailable'}\n\n"
+            )
         source = (
             sum(durations) if durations and all(value is not None for value in durations) else None
         )
@@ -513,8 +552,9 @@ class ReviewScreen(Screen):
                 estimated = build_timeline(config, durations)[-1].content_end
             except (ValueError, OSError):
                 pass  # Invalid draft is shown for editing; saving still reports domain validation errors.
-        text += f"\nTotal source duration: {format_duration(source) if source is not None else 'Unavailable'}"
-        text += f"\nEstimated output duration: {format_duration(estimated) if estimated is not None else 'Unavailable'}"
+        text += "Timeline\n"
+        text += f"Source duration     {format_duration(source) if source is not None else 'Unavailable'}"
+        text += f"\nEstimated output    {format_duration(estimated) if estimated is not None else 'Unavailable'}"
         if not get_current_worker().is_cancelled:
             self.app.call_from_thread(self.show_review, text)
 
@@ -530,6 +570,8 @@ class ReviewScreen(Screen):
             if event.kind == EventKind.START:
                 self.planned_stages = event.details.get("stages", [])
                 self.completed_stages.clear()
+                self.stage_states = {stage: "pending" for stage in self.planned_stages}
+                self._render_stage_status()
                 overall.update(total=len(self.planned_stages) or None, progress=0)
             elif event.kind == EventKind.COMPLETE:
                 overall.update(progress=len(self.planned_stages))
@@ -539,6 +581,16 @@ class ReviewScreen(Screen):
             return
         if event.kind in {EventKind.ARTIFACT, EventKind.WARNING, EventKind.REVIEW}:
             return
+        if event.stage.value in self.stage_states:
+            if event.kind in {EventKind.START, EventKind.PROGRESS}:
+                self.stage_states[event.stage.value] = "active"
+            elif event.kind == EventKind.COMPLETE:
+                self.stage_states[event.stage.value] = "complete"
+            elif event.kind == EventKind.REUSED:
+                self.stage_states[event.stage.value] = "reused"
+            elif event.kind == EventKind.FAILURE:
+                self.stage_states[event.stage.value] = "failed"
+            self._render_stage_status()
         label.update(
             f"{event.stage.value}: {event.message}"
             + (" (reused)" if event.kind == EventKind.REUSED else "")
@@ -565,6 +617,20 @@ class ReviewScreen(Screen):
                 overall.update(progress=len(self.completed_stages))
         elif event.kind == EventKind.FAILURE:
             progress.update(total=1, progress=0)
+
+    def _render_stage_status(self) -> None:
+        labels = {
+            "pending": ("○", "pending", "Pending"),
+            "active": ("●", "active", "Active"),
+            "complete": ("✓", "success", "Complete"),
+            "reused": ("↻", "muted", "Reused"),
+            "failed": ("✗", "error", "Failed"),
+        }
+        lines = []
+        for stage in self.planned_stages:
+            marker, style, status = labels[self.stage_states.get(stage, "pending")]
+            lines.append(f"[{style}]{marker} {stage.title():<12} {status}[/]")
+        self.query_one("#stage-status", Static).update("\n".join(lines))
 
     @on(Button.Pressed, "#back")
     def back_pressed(self) -> None:
@@ -652,26 +718,40 @@ class TextualObserver:
 
 class CourseApp(App[None]):
     CSS = """
-    Screen { background: $surface; }
-    #form, #session-form { padding: 1 3; width: 1fr; }
+    Screen { background: $background; }
+    .workflow-header { height: 3; padding: 0 2; align-vertical: middle; background: $panel; border-bottom: solid $border; }
+    .app-brand { width: 1fr; text-style: bold; color: $accent; }
+    .workflow-step { width: auto; padding: 0 1; color: $text-muted; }
+    .workflow-step.active { color: $foreground; background: $accent; text-style: bold; }
+    .workflow-step.complete { color: $success; }
+    .workflow-arrow { width: auto; color: $text-muted; }
+    #form, #session-form { padding: 1 2; width: 1fr; }
     #form { max-width: 100; }
-    .heading { text-style: bold; color: $accent; margin-bottom: 1; }
+    .heading { text-style: bold; color: $accent; margin: 0 0 1 0; }
+    .section-title, .panel-title { text-style: bold; color: $foreground; margin-bottom: 1; }
+    .form-section { padding: 1 2; margin-bottom: 1; border: round $border; background: $surface; }
     Input { margin-bottom: 1; }
-    #sessions, #videos { width: 1fr; border: round $accent; }
+    Checkbox { margin-bottom: 1; }
+    Collapsible { margin-bottom: 1; border: round $border; }
+    #sessions, #videos { width: 1fr; border: round $border; background: $surface; }
     #session-workspace { height: 1fr; }
     SessionScreen.compact #session-workspace { layout: grid; grid-size: 2; grid-columns: 2fr 3fr; grid-rows: 2fr 1fr; }
     SessionScreen.compact #sessions { column-span: 2; width: 1fr; }
-    #sessions ListItem { height: auto; padding: 0 1; }
+    #sessions ListItem { height: auto; padding: 0 1; border-left: thick transparent; }
+    #sessions ListItem.--highlight { background: $panel; border-left: thick $accent; }
     #sessions Label { width: 1fr; }
-    Input:focus, #videos:focus, #sessions:focus { border: heavy $accent; }
-    #session-form { padding: 1; width: 1fr; }
+    Input:focus, Button:focus, Checkbox:focus, Collapsible:focus, #videos:focus, #sessions:focus { border: heavy $accent; }
+    #session-form { padding: 1 2; width: 1fr; border: round $border; background: $surface; }
     #navigation { height: auto; align-horizontal: right; padding: 1; }
     Button { margin: 0 1; }
-    #review-summary { padding: 0 1 1 1; }
-    #review-details { padding: 1; }
+    #review-summary { padding: 0 1 1 1; color: $foreground; }
+    #review-details { padding: 1 2; border: round $border; background: $surface; }
     #review-details { height: 2fr; }
-    #review-actions { height: auto; }
-    #build-log { height: 1fr; border: round $primary; }
+    #review-actions { height: auto; padding: 1 0; }
+    #stage-label { padding: 0 2; text-style: bold; }
+    #session-count { padding: 0 2; color: $text-muted; }
+    #stage-status { height: auto; max-height: 8; padding: 0 2; color: $text-muted; }
+    #build-log { height: 1fr; margin: 1 1 0 1; border: round $border; background: $surface; }
     ConfirmQuit { align: center middle; }
     ConfirmQuit > Static { width: 55; height: 7; padding: 2; background: $panel; border: round $warning; }
     """
@@ -690,6 +770,11 @@ class CourseApp(App[None]):
                 warning=PALETTE["warning"],
                 error=PALETTE["error"],
                 success=PALETTE["success"],
+                foreground=PALETTE["foreground"],
+                background=PALETTE["background"],
+                surface=PALETTE["surface"],
+                panel=PALETTE["panel"],
+                variables={"border": PALETTE["border"], "muted": PALETTE["muted"]},
             )
         )
         self.theme = "transcript-video"

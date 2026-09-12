@@ -33,3 +33,4 @@ verify_final_audio = false
 
 [speedup]
 enabled = false
+overlay_font_size = 44

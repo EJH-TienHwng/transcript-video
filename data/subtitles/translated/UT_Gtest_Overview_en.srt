@@ -179,11 +179,11 @@ The first part is the macro test.
 Inside it, there will be the test fixture and the test case name.
 
 49
-00:08:42,530 --> 00:08:55,000
+00:08:42,530 --> 00:08:53,000
 The purpose of the test fixture is to group related test cases together, while the test case name is used to identify each test case.
 
 50
-00:08:55,000 --> 00:08:59,740
+00:08:53,000 --> 00:08:59,740
 The second part is the description.
 
 50

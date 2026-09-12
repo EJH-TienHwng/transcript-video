@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -43,6 +44,7 @@ ACOUSTIC_ONSET_CONFIRM_SECONDS = 0.06
 # Half a second is visible relative to subtitle cues; diagnose it instead of dropping speech.
 TIMING_SHIFT_REVIEW_SECONDS = 0.5
 TTS_REVIEW_VERSION = 6
+TTS_IDENTITY_VERSION = 1
 SPEEDUP_EPSILON = 1e-6
 
 
@@ -655,8 +657,9 @@ def _review_entry(
     action: str,
     reason: str,
     confidence: float | None = None,
+    tts_identity: str | None = None,
 ) -> dict[str, object]:
-    return {
+    entry = {
         "schema_version": TTS_REVIEW_VERSION,
         "subtitle_index": subtitle_index,
         "text": segment.text,
@@ -691,6 +694,98 @@ def _review_entry(
         "review_reason": reason,
         "generation_failures": 0,
     }
+    if tts_identity is not None:
+        entry["tts_identity"] = tts_identity
+    return entry
+
+
+def _model_fingerprint(model_name: str | Path | None) -> dict[str, object] | None:
+    if model_name is None:
+        return None
+    path = Path(model_name).expanduser()
+    if not path.is_absolute():
+        path = path.resolve()
+    fingerprint: dict[str, object] = {"path": str(path)}
+    try:
+        stat = path.stat()
+    except OSError:
+        return fingerprint
+    fingerprint.update(size=stat.st_size, mtime_ns=stat.st_mtime_ns)
+    if path.is_dir():
+        lightweight = []
+        for child in sorted(path.glob("*")):
+            if child.name in {"config.json", "generation_config.json"} or child.name.endswith(
+                (".index.json", ".safetensors", ".bin")
+            ):
+                try:
+                    child_stat = child.stat()
+                except OSError:
+                    continue
+                lightweight.append((child.name, child_stat.st_size, child_stat.st_mtime_ns))
+        fingerprint["files"] = lightweight
+    return fingerprint
+
+
+def build_tts_identity(
+    *,
+    model: str | Path,
+    speaker: str,
+    language: str,
+    instruct: str,
+    mode: str,
+    generation_mode: str,
+    device: str,
+    attn_implementation: str,
+    alignment_model: str | Path | None,
+    max_speedup: float,
+    chunk_minutes: int | None = None,
+    chunk_tail_seconds: float | None = None,
+    context_max_sentences: int | None = None,
+    context_max_chars: int | None = None,
+    context_break_seconds: float | None = None,
+) -> str:
+    """Hash waveform and placement inputs without reading model weights."""
+    payload = {
+        "version": 1,
+        "model": _model_fingerprint(model),
+        "speaker": speaker,
+        "language": language,
+        "instruct": instruct,
+        "mode": mode,
+        "generation_mode": generation_mode,
+        "device": device,
+        "attn_implementation": attn_implementation,
+        "alignment_model": _model_fingerprint(alignment_model),
+        "max_speedup": max_speedup,
+        "chunk_minutes": chunk_minutes,
+        "chunk_tail_seconds": chunk_tail_seconds,
+        "context_max_sentences": context_max_sentences,
+        "context_max_chars": context_max_chars,
+        "context_break_seconds": context_break_seconds,
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def tts_identity_path(audio_path: Path) -> Path:
+    return audio_path.with_suffix(audio_path.suffix + ".identity.json")
+
+
+def write_tts_identity(audio_path: Path, identity: str) -> None:
+    write_text(
+        tts_identity_path(audio_path),
+        json.dumps({"schema_version": TTS_IDENTITY_VERSION, "identity": identity}) + "\n",
+    )
+
+
+def tts_identity_is_current(audio_path: Path, identity: str) -> bool:
+    try:
+        metadata = json.loads(tts_identity_path(audio_path).read_text(encoding="utf-8"))
+        return (
+            metadata["schema_version"] == TTS_IDENTITY_VERSION and metadata["identity"] == identity
+        )
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
 
 
 def _add_review_reason(entry: dict[str, object], reason: str) -> None:
@@ -709,6 +804,7 @@ def generate_context_group_items(
     instruct: str,
     max_speedup: float,
     video_duration: float | None,
+    tts_identity: str | None = None,
 ) -> tuple[
     list[tuple[int, SubtitleSegment, NDArray[np.float32]]], int | None, list[dict[str, object]]
 ]:
@@ -894,6 +990,7 @@ def generate_context_group_items(
                     action=action,
                     reason=reason,
                     confidence=confidences.get(subtitle_index),
+                    tts_identity=tts_identity,
                 )
                 entry.update(metadata)
                 entry.update(boundary_metadata.get(subtitle_index, {}))
@@ -1184,7 +1281,11 @@ def invalidate_tts_review_log(path: Path) -> None:
     path.with_suffix(".pretty.json").unlink(missing_ok=True)
 
 
-def tts_review_is_current(path: Path, segments: list[tuple[int, SubtitleSegment]]) -> bool:
+def tts_review_is_current(
+    path: Path,
+    segments: list[tuple[int, SubtitleSegment]],
+    tts_identity: str | None = None,
+) -> bool:
     """Old review-only logs cannot prove safe cached sentence boundaries."""
     try:
         entries = [
@@ -1203,6 +1304,7 @@ def tts_review_is_current(path: Path, segments: list[tuple[int, SubtitleSegment]
             and entry["text"] == expected[entry["subtitle_index"]].text
             and entry["start"] == expected[entry["subtitle_index"]].start
             and entry["end"] == expected[entry["subtitle_index"]].end
+            and (tts_identity is None or entry["tts_identity"] == tts_identity)
             and isinstance(entry["cache_start_sample"], int)
             and isinstance(entry["cache_end_sample"], int)
             and 0 <= entry["cache_start_sample"] < entry["cache_end_sample"]
@@ -1285,6 +1387,7 @@ def synthesize_simple_tts_audio(
     tts_instruct: str,
     device: str,
     attn_implementation: str,
+    tts_identity: str | None = None,
 ) -> None:
     """Generate an untimed continuous voice-over."""
     import numpy as np
@@ -1304,6 +1407,8 @@ def synthesize_simple_tts_audio(
         wav_list.append(np.asarray(wav, dtype=np.float32))
     audio_out.parent.mkdir(parents=True, exist_ok=True)
     write_audio(audio_out, np.clip(np.concatenate(wav_list), -1.0, 1.0), sample_rate)
+    if tts_identity is not None:
+        write_tts_identity(audio_out, tts_identity)
 
 
 def synthesize_timed_tts_audio(
@@ -1323,6 +1428,7 @@ def synthesize_timed_tts_audio(
     context_break_seconds: float = 3.0,
     review_log_path: Path | None = None,
     verify_final_audio: bool = False,
+    tts_identity: str | None = None,
 ) -> list[SubtitleSegment]:
     """Generate contextual TTS and place complete sentences as close to SRT starts as possible."""
     groups = build_tts_context_groups(
@@ -1331,6 +1437,21 @@ def synthesize_timed_tts_audio(
     if not groups:
         raise ValueError("No subtitle segments are available for TTS generation.")
     video_duration = get_media_duration_seconds(video_path) or 0.0
+    tts_identity = tts_identity or build_tts_identity(
+        model=tts_model_name,
+        speaker=tts_speaker,
+        language=tts_language,
+        instruct=tts_instruct,
+        mode="timed",
+        generation_mode="full",
+        device=device,
+        attn_implementation=attn_implementation,
+        alignment_model=alignment_model_name,
+        max_speedup=max_speedup,
+        context_max_sentences=context_max_sentences,
+        context_max_chars=context_max_chars,
+        context_break_seconds=context_break_seconds,
+    )
     model = load_qwen_tts_model(tts_model_name, device, attn_implementation)
     aligner = load_faster_whisper_aligner(alignment_model_name) if alignment_model_name else None
     items, sample_rate, reviews = generate_context_group_items(
@@ -1343,6 +1464,7 @@ def synthesize_timed_tts_audio(
         instruct=tts_instruct,
         max_speedup=max_speedup,
         video_duration=video_duration,
+        tts_identity=tts_identity,
     )
     review_path = review_log_path or ProjectPaths.from_root(find_project_root()).tts_review_path(
         audio_out

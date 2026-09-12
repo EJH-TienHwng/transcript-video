@@ -11,12 +11,8 @@ First, we have a list of C files that require UT.
 To perform UT using Cantata, we will be provided with a database folder.
 
 4
-00:00:16,580 --> 00:00:20,360
-The database folder contains a header folder,
-
-5
-00:00:20,660 --> 00:00:25,480
-and the Cantata folders corresponding to the C files that require UT.
+00:00:16,580 --> 00:00:27,200
+The database folder contains a header folder, and the Cantata folders corresponding to the C files that require UT.
 
 6
 00:00:27,700 --> 00:00:32,700
