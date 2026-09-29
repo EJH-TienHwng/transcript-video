@@ -373,11 +373,10 @@ class RichProgressObserver:
         succeeded = self.state.total - len(failures)
         text = f"Videos: {succeeded}/{self.state.total} · Elapsed: {format_duration(elapsed)}"
         if details:
-            text = (
-                " · ".join(f"{key}: {value}" for key, value in details.items())
-                + "\nElapsed: "
-                + format_duration(elapsed)
-            )
+            succeeded = details.get("Completed", succeeded)
+            total = details.get("Total", self.state.total)
+            text = f"Videos: {succeeded}/{total} · Elapsed: {format_duration(elapsed)}"
+            text += "\n" + " · ".join(f"{key}: {value}" for key, value in details.items())
         flagged = sum(item.get("flagged", 0) for item in self.state.quality.values())
         text += (
             f"\nTotal: {self.state.total} · Succeeded: {succeeded} · Failed: {len(failures)}"

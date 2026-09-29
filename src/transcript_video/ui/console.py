@@ -18,9 +18,15 @@ class ConsolePair:
 
 def make_consoles(*, no_color: bool = False) -> ConsolePair:
     color_disabled = no_color or "NO_COLOR" in os.environ
+    options = {
+        "theme": THEME,
+        "no_color": color_disabled,
+        "force_terminal": None,
+        "color_system": None if color_disabled else "auto",
+    }
     return ConsolePair(
-        Console(theme=THEME, no_color=color_disabled, force_terminal=None),
-        Console(theme=THEME, no_color=color_disabled, force_terminal=None, file=sys.stderr),
+        Console(**options),
+        Console(**options, file=sys.stderr),
     )
 
 

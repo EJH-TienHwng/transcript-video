@@ -10,7 +10,12 @@ import pytest
 from typer.testing import CliRunner
 
 from transcript_video.cli import app
-from transcript_video.config import ProjectPaths, RunSettings, SubtitleSegment
+from transcript_video.config import (
+    DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE,
+    ProjectPaths,
+    RunSettings,
+    SubtitleSegment,
+)
 from transcript_video.hardware import get_ffmpeg_exe, get_ffprobe_exe
 from transcript_video.process_runner import probe_media, run_ffmpeg, run_process
 from transcript_video.processing.speedup import (
@@ -130,9 +135,9 @@ def test_custom_label_is_kept_out_of_filter_syntax(tmp_path):
     assert build_overlay_text(segment) == f"{label}\nSpeed up \N{MULTIPLICATION SIGN}5"
     assert label not in graph
     assert "textfile=" in graph and "expansion=none" in graph
-    assert "fontsize=44" in graph
+    assert f"fontsize={DEFAULT_SPEEDUP_OVERLAY_FONT_SIZE:g}" in graph
     assert "borderw=3:bordercolor=black" in graph
-    assert "line_spacing=-6:text_align=R" in graph
+    assert "line_spacing=-16:text_align=R" in graph
     assert "box=" not in graph and "boxcolor=" not in graph and "boxborderw=" not in graph
 
 

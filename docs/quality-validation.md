@@ -7,23 +7,25 @@ hashed on normal runs, so replacing weights without changing path, size, or mtim
 known limitation. Legacy or incomplete metadata is rejected for reuse.
 No model inference or manual listening acceptance is implied by mocked/unit test results.
 
-## Local environment, 2026-09-07
+## Local environment, 2026-09-29
 
 - Python 3.14.7; project pin 3.14 and packaging `>=3.14,<3.15`.
 - Torch 2.14.0+cu132, CUDA 13.2 local wheel; torchaudio 2.11.0 local wheel.
 - qwen-tts 0.1.1 and Transformers 4.57.3 installed.
-- GTX 1650 Ti, compute capability 7.5; `flash_attn` absent.
-- No `models/`, `data/input/`, or local MP4/WAV test material found in `data/`.
-- FFmpeg 7.1 (imageio bundled) is available, with working NVENC and libass probes. `ffprobe`
-  is missing from PATH and beside FFmpeg; Doctor correctly exits 1 for this and missing models.
+- NVIDIA RTX A3000 Laptop GPU, compute capability 8.6; `flash_attn` absent.
+- Local faster-whisper-large-v3 and Qwen3-TTS-12Hz-1.7B-CustomVoice weights are available,
+  together with representative MP4 inputs and translated SRTs.
+- FFmpeg/ffprobe 8.1.1 are available on PATH. The acceptance run uses `libx264` deliberately,
+  so NVENC availability does not affect the result.
 - The installed Qwen import prints third-party optional FlashAttention/SoX warnings. The
   project's speech-duration adjustment still uses FFmpeg atempo and does not require SoX.
 
 The [official FA2 implementation](https://github.com/Dao-AILab/flash-attention#nvidia-cuda-support)
 lists Ampere/Ada/Hopper support for its CUDA backend and treats Windows compilation as less
 tested. Its PyTorch minimum alone does not establish compatibility with this custom
-Python/Torch/CUDA wheel combination. This host's 7.5 GPU cannot validate that backend.
-No package installation or real TTS FA2 benchmark was attempted; SDPA remains the preset.
+Python/Torch/CUDA wheel combination. This host's 8.6 GPU can theoretically support that
+backend, but compatibility has not been established. No package installation or real TTS FA2
+benchmark was attempted; SDPA remains the preset.
 
 The [Qwen project](https://github.com/QwenLM/Qwen3-TTS) exposes the attention implementation
 through model loading. The installed 0.1.1 source was inspected: its speech tokenizer is a
@@ -59,13 +61,14 @@ reuse. Simple full TTS uses an identity sidecar.
 
 - `uv run ruff check .`: passed.
 - `uv run ruff format --check .`: passed after formatting two mixed-line-ending edits.
-- `uv run pytest`: 278 passed on Windows, including synthetic real-FFmpeg tests and the
-  installed Qwen/Transformers token-flow check without model weights.
+- Local fast suite on Windows: 338 passed, 7 deselected, including synthetic real-FFmpeg tests
+  and the installed Qwen/Transformers token-flow check.
 - `uv build`: source distribution and wheel built successfully.
 - Both shipped profiles pass `config validate`; the Python consistency script passes.
-- Doctor: expected exit 1 for missing ffprobe/ASR/Qwen models; FA2 reports optional WARN.
-- No real Qwen/Whisper inference, representative-media listening, FA2 performance benchmark,
-  or Linux execution was performed. The CI Windows/Linux matrix remains configured.
+- Doctor: FA2 remains an optional WARN; current FFmpeg/ffprobe and model paths are available.
+- A real Qwen/Whisper run with representative media is in progress in an isolated temporary
+  project root. Artifact inspection, manual listening, FA2 performance benchmarking, and Linux
+  workflow execution remain incomplete. The CI Windows/Linux matrix remains configured.
 
 ## Files changed in this implementation
 

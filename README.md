@@ -97,7 +97,7 @@ Allowed factors are `2`, `5`, and `10`. Timestamps accept `HH:MM:SS`, millisecon
 `,`, and `MM:SS`. Intervals are sorted but must not overlap or exceed the final video duration.
 The optional label appears above `Speed up ×N` in the top-right overlay. White text uses a thin
 black character outline without a background box. This overlay is separate from subtitles; set
-`overlay_font_size` under `[speedup]` to control it (default: `44`).
+`overlay_font_size` under `[speedup]` to control it (default: `36`).
 
 After adjusting timestamps, regenerate only the additional artifact without running Whisper,
 subtitle rendering, TTS, or normal muxing:

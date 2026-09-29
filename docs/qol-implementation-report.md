@@ -1,5 +1,9 @@
 # Báo cáo hoàn thiện QoL trên nhánh dev
 
+> Báo cáo lịch sử tại thời điểm 2026-09-06. Các nhận định về model, media, ffprobe, test count
+> và CI bên dưới không phải trạng thái hiện tại; xem `quality-validation.md` và `todo.md` để có
+> bằng chứng validation mới nhất.
+
 Ngày kiểm tra: 2026-09-06. Giữ kiến trúc CLI/Wizard/Textual → application → processing/course.
 
 ## Fixed bugs

@@ -1,7 +1,7 @@
 # TODO — transcript-video (`dev`)
 
-> Đối chiếu với nhánh `dev` tại commit `fabdc4cc2d163d2221ff456d513b958ef432052f`.
-> Cập nhật working tree ngày 2026-09-07: review v4, provenance v1 và các phase implementation; xem `quality-validation.md`. Các mục acceptance audio/model thật vẫn giữ chưa hoàn thành.
+> Đối chiếu với nhánh `dev` tại commit `b3230709812daa26000fc21a22ce30ec959b3c0c`.
+> Cập nhật working tree ngày 2026-09-29: review v4, provenance v1, các phase implementation và các sửa ổn định CI/no-color; xem `quality-validation.md`. Các mục acceptance audio/model thật vẫn giữ chưa hoàn thành cho tới khi có artifact và manual review đầy đủ.
 >
 > Quy ước:
 > - `[x]`: đã có implementation rõ ràng trong code và/hoặc regression test.
@@ -203,7 +203,7 @@
 
 ## 10. Acceptance checklist trước khi đóng các task TTS
 
-- [ ] Chạy test suite fast trên Windows/Linux. Windows: 278 test pass; chưa chạy Linux, giữ CI matrix hiện tại.
+- [ ] Chạy test suite fast trên Windows/Linux. Windows local: 338 passed, 7 deselected; Linux runner cho commit ổn định kế tiếp vẫn chờ workflow CI.
 - [x] Chạy integration tests FFmpeg.
 - [ ] Chạy real Qwen TTS trên ít nhất một video ngắn và một video dài.
 - [ ] Nghe thủ công toàn bộ các sentence bị QA report flag.
@@ -212,7 +212,7 @@
 - [ ] Xác minh các sentence có `overflow_duration > 0`.
 - [ ] Xác minh final TTS WAV và final muxed MP4 bằng ffprobe.
 - [x] Không có partial artifact bị reuse sau một run bị interrupt.
-- [x] Chạy `ruff check`, `ruff format --check`, `pytest` và `uv build`. Lượt đầy đủ: 278 passed, lint/format sạch, wheel và sdist build thành công.
+- [x] Chạy `ruff check`, `ruff format --check`, `pytest` và `uv build`. Lượt trước đó: 278 passed, lint/format sạch, wheel và sdist build thành công; lượt fast hiện tại: 338 passed, 7 deselected, lint/format sạch.
 
 ---
 

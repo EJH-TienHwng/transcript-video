@@ -47,11 +47,16 @@ def wizard_ui(ui_console):
     # A linear wizard owns the terminal for this scope; restore it for the next invocation.
     global console, PROMPT_STYLE
     previous = console, PROMPT_STYLE
+    previous_color_system = ui_console._color_system
+    if ui_console.no_color:
+        # Rich's no_color retains bold/dim escape codes when output is forced to a terminal.
+        ui_console._color_system = None
     console, PROMPT_STYLE = ui_console, questionary_style(bool(ui_console.no_color))
     try:
         yield
     finally:
         console, PROMPT_STYLE = previous
+        ui_console._color_system = previous_color_system
 
 
 def _ask(kind: str, message: str, **kwargs):

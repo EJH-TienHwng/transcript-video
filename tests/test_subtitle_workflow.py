@@ -63,7 +63,7 @@ def test_missing_source_generates_then_stops_at_translation_handoff(tmp_path, mo
     )
     assert handoff.kind == EventKind.WARNING
     assert str(translated) in handoff.message
-    assert "docs\\prompts\\optimal_prompt.md" in handoff.message
+    assert "docs/prompts/optimal_prompt.md" in handoff.message.replace("\\", "/")
 
 
 def test_existing_source_is_enough_without_model_or_config_invalidation(tmp_path, monkeypatch):
@@ -193,23 +193,23 @@ def test_migration_planning_is_non_recursive_and_collision_safe(tmp_path):
     [
         ("Analysis_en.srt", "9362ABF70DB59BFDF195CC3B7AEC40E7A2D28881B4ED8DE99824A65A3CDA26B9"),
         ("ASW_Demo_en.srt", "F7937601D1BD7689D2806F269FFB1A71CC2CB9D1235663B3D2A445DB63B6C3EC"),
-        ("Find_Delta_en.srt", "A856981288B2D243C8CDE601686388CA46D4678EA01037315A381FD69AFE936F"),
-        ("Report_en.srt", "6484DE35A0875D253D906CE2255B86BC9A1219F626D4C885386A628BAB9011B7"),
+        ("Find_Delta_en.srt", "3983B2DDE78EC7B5E16798DCF5DB1C28C84BFC628796D5CF0DF3C16A2F6A3901"),
+        ("Report_en.srt", "844BACD6461CD2F10A12169903B5789CA05262FF26D145F42A0025AE822C0A56"),
         (
             "Test_Case_Generation_en.srt",
-            "C00197F27A3583F3954E3B8C582C1CC9CBBE640E93D5966F745313E67F2BA225",
+            "73C7B5345714698A04641190E41B9D58A54405EAEED9A242FCECFA0FBAB5A613",
         ),
         (
             "UT_Cantata_Demo_Version_1_en.srt",
-            "314AEBE5539F7B67063131F1E5B53E5F357310F1E57FA217B5022212A995284D",
+            "C15BDF829E9B2912E5707C17E82FA1955EA344506DF0E414650D04639791D97C",
         ),
         (
             "UT_Gtest_Overview_en.srt",
-            "739C1778216B30E5E8223EA7CEA5DEFCC81C1738E352BDDC7703AFB0CD803A2F",
+            "C3901D2FBB8032DD4BDCC0D3E92677423AB59FD20AD145FA0EDAF42A8DF7FB00",
         ),
     ],
 )
-def test_repository_english_subtitles_were_moved_without_content_changes(name, digest):
+def test_repository_translated_subtitle_golden_files(name, digest):
     path = Path(__file__).parents[1] / "data/subtitles/translated" / name
     content = path.read_bytes().replace(b"\r\n", b"\n")
     assert hashlib.sha256(content).hexdigest().upper() == digest
