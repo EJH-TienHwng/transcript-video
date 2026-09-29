@@ -100,8 +100,9 @@ def test_cli_prints_translation_handoff(tmp_path, monkeypatch):
     )
     assert result.exit_code == 0, result.exception
     assert "Waiting for translated English subtitles" in result.stdout
+    assert "Create the English translated subtitle using:" in result.stdout
     assert translated.name in result.stdout
-    assert "optimal_prompt.md" in result.stdout
+    assert "After creating the English SRT, rerun the process command." in result.stdout
 
 
 def test_force_transcription_only_rewrites_source_and_english_drives_burn_and_tts(

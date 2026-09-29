@@ -153,16 +153,6 @@ def test_deprecated_wrappers_are_visible(module, command, monkeypatch, capsys):
     delegate.assert_called_once()
 
 
-@pytest.mark.parametrize(
-    "args",
-    [["--help"], ["process", "--help"], ["course", "--help"], ["config", "--help"], ["--version"]],
-)
-def test_cli_help_and_version_no_ansi(args):
-    result = CliRunner().invoke(app, ["--no-color", *args], env={"NO_COLOR": "1"})
-    assert result.exit_code == 0
-    assert "\x1b" not in result.output
-
-
 @pytest.mark.parametrize("invalid", [False, True])
 def test_config_validate_json(tmp_path, invalid):
     path = tmp_path / "run.toml"
@@ -389,18 +379,30 @@ def test_ffprobe_failure_keeps_tool_and_output(monkeypatch, code, output):
     assert caught.value.stdout == output and caught.value.stderr == "details"
 
 
-@pytest.mark.parametrize("mode", ["--no-color", "NO_COLOR", "piped"])
+@pytest.mark.parametrize(
+    "args",
+    [["--help"], ["process", "--help"], ["course", "--help"], ["config", "--help"], ["--version"]],
+)
+def test_cli_help_and_version_no_ansi(monkeypatch, capsys, args):
+    from typer import rich_utils
+
+    from transcript_video import cli
+
+    monkeypatch.setattr(rich_utils, "FORCE_TERMINAL", True)
+    monkeypatch.setattr(sys, "argv", ["transcript-video", "--no-color", *args])
+    cli.main()
+    assert "\x1b" not in capsys.readouterr().out
+    assert rich_utils.FORCE_TERMINAL is True
+
+
+@pytest.mark.parametrize("mode", ["NO_COLOR", "piped"])
 def test_main_help_honors_no_color_and_redirection(monkeypatch, capsys, mode):
     from typer import rich_utils
 
     from transcript_video import cli
 
     monkeypatch.setattr(rich_utils, "FORCE_TERMINAL", True)
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        ["transcript-video", *(["--no-color"] if mode == "--no-color" else []), "--help"],
-    )
+    monkeypatch.setattr(sys, "argv", ["transcript-video", "--help"])
     if mode == "NO_COLOR":
         monkeypatch.setenv("NO_COLOR", "1")
     cli.main()
