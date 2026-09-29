@@ -10,16 +10,20 @@ Transcript Video is a local, GPU-first pipeline for Vietnamese speech transcript
 
 ```text
 transcript-video
+├── interactive
 ├── process [VIDEO]
 ├── inspect VIDEO
 ├── doctor
 ├── config show|validate
+├── tui
 └── course create|build|tui
 ```
 
 Global options must appear before the command: `-q`, `-v`, `-vv`, `--no-color`, `--plain`, `--log-file PATH`, and `--json`. Typer also provides `--install-completion` and `--show-completion`.
 
 The default terminal log is concise. `-v` adds diagnostics and `-vv` adds source locations and tracebacks. Detailed DEBUG logs always rotate at `logs/transcript-video.log` unless `--log-file` overrides the path. `NO_COLOR` and `--no-color` are both honored.
+
+With no command, `transcript-video` opens the guided Questionary launcher only on an interactive TTY. Redirected input/output prints help and does not prompt. `transcript-video interactive` explicitly opens that launcher; `transcript-video tui` opens the Textual processing workspace. Both are frontends over the same application batch planner/executor as `process`, not subprocess wrappers around the CLI.
 
 See [logging/event schema](observability.md): default output contains status/progress, warnings and results; `-q` disables progress. Long commands also write per-run DEBUG text and JSONL in `logs/runs/`. Use `--events-json FILE` on `process` or `course build` for a new event JSONL file; dry-run writes none. The wizard supports batch selection, automatic titles/numbers, Recommended/Custom settings and review before saving.
 
@@ -67,6 +71,10 @@ uv run transcript-video --json doctor
 ```
 
 Exit codes are `0` for success, `1` for a runtime/readiness failure, `2` for invalid CLI usage, and `130` for user cancellation.
+
+## Processing launcher and TUI
+
+The launcher selects multiple inputs in order, applies batch defaults, then supports sparse per-video overrides and reset. The current basic controls are profile, device, encoder, TTS, final-audio verification, speed-up and force-transcription. Its review resolves each video independently before dry-run or execution. The Textual workspace offers the same selected/all apply, reset, preview, dry-run and process operations. Existing `course tui` remains the dedicated course editor.
 
 ## Course wizard and full TUI
 

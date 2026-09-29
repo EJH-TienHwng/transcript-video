@@ -16,6 +16,7 @@ from ..processing.models import get_model_filename_suffix
 from ..processing.pipeline import process_video
 from ..processing.runtime import model_runtime
 from ..processing.speedup import process_speedup_outputs
+from .batch import ProcessItem
 from .errors import describe_error
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,21 @@ class ProcessPlan:
     normal_output_paths: tuple[Path, ...]
     speedup_output_paths: tuple[Path, ...]
     artifacts: tuple[Path, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class BatchProcessPlan:
+    """A selected-order batch of independently resolved one-video plans."""
+
+    plans: tuple[ProcessPlan, ...]
+
+    @property
+    def videos(self) -> tuple[Path, ...]:
+        return tuple(video for plan in self.plans for video in plan.videos)
+
+    @property
+    def artifacts(self) -> tuple[Path, ...]:
+        return tuple(path for plan in self.plans for path in plan.artifacts)
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,7 +188,44 @@ def build_process_plan(
     )
 
 
+def build_batch_process_plan(
+    items: Sequence[ProcessItem], *, defer_video_errors: bool = False
+) -> BatchProcessPlan:
+    """Build isolated plans while preserving the selection order and collision protection."""
+    if not items:
+        raise ValueError("Select at least one video.")
+    plans = tuple(
+        build_process_plan(
+            item.settings,
+            [item.video],
+            item.translated_srt,
+            defer_video_errors=defer_video_errors,
+        )
+        for item in items
+    )
+    roots = {plan.root for plan in plans}
+    if len(roots) != 1:
+        raise ValueError("All batch videos must use the same project root.")
+    seen: dict[str, Path] = {}
+    for video in (plan.videos[0] for plan in plans):
+        key = video.stem.casefold()
+        if key in seen:
+            if seen[key] == video:
+                raise ValueError(f"Video selected more than once: {video}")
+            raise ValueError(
+                f"Videos share an output name: {seen[key]} and {video}; rename one input."
+            )
+        seen[key] = video
+    return BatchProcessPlan(plans)
+
+
 def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = None) -> RunSummary:
+    return execute_batch_process_plan(BatchProcessPlan((plan,)), observer)
+
+
+def execute_batch_process_plan(
+    batch: BatchProcessPlan, observer: PipelineObserver | None = None
+) -> RunSummary:
     failures: list[str] = []
     errors: list[Exception] = []
     waiting: list[Path] = []
@@ -180,85 +233,89 @@ def execute_process_plan(plan: ProcessPlan, observer: PipelineObserver | None = 
     with (
         event_scope(observer),
         model_runtime(),
-        stage_context(PipelineStage.RUN, "Processing videos", total=len(plan.videos)),
+        stage_context(PipelineStage.RUN, "Processing videos", total=len(batch.videos)),
     ):
-        plan.paths.create_dirs()
-        configure_binary_path(plan.root)
-        for position, (video, source_srt_path, translated_srt_path) in enumerate(
-            zip(
+        batch.plans[0].paths.create_dirs()
+        configure_binary_path(batch.plans[0].root)
+        position = 0
+        for plan in batch.plans:
+            for video, source_srt_path, translated_srt_path in zip(
                 plan.videos,
                 plan.source_srt_paths,
                 plan.translated_srt_paths,
                 strict=True,
-            ),
-            1,
-        ):
-            with log_context(
-                video=video.name, stage="video", operation=None, chunk=None, subtitle=None
             ):
-                stages = ["source subtitles", "translated subtitles"]
-                if translated_srt_path.is_file() and not plan.settings.transcription.skip_burn:
-                    stages += ["tts", "render", "mux"] if plan.settings.tts.enabled else ["render"]
-                if plan.settings.speedup.enabled:
-                    stages.append("speedup")
-                video_started = time.perf_counter()
-                emit(
-                    PipelineStage.VIDEO,
-                    f"[{position}/{len(plan.videos)}] {video.name}",
-                    kind=EventKind.START,
-                    current=position - 1,
-                    total=len(plan.videos),
-                    details={"stages": stages},
-                )
-                try:
-                    _validate_input_video(video)
-                    needs_model = (
-                        plan.settings.transcription.overwrite_srt
-                        or not source_srt_path.is_file()
-                        or (
-                            plan.settings.tts.enabled
-                            and plan.settings.tts.mode == "timed"
-                            and translated_srt_path.is_file()
+                position += 1
+                with log_context(
+                    video=video.name, stage="video", operation=None, chunk=None, subtitle=None
+                ):
+                    stages = ["source subtitles", "translated subtitles"]
+                    if translated_srt_path.is_file() and not plan.settings.transcription.skip_burn:
+                        stages += (
+                            ["tts", "render", "mux"] if plan.settings.tts.enabled else ["render"]
                         )
-                    )
-                    if needs_model and not plan.model.is_dir():
-                        raise FileNotFoundError(f"Model folder not found: {plan.model}")
-                    outcome = process_video(
-                        video,
-                        plan.model,
-                        source_srt_path,
-                        translated_srt_path,
-                        plan.paths,
-                        plan.settings,
-                        observer,
-                    )
-                except Exception as exc:
-                    logger.debug(
-                        "Video processing failed", exc_info=True, extra={"diagnostic_only": True}
-                    )
-                    failures.append(f"{video.name}: {describe_error(exc)}")
-                    errors.append(exc)
+                    if plan.settings.speedup.enabled:
+                        stages.append("speedup")
+                    video_started = time.perf_counter()
                     emit(
                         PipelineStage.VIDEO,
-                        str(exc),
-                        kind=EventKind.FAILURE,
-                        details={"elapsed_seconds": time.perf_counter() - video_started},
+                        f"[{position}/{len(batch.videos)}] {video.name}",
+                        kind=EventKind.START,
+                        current=position - 1,
+                        total=len(batch.videos),
+                        details={"stages": stages},
                     )
-                else:
-                    if outcome == "waiting_for_translation":
-                        waiting.append(translated_srt_path)
-                    else:
+                    try:
+                        _validate_input_video(video)
+                        needs_model = (
+                            plan.settings.transcription.overwrite_srt
+                            or not source_srt_path.is_file()
+                            or (
+                                plan.settings.tts.enabled
+                                and plan.settings.tts.mode == "timed"
+                                and translated_srt_path.is_file()
+                            )
+                        )
+                        if needs_model and not plan.model.is_dir():
+                            raise FileNotFoundError(f"Model folder not found: {plan.model}")
+                        outcome = process_video(
+                            video,
+                            plan.model,
+                            source_srt_path,
+                            translated_srt_path,
+                            plan.paths,
+                            plan.settings,
+                            observer,
+                        )
+                    except Exception as exc:
+                        logger.debug(
+                            "Video processing failed",
+                            exc_info=True,
+                            extra={"diagnostic_only": True},
+                        )
+                        failures.append(f"{video.name}: {describe_error(exc)}")
+                        errors.append(exc)
                         emit(
                             PipelineStage.VIDEO,
-                            f"{video.name} completed",
-                            kind=EventKind.COMPLETE,
+                            str(exc),
+                            kind=EventKind.FAILURE,
                             details={"elapsed_seconds": time.perf_counter() - video_started},
                         )
+                    else:
+                        if outcome == "waiting_for_translation":
+                            waiting.append(translated_srt_path)
+                        else:
+                            emit(
+                                PipelineStage.VIDEO,
+                                f"{video.name} completed",
+                                kind=EventKind.COMPLETE,
+                                details={"elapsed_seconds": time.perf_counter() - video_started},
+                            )
     elapsed = time.perf_counter() - started
-    existing = tuple(path for path in plan.artifacts if path.exists())
+    existing = tuple(path for path in batch.artifacts if path.exists())
     return RunSummary(
-        len(plan.videos) - len(failures) - len(waiting),
-        len(plan.videos),
+        len(batch.videos) - len(failures) - len(waiting),
+        len(batch.videos),
         elapsed,
         tuple(failures),
         existing,

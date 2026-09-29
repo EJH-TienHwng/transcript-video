@@ -68,6 +68,18 @@ def test_cli_config_validate() -> None:
     assert "Valid configuration" in result.stdout
 
 
+def test_no_argument_cli_prints_help_without_prompting() -> None:
+    result = CliRunner().invoke(app, [])
+    assert result.exit_code == 0
+    assert "Usage:" in result.stdout
+
+
+def test_interactive_command_rejects_non_tty() -> None:
+    result = CliRunner().invoke(app, ["interactive"])
+    assert result.exit_code == 2
+    assert "requires a TTY" in result.output
+
+
 def test_legacy_cli_keeps_global_options_before_process() -> None:
     assert _normalize_legacy_argv(["--no-color", "-vv", "--video", "lesson.mp4"]) == [
         "--no-color",

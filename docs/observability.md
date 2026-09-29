@@ -69,6 +69,8 @@ events include `details.elapsed_seconds`, measured with a monotonic clock. Neste
 such as `load_qwen`, `load_aligner`, `load_whisper`, `load_translation`, and `chunk` do not complete
 the enclosing stage. RUN completion means all inputs were attempted; count VIDEO failures to
 determine batch success. A failed video does not prevent later videos from running.
+The interactive launcher and processing TUI resolve one effective settings object per selected
+video before calling this same execution path; they do not create a second event stream.
 
 Process stages include run, video, transcribe, translate, subtitles, render, tts, mux.
 Course stages include run, validate, normalize, toc, cards, concatenate, chapters. The final

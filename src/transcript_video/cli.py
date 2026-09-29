@@ -39,7 +39,7 @@ except ImportError:  # Typer before it vendored Click.
 logger = logging.getLogger(__name__)
 app = typer.Typer(
     help="Vietnamese transcription, external English subtitle handoff, TTS, and course building.",
-    no_args_is_help=True,
+    no_args_is_help=False,
     invoke_without_command=True,
     pretty_exceptions_show_locals=False,
 )
@@ -149,6 +149,48 @@ def global_options(
     )
     ctx.with_resource(log_context(run_id=ctx.obj.run_id))
     ctx.call_on_close(close_logging)
+    if ctx.invoked_subcommand is None:
+        from .interactive import interaction_available, launch
+
+        if interaction_available():
+            ctx.obj.logging(command="interactive", console_enabled=False)
+            launch(ctx.obj.consoles.out)
+        else:
+            typer.echo(ctx.get_help())
+
+
+@app.command("interactive")
+def interactive_command(ctx: typer.Context) -> None:
+    """Open the guided Questionary launcher in an interactive terminal."""
+    from .interactive import interaction_available, launch
+
+    if not interaction_available():
+        raise typer.BadParameter("Interactive mode requires a TTY for both input and output.")
+    state = _state(ctx)
+    state.logging(command="interactive", console_enabled=False)
+    launch(state.consoles.out)
+
+
+@app.command("tui")
+def tui_command(
+    ctx: typer.Context, root: Annotated[Path | None, typer.Option("--root")] = None
+) -> None:
+    """Open the Textual workspace for heterogeneous video batches."""
+    state = _state(ctx)
+    state.logging(command="tui", console_enabled=False)
+    from .tui.process_app import ProcessApp
+
+    previous_no_color = os.environ.get("NO_COLOR")
+    if state.consoles.out.no_color:
+        os.environ["NO_COLOR"] = "1"
+    try:
+        tui = ProcessApp(root)
+    finally:
+        if previous_no_color is None:
+            os.environ.pop("NO_COLOR", None)
+        else:
+            os.environ["NO_COLOR"] = previous_no_color
+    tui.run()
 
 
 def _state(ctx: typer.Context) -> CLIState:
@@ -806,7 +848,7 @@ def course_tui(
 
 
 def _normalize_legacy_argv(argv: list[str]) -> list[str]:
-    commands = {"process", "speedup", "course", "config", "inspect", "doctor"}
+    commands = {"process", "speedup", "course", "config", "inspect", "doctor", "interactive", "tui"}
     if (
         not argv
         or any(item in commands for item in argv)

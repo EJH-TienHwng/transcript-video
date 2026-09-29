@@ -7,6 +7,7 @@ Local, GPU-first tools for Vietnamese transcription, externally translated Engli
 ## Highlights
 
 - One Typer executable with Rich output: `transcript-video`.
+- A guided Questionary launcher and Textual batch workspace over the same processing application layer.
 - Reusable TOML configuration and profiles instead of long repeated commands.
 - Real FFmpeg machine-readable progress support and a shared subprocess runner.
 - Questionary course wizard plus a full three-screen Textual editor.
@@ -38,6 +39,13 @@ Retiming changes timing only. It keeps each translated start unless TTS is meani
 ## Basic CLI
 
 ```powershell
+# In an interactive terminal, open the guided launcher
+uv run transcript-video
+uv run transcript-video interactive
+
+# Open the Textual workspace for per-video batch settings
+uv run transcript-video tui
+
 # Process every configured video
 uv run transcript-video process
 
@@ -65,6 +73,8 @@ uv run transcript-video process lesson.mp4 --dry-run
 ```
 
 Positional inputs accept names inside `data/input/` or absolute paths. Repeated paths are processed once, keeping the first occurrence. Distinct inputs with the same filename stem are rejected to prevent output collisions. With no positional inputs, `project.video` is used when configured; otherwise `data/input/` is scanned. `--translated-srt` is limited to single-video runs; batches resolve each canonical English SRT independently.
+
+Running `transcript-video` with no command opens the Questionary launcher only when both stdin and stdout are TTYs. Redirected or automated invocations print normal help and never prompt. The launcher and `tui` share the application batch model: batch defaults are merged with sparse per-video overrides, each selected video receives an independent resolved settings object, and execution keeps selection order while continuing after isolated failures. The current interactive controls cover profile, device/encoder, TTS, final-audio verification, speed-up, and force transcription. Persisted batch manifests are intentionally not added yet.
 
 The pre-0.3 form (`transcript-video --video lesson.mp4 ...`) remains accepted. The old `transcript-course` and `transcript-course-config` executables are deprecated wrappers.
 

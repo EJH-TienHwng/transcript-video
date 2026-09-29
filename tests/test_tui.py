@@ -6,6 +6,21 @@ from textual.widgets import Button, Input, ListView
 from transcript_video.tui.app import CourseApp, SessionScreen
 
 
+@pytest.mark.asyncio
+async def test_process_tui_opens_workspace(tmp_path):
+    from transcript_video.tui.process_app import ProcessApp
+
+    input_dir = tmp_path / "data/input"
+    input_dir.mkdir(parents=True)
+    (input_dir / "lesson.mp4").touch()
+    async with ProcessApp(tmp_path).run_test() as pilot:
+        await pilot.pause()
+        assert pilot.app.query_one("#videos")
+        await pilot.press("space")
+        assert [video.name for video in pilot.app.controller.batch.videos] == ["lesson.mp4"]
+        assert "lesson.mp4" in str(pilot.app.query_one("#preview").render())
+
+
 @pytest.fixture
 def course(tmp_path, monkeypatch):
     (tmp_path / "pyproject.toml").touch()

@@ -10,16 +10,20 @@ Transcript Video là pipeline chạy local, ưu tiên GPU để nhận dạng ti
 
 ```text
 transcript-video
+├── interactive
 ├── process [VIDEO]
 ├── inspect VIDEO
 ├── doctor
 ├── config show|validate
+├── tui
 └── course create|build|tui
 ```
 
 Các option toàn cục phải đặt trước command: `-q`, `-v`, `-vv`, `--no-color`, `--plain`, `--log-file PATH` và `--json`. Typer cũng hỗ trợ `--install-completion` và `--show-completion`.
 
 Log mặc định trên terminal được rút gọn. `-v` hiện thêm chẩn đoán, còn `-vv` hiện vị trí source và traceback. Log DEBUG chi tiết được rotate tại `logs/transcript-video.log`, hoặc đường dẫn truyền qua `--log-file`. Cả biến `NO_COLOR` và option `--no-color` đều được hỗ trợ.
+
+Khi không truyền command, `transcript-video` chỉ mở launcher Questionary khi stdin và stdout đều là TTY. Với pipe hoặc output redirect, lệnh in help và không prompt. `transcript-video interactive` mở launcher rõ ràng; `transcript-video tui` mở workspace Textual cho batch. Cả hai dùng chung application batch planner/executor với `process`, không gọi lại CLI qua subprocess.
 
 
 Xem [logging/event schema](observability.md): default chỉ hiện status/progress, warning và kết quả; `-q` tắt progress. Mỗi lệnh dài có log DEBUG text + JSONL riêng trong `logs/runs/`. `--events-json FILE` dùng với `process` hoặc `course build` để ghi event JSONL vào file mới; dry-run không ghi file. Wizard hỗ trợ chọn nhiều video, tự tạo title/number, Recommended/Custom và final review trước khi lưu.
@@ -67,6 +71,10 @@ uv run transcript-video --json doctor
 ```
 
 Exit code: `0` thành công, `1` lỗi runtime/môi trường chưa sẵn sàng, `2` dùng CLI sai và `130` khi người dùng hủy.
+
+## Launcher và TUI xử lý video
+
+Launcher cho phép chọn nhiều video theo thứ tự, đặt batch defaults, ghi đè thưa theo từng video và reset override. Basic controls hiện có gồm profile, device, encoder, TTS, verify audio, speed-up và force transcription. Review resolve settings độc lập cho từng video trước dry-run hoặc run. Workspace Textual có thao tác apply selected/all, reset, preview, dry-run và process tương đương. `course tui` vẫn là editor chuyên cho course.
 
 ## Course Wizard và TUI đầy đủ
 
